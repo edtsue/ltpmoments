@@ -992,6 +992,127 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink);
 }
 
+/* ============================================================
+   THE GEMINI RAIL
+   ============================================================ */
+.app { grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--chat-w, 330px); }
+.app:has(.chat.shut) { --chat-w: 42px; }
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--shell-2);
+  border-left: 1px solid var(--shell-line);
+  overflow: hidden;
+}
+.ck-hd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 11px;
+  border-bottom: 1px solid var(--shell-line);
+}
+.ck-mark { color: var(--vi); font-size: 13px; flex: none; }
+.ck-n { font-size: 13px; font-weight: 620; flex: 1 1 auto; }
+.ck-clear, .ck-fold {
+  flex: none;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: none;
+  color: var(--shell-ink3);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ck-fold { padding: 0; width: 24px; font-size: 13px; line-height: 1; }
+.ck-clear:hover, .ck-fold:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.ck-clear:focus-visible, .ck-fold:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+
+/* Collapsed, the rail keeps only the control that brings it back. Everything
+   else goes rather than being squeezed — a panel with its conversation clipped
+   in half is worse than one that is honestly not there. */
+.chat.shut .ck-n, .chat.shut .ck-mark, .chat.shut .ck-clear,
+.chat.shut .ck-body, .chat.shut .ck-ask { display: none; }
+.chat.shut .ck-hd { padding: 12px 8px; border-bottom: none; }
+
+.ck-body { flex: 1 1 auto; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.ck-empty { color: var(--shell-ink3); font-size: 11.5px; line-height: 1.55; }
+.ck-empty p { margin: 0 0 9px; }
+.ck-cav { padding-top: 9px; border-top: 1px dashed var(--shell-line); }
+
+.ck-who {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+  margin-bottom: 4px;
+}
+.ck-tx { font-size: 12.3px; line-height: 1.55; color: var(--shell-ink2); }
+.ck-tx.muted { color: var(--shell-ink3); font-style: italic; }
+.ck.user .ck-tx {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--well);
+  color: var(--shell-ink);
+}
+.ck.gemini .ck-who { color: var(--vi-ink); }
+/* Figures the board did not supply, named rather than hidden. Refusing the
+   whole answer over one stray digit would make the panel unusable; leaving it
+   unmarked would make it untrustworthy. */
+.ck-warn {
+  margin-top: 7px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(148, 98, 0, .12);
+  color: var(--pill-amber);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.ck-ask {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--shell-line);
+}
+.ck-ask textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  resize: none;
+  max-height: 130px;
+  padding: 8px 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 10px;
+  background: var(--sunken);
+  color: var(--shell-ink);
+  font-family: var(--sans);
+  font-size: 12.3px;
+  line-height: 1.45;
+}
+.ck-ask textarea:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+.ck-ask button {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: var(--shell-ink);
+  color: var(--shell-2);
+  font-size: 11px;
+  cursor: pointer;
+}
+.ck-ask button:hover { opacity: .88; }
+.ck-ask button:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; }
+
+@media (max-width: 1180px) { .app { --chat-w: 42px; } .chat:not(.shut) .ck-body, .chat:not(.shut) .ck-ask { display: none; } }
+
 </style>
 <style>
   .gem-row, .pop-read { display: none; }
@@ -1078,6 +1199,25 @@ button, input, select { font-family: inherit; }
     </header>
     <div class="body" id="body"></div>
   </main>
+
+  <!-- The reader, beside the board. Its own prefix throughout: `panel` and
+       `pn-` already belong to the add-an-audience dialog, and two components
+       sharing a class name is a cascade collision waiting to happen. -->
+  <aside class="chat" id="chat">
+    <div class="ck-hd">
+      <span class="ck-mark" aria-hidden="true">&#10022;</span>
+      <span class="ck-n">Gemini</span>
+      <button class="ck-clear" id="chatClear" type="button">Clear</button>
+      <button class="ck-fold" id="chatFold" type="button"
+        aria-controls="chat" aria-expanded="true"
+        aria-label="Collapse the Gemini panel">&rsaquo;</button>
+    </div>
+    <div class="ck-body" id="chatBody"></div>
+    <div class="ck-ask">
+      <textarea id="chatIn" rows="1" placeholder="Ask about the board…"></textarea>
+      <button id="chatGo" type="button" aria-label="Send">&#9654;</button>
+    </div>
+  </aside>
 </div>
 
 <!-- The add-an-audience panel. Empty until it is opened, so nothing in it can
@@ -3003,4 +3143,129 @@ window.addEventListener('resize', closePop, { passive: true });
 /* ---------- boot ---------- */
 recompute();
 render();
+
+/* ============================================================
+   THE GEMINI RAIL
+   A reader beside the board, not a second board. It is handed a digest of what
+   is actually on screen — the selection, the counts, the loudest and quietest
+   weeks, the moments in view — and it answers from that. What it cannot see,
+   it has to say it cannot see.
+   ============================================================ */
+const CHAT = { open: true, busy: false, turns: [] };
+
+/* What the model is allowed to know. Built fresh on every question, because a
+   digest that lags the board is worse than no digest — it would answer
+   confidently about a category the planner switched off a minute ago. */
+function boardDigest() {
+  const v = visible().sort((a, b) => b.score - a.score);
+  const auds = audiences();
+  const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
+  const off = CATS.filter(c => S.off.has(c));
+
+  const weeks = weekAxis();
+  const load = weeks.map((w, i) => ({
+    i, label: w.label,
+    total: v.filter(m => weekKey(m.start < WIN_START ? WIN_START : m.start) === w.key)
+            .reduce((s, m) => s + m.score, 0)
+  })).sort((x, y) => y.total - x.total);
+
+  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score} ${m.band.label}`;
+  const shown = S.showWatch ? 'Anchor, Play and Watch' : 'Anchor and Play only';
+
+  return [
+    `AUDIENCES: ${auds.map(a => `${a.name} (${a.size || 'size not given'})`).join(' + ')}` +
+      (auds.length > 1 ? ` — combined by ${S.mode}` : ''),
+    ...auds.map(a => `  ${a.name}: ${a.def}`),
+    ``,
+    `WINDOW: ${MONTHS[0].label} ${MONTHS[0].y} to ${MONTHS[11].label} ${MONTHS[11].y}. ${v.length} moments.`,
+    `BANDS: Anchor ${b.anchor}, Play ${b.play}, Watch ${b.watch}, Skip ${b.skip}.`,
+    `DRAWN ON THE RIBBON: ${shown}.`,
+    off.length ? `CATEGORIES SWITCHED OFF (not on the board, not in this digest): ${off.join(', ')}.`
+               : `All ten categories are on.`,
+    ``,
+    `BY CATEGORY: ${CATS.filter(c => !S.off.has(c))
+      .map(c => `${c} ${v.filter(m => m.cat === c).length}`).join(', ')}.`,
+    ``,
+    `THE 25 HIGHEST-SCORING MOMENTS IN VIEW:`,
+    ...v.slice(0, 25).map(m => '  ' + line(m)),
+    ``,
+    `THE UNCLAIMED MOMENTS — high affinity, quiet week:`,
+    ...unclaimed(v).map(m => `  ${m.start} · ${m.name} · affinity ${Math.round(m.parts.aff)}, congestion ${Math.round(m.parts.cong)}`),
+    ``,
+    `BUSIEST WEEKS: ${load.slice(0, 3).map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`,
+    `QUIETEST WEEKS WITH ANYTHING IN THEM: ${load.filter(w => w.total > 0).slice(-3)
+      .map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`
+  ].join('\n');
+}
+
+function renderChat() {
+  const rail = document.getElementById('chat');
+  rail.classList.toggle('shut', !CHAT.open);
+  document.getElementById('chatFold').textContent = CHAT.open ? '›' : '‹';
+  document.getElementById('chatFold').setAttribute('aria-expanded', String(CHAT.open));
+
+  const body = document.getElementById('chatBody');
+  if (!CHAT.turns.length) {
+    body.innerHTML = `<div class="ck-empty">
+      <p>Ask about what is on the board — why a moment scores where it does,
+         which weeks are empty, what these audiences disagree about.</p>
+      <p class="ck-cav">It reads a digest of the board, not the whole calendar,
+         and it will say so when the answer is not in front of it.</p>
+    </div>`;
+  } else {
+    body.innerHTML = CHAT.turns.map(t => `
+      <div class="ck ${t.role}">
+        <div class="ck-who">${t.role === 'user' ? 'You' : 'Gemini'}</div>
+        <div class="ck-tx">${esc(t.text).replace(/\n/g, '<br>')}</div>
+        ${t.unverified && t.unverified.length ? `<div class="ck-warn">
+          Not from the board: ${t.unverified.slice(0, 6).map(esc).join(', ')} — check these.
+        </div>` : ''}
+      </div>`).join('') + (CHAT.busy ? `<div class="ck gemini"><div class="ck-who">Gemini</div>
+        <div class="ck-tx muted">Reading the board…</div></div>` : '');
+  }
+  body.scrollTop = body.scrollHeight;
+}
+
+async function askChat() {
+  const box = document.getElementById('chatIn');
+  const q = box.value.trim();
+  if (!q || CHAT.busy) return;
+  box.value = '';
+  box.style.height = 'auto';
+  CHAT.turns.push({ role: 'user', text: q });
+  CHAT.busy = true;
+  renderChat();
+  try {
+    const j = await callGemini({
+      action: 'chat',
+      question: q,
+      digest: boardDigest(),
+      history: CHAT.turns.slice(0, -1).map(t => ({ role: t.role, text: t.text }))
+    });
+    CHAT.turns.push({ role: 'gemini', text: j.reply, unverified: j.unverified || [] });
+  } catch (err) {
+    CHAT.turns.push({ role: 'gemini', text: err.message, error: true });
+  } finally {
+    CHAT.busy = false;
+    renderChat();
+  }
+}
+
+document.getElementById('chatGo').addEventListener('click', askChat);
+document.getElementById('chatIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askChat(); }
+});
+document.getElementById('chatIn').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(e.target.scrollHeight, 130) + 'px';
+});
+document.getElementById('chatFold').addEventListener('click', () => {
+  CHAT.open = !CHAT.open;
+  renderChat();
+});
+document.getElementById('chatClear').addEventListener('click', () => {
+  CHAT.turns = [];
+  renderChat();
+});
+renderChat();
 </script>

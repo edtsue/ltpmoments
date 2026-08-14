@@ -39,8 +39,11 @@ const API_KEY = process.env.GEMINI_KEY || process.env.GEMINI_API_KEY;
    about. The read is prose a human will paste into a deck, so it gets room. */
 const PLAN = {
   'read-cut':    { temperature: 0,    cap: 2200, think: false },
-  'read-moment': { temperature: 0.45, cap: 320,  think: false }
+  'read-moment': { temperature: 0.45, cap: 320,  think: false },
+  'chat':        { temperature: 0.4,  cap: 700,  think: false }
 };
+
+const MAX_TURNS = 10;      // the conversation the client may send back
 
 const MAX_SOURCE = 24000;   // a bad paste should cost a 400, not a bill
 
@@ -75,6 +78,12 @@ const READ_SCHEMA = {
   type: 'object',
   properties: { read: { type: 'string' } },
   required: ['read']
+};
+
+const CHAT_SCHEMA = {
+  type: 'object',
+  properties: { reply: { type: 'string' } },
+  required: ['reply']
 };
 
 /* ---------- prompts ---------- */
@@ -160,6 +169,59 @@ RULES:
 - Lead with the component that actually decides this moment — the highest one if it is carrying the score, the lowest one if it is what holds the moment back. Say which, plainly.
 - Never invent a fact about the moment: no audience figures, no what-happened-last-year, no competitor names, no partnership suggestions. You know only what is written above.
 - Write like a planner briefing a colleague. Flat, specific, no marketing adjectives, no "leverage", no "unlock", no "tap into".`;
+}
+
+/* THE BOARD IS THE ONLY SOURCE. The client sends a digest of what is actually
+   on screen — the selection, the counts, the top moments, the quiet weeks —
+   and the model answers from that and from what this tool is. It is told, in
+   terms, that it cannot see the whole calendar and must say so rather than
+   reach for what it half-remembers about a franchise or a date.
+
+   Unlike read-moment, a stray number here is reported rather than refused. A
+   conversation that dies on an unmatched digit is unusable, and the honest
+   middle is to show the answer with the unverifiable figures named. */
+function chatPrompt(digest, history, question) {
+  const turns = (history || []).slice(-MAX_TURNS)
+    .map(t => `${t.role === 'user' ? 'PLANNER' : 'YOU'}: ${String(t.text).slice(0, 1200)}`)
+    .join('\n');
+
+  return `You are the reader beside a media planning tool called LTP Moments. It
+sits at stage 6.2 of a long-term planning process, and it produces a calendar:
+which cultural moments a set of target audiences actually cares about across a
+planning year, and which ones to skip.
+
+HOW THE TOOL SCORES A MOMENT, out of 100. Five named components, never a bare
+number, so a planner can say which part is wrong:
+  Affinity .50      does this audience care. The ONLY term that varies by audience.
+  Scale .20         how many of them show up.
+  Actionability .15 is there a way to buy in — a distributor, a sponsorship.
+  Timing .15        is the date firm enough to plan against.
+  Congestion        how loud that week is. A MULTIPLIER, up to minus 25%.
+                    HIGHER IS WORSE: a low congestion figure means a QUIET week.
+Bands: Anchor 72+ (build a beat on it), Play 56+ (buy in with what exists),
+Watch 40+ (know about it, no line item), Skip (say out loud we are not doing it).
+Several audiences combine on affinity only: blend (size-weighted), overlap (the
+lowest — where one buy serves all), any (the highest — reach at least one).
+
+WHAT IS ON THE BOARD RIGHT NOW:
+${digest}
+
+RULES:
+- Answer from the board above and from how the tool works. Nothing else.
+- You are seeing a DIGEST, not the whole calendar. If the answer needs a moment
+  that is not listed, say plainly that it is not in what you can see and tell
+  the planner how to surface it — switch a category on, turn Watch on, change
+  the combine mode.
+- Never state a figure that is not above. No audience sizes, no reach, no
+  ratings, no budgets, no what-happened-last-year.
+- Never invent a moment, a date, a partner or a competitor. If you are not sure
+  a thing is real, do not name it.
+- Two short paragraphs at most. A planner is reading this beside the board, not
+  instead of it. No headings, no bullet lists unless asked for a list.
+- Flat and specific. No "leverage", "unlock", "tap into", "dive deeper".
+
+${turns ? 'THE CONVERSATION SO FAR:\n' + turns + '\n' : ''}
+PLANNER: ${question}`;
 }
 
 /* ---------- the call ---------- */
@@ -359,6 +421,23 @@ module.exports = async (req, res) => {
         });
       }
       return res.status(200).json({ ok: true, read: text });
+    }
+
+    if (action === 'chat') {
+      const question = String(body.question || '').trim().slice(0, 1000);
+      const digest = String(body.digest || '').slice(0, 14000);
+      if (!question) return res.status(400).json({ error: 'Ask something first.' });
+      if (!digest) return res.status(400).json({ error: 'The board sent nothing to read.' });
+
+      const out = await callGemini(action, chatPrompt(digest, body.history, question), CHAT_SCHEMA);
+      const reply = String(out.reply || '').trim();
+
+      /* Everything the digest contains is quotable. Anything else is the model
+         reaching beyond the board, so it is named rather than hidden — and
+         rather than thrown away, which would make the panel unusable. */
+      const allowed = digest.match(/\d+(?:\.\d+)?/g) || [];
+      const unverified = verifyRead(reply, allowed);
+      return res.status(200).json({ ok: true, reply, unverified });
     }
 
     return res.status(400).json({ error: 'Unknown action' });

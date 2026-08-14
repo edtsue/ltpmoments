@@ -870,3 +870,128 @@ window.addEventListener('resize', closePop, { passive: true });
 /* ---------- boot ---------- */
 recompute();
 render();
+
+/* ============================================================
+   THE GEMINI RAIL
+   A reader beside the board, not a second board. It is handed a digest of what
+   is actually on screen — the selection, the counts, the loudest and quietest
+   weeks, the moments in view — and it answers from that. What it cannot see,
+   it has to say it cannot see.
+   ============================================================ */
+const CHAT = { open: true, busy: false, turns: [] };
+
+/* What the model is allowed to know. Built fresh on every question, because a
+   digest that lags the board is worse than no digest — it would answer
+   confidently about a category the planner switched off a minute ago. */
+function boardDigest() {
+  const v = visible().sort((a, b) => b.score - a.score);
+  const auds = audiences();
+  const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
+  const off = CATS.filter(c => S.off.has(c));
+
+  const weeks = weekAxis();
+  const load = weeks.map((w, i) => ({
+    i, label: w.label,
+    total: v.filter(m => weekKey(m.start < WIN_START ? WIN_START : m.start) === w.key)
+            .reduce((s, m) => s + m.score, 0)
+  })).sort((x, y) => y.total - x.total);
+
+  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score} ${m.band.label}`;
+  const shown = S.showWatch ? 'Anchor, Play and Watch' : 'Anchor and Play only';
+
+  return [
+    `AUDIENCES: ${auds.map(a => `${a.name} (${a.size || 'size not given'})`).join(' + ')}` +
+      (auds.length > 1 ? ` — combined by ${S.mode}` : ''),
+    ...auds.map(a => `  ${a.name}: ${a.def}`),
+    ``,
+    `WINDOW: ${MONTHS[0].label} ${MONTHS[0].y} to ${MONTHS[11].label} ${MONTHS[11].y}. ${v.length} moments.`,
+    `BANDS: Anchor ${b.anchor}, Play ${b.play}, Watch ${b.watch}, Skip ${b.skip}.`,
+    `DRAWN ON THE RIBBON: ${shown}.`,
+    off.length ? `CATEGORIES SWITCHED OFF (not on the board, not in this digest): ${off.join(', ')}.`
+               : `All ten categories are on.`,
+    ``,
+    `BY CATEGORY: ${CATS.filter(c => !S.off.has(c))
+      .map(c => `${c} ${v.filter(m => m.cat === c).length}`).join(', ')}.`,
+    ``,
+    `THE 25 HIGHEST-SCORING MOMENTS IN VIEW:`,
+    ...v.slice(0, 25).map(m => '  ' + line(m)),
+    ``,
+    `THE UNCLAIMED MOMENTS — high affinity, quiet week:`,
+    ...unclaimed(v).map(m => `  ${m.start} · ${m.name} · affinity ${Math.round(m.parts.aff)}, congestion ${Math.round(m.parts.cong)}`),
+    ``,
+    `BUSIEST WEEKS: ${load.slice(0, 3).map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`,
+    `QUIETEST WEEKS WITH ANYTHING IN THEM: ${load.filter(w => w.total > 0).slice(-3)
+      .map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`
+  ].join('\n');
+}
+
+function renderChat() {
+  const rail = document.getElementById('chat');
+  rail.classList.toggle('shut', !CHAT.open);
+  document.getElementById('chatFold').textContent = CHAT.open ? '›' : '‹';
+  document.getElementById('chatFold').setAttribute('aria-expanded', String(CHAT.open));
+
+  const body = document.getElementById('chatBody');
+  if (!CHAT.turns.length) {
+    body.innerHTML = `<div class="ck-empty">
+      <p>Ask about what is on the board — why a moment scores where it does,
+         which weeks are empty, what these audiences disagree about.</p>
+      <p class="ck-cav">It reads a digest of the board, not the whole calendar,
+         and it will say so when the answer is not in front of it.</p>
+    </div>`;
+  } else {
+    body.innerHTML = CHAT.turns.map(t => `
+      <div class="ck ${t.role}">
+        <div class="ck-who">${t.role === 'user' ? 'You' : 'Gemini'}</div>
+        <div class="ck-tx">${esc(t.text).replace(/\n/g, '<br>')}</div>
+        ${t.unverified && t.unverified.length ? `<div class="ck-warn">
+          Not from the board: ${t.unverified.slice(0, 6).map(esc).join(', ')} — check these.
+        </div>` : ''}
+      </div>`).join('') + (CHAT.busy ? `<div class="ck gemini"><div class="ck-who">Gemini</div>
+        <div class="ck-tx muted">Reading the board…</div></div>` : '');
+  }
+  body.scrollTop = body.scrollHeight;
+}
+
+async function askChat() {
+  const box = document.getElementById('chatIn');
+  const q = box.value.trim();
+  if (!q || CHAT.busy) return;
+  box.value = '';
+  box.style.height = 'auto';
+  CHAT.turns.push({ role: 'user', text: q });
+  CHAT.busy = true;
+  renderChat();
+  try {
+    const j = await callGemini({
+      action: 'chat',
+      question: q,
+      digest: boardDigest(),
+      history: CHAT.turns.slice(0, -1).map(t => ({ role: t.role, text: t.text }))
+    });
+    CHAT.turns.push({ role: 'gemini', text: j.reply, unverified: j.unverified || [] });
+  } catch (err) {
+    CHAT.turns.push({ role: 'gemini', text: err.message, error: true });
+  } finally {
+    CHAT.busy = false;
+    renderChat();
+  }
+}
+
+document.getElementById('chatGo').addEventListener('click', askChat);
+document.getElementById('chatIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askChat(); }
+});
+document.getElementById('chatIn').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(e.target.scrollHeight, 130) + 'px';
+});
+document.getElementById('chatFold').addEventListener('click', () => {
+  CHAT.open = !CHAT.open;
+  renderChat();
+});
+document.getElementById('chatClear').addEventListener('click', () => {
+  CHAT.turns = [];
+  renderChat();
+});
+renderChat();

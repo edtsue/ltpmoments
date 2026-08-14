@@ -97,6 +97,25 @@
     </header>
     <div class="body" id="body"></div>
   </main>
+
+  <!-- The reader, beside the board. Its own prefix throughout: `panel` and
+       `pn-` already belong to the add-an-audience dialog, and two components
+       sharing a class name is a cascade collision waiting to happen. -->
+  <aside class="chat" id="chat">
+    <div class="ck-hd">
+      <span class="ck-mark" aria-hidden="true">&#10022;</span>
+      <span class="ck-n">Gemini</span>
+      <button class="ck-clear" id="chatClear" type="button">Clear</button>
+      <button class="ck-fold" id="chatFold" type="button"
+        aria-controls="chat" aria-expanded="true"
+        aria-label="Collapse the Gemini panel">&rsaquo;</button>
+    </div>
+    <div class="ck-body" id="chatBody"></div>
+    <div class="ck-ask">
+      <textarea id="chatIn" rows="1" placeholder="Ask about the board…"></textarea>
+      <button id="chatGo" type="button" aria-label="Send">&#9654;</button>
+    </div>
+  </aside>
 </div>
 
 <!-- The add-an-audience panel. Empty until it is opened, so nothing in it can

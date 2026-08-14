@@ -12,6 +12,7 @@ const mk = (id) => {
     id, innerHTML: '', textContent: '', scrollTop: 0, style: {}, dataset: {},
     classList: { toggle() {}, add() {}, remove() {}, contains: () => false },
     setAttribute() {}, getAttribute: () => null, remove() {}, appendChild() {},
+    addEventListener() {}, focus() {},
     querySelector: () => mk('q'), querySelectorAll: () => [],
     offsetWidth: 320, offsetHeight: 200,
     getBoundingClientRect: () => ({ left: 0, top: 0, right: 0, bottom: 0 })
@@ -19,7 +20,7 @@ const mk = (id) => {
   return el;
 };
 for (const id of ['audList', 'audDef', 'audMode', 'catStrip', 'railFoot',
-                  'hdRight', 'hdTools', 'watchTog', 'themeTog', 'body', 'panel']) {
+                  'hdRight', 'hdTools', 'watchTog', 'themeTog', 'body', 'panel', 'chat', 'chatBody', 'chatIn', 'chatGo', 'chatFold', 'chatClear']) {
   els.set(id, mk(id));
 }
 
