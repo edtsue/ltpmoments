@@ -203,8 +203,27 @@ function renderHead() {
     <span class="hd-pill">Skip <b>${b.skip}</b></span>`;
 }
 
-const bandLegend = () => BANDS.map(b =>
-  `<span class="li"><span class="bandpill ${b.id}">${b.label}</span> ${b.note}</span>`).join('');
+/* The legend has to show the ENCODING, not just name the bands. It drew four
+   coloured pills, which said what Anchor and Play mean but never said that a
+   solid bar is one and a tinted bar is the other — so the first question the
+   board actually provokes, "why are some bars dark?", had no answer on screen.
+   Each row now carries a bar drawn in its own treatment.
+
+   Neutral, not category-coloured: this legend is about WEIGHT. A row of
+   coloured keys would read as a second category scale.
+
+   Skip is not listed. A bar is only drawn at 40 or above, and Skip is below
+   40, so it can never appear on the ribbon — a legend entry for it would be
+   describing something that is not there. The Skip count stays in the header,
+   where it is a count rather than a drawing. */
+const bandLegend = () => BANDS.filter(b => b.id !== 'skip').map(b => {
+  const dim = b.id === 'watch' && !S.showWatch;
+  return `<span class="li${dim ? ' dim' : ''}">
+    <span class="key ${b.id}"></span>
+    <b>${b.label}</b> ${b.id === 'anchor' ? '72+' : b.id === 'play' ? '56–71' : '40–55'} · ${b.note}
+    ${dim ? '<i>— switch Watch on to draw these</i>' : ''}
+  </span>`;
+}).join('');
 
 /* ============================================================
    THE FIVE COMPONENTS, WRITTEN OUT
