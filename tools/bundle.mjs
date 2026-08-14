@@ -48,14 +48,27 @@ const html = read('index.html');
 
 /* The page body, between </head> and </body>, minus the tags the publisher
    supplies itself. */
-const body = html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>'))
+let body = html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>'))
   .replace(/<script[\s\S]*?<\/script>/g, '')
   .trim();
+/* Say what this copy is. A reader comparing directions should not wonder why
+   the Gemini button they were told about is not on the page. */
+body = body.replace('</div>\n\n<div class="app">',
+  '<span class="mk-note">Static copy — the Gemini reader needs the live site.</span></div>\n\n<div class="app">');
+
+/* The flattened page has no server behind it, so the two Gemini controls would
+   offer something that can only fail. They are hidden rather than removed: the
+   bundle stays a byte-for-byte flatten of the real files, and the one thing
+   that is genuinely different about it is stated on the page. */
+const STATIC_NOTE = `<style>
+  .gem-row, .pop-read { display: none; }
+</style>`;
 
 const out = `<title>LTP Moments</title>
 <style>
 ${css}
 </style>
+${STATIC_NOTE}
 
 ${body}
 
