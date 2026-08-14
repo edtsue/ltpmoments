@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LTP Moments — five directions</title>
+<meta name="description" content="Five UI directions for the cultural moments module: pick an audience, see the year that audience actually cares about.">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <clipPath id="icclip"><rect width="64" height="64" rx="14.5"/></clipPath>
+</defs>
+<!-- The module's mark, drawn in the same language as the process map's step
+     icons: a rounded tile, one silhouette, a shadow stack behind it. Moments
+     are points in a year, so the silhouette is a run of marks on a line. -->
+<symbol id="ic-moments" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14.5" fill="#B0299B"/>
+  <g clip-path="url(#icclip)" opacity=".2" fill="#000">
+    <rect x="12" y="40" width="40" height="4" rx="2"/>
+  </g>
+  <rect x="12" y="41" width="40" height="3.5" rx="1.75" fill="#fff" opacity=".45"/>
+  <circle cx="20" cy="42.75" r="4.5" fill="#fff" opacity=".55"/>
+  <circle cx="33" cy="42.75" r="6.5" fill="#fff"/>
+  <circle cx="46" cy="42.75" r="3.5" fill="#fff" opacity=".55"/>
+  <rect x="30.5" y="16" width="5" height="18" rx="2.5" fill="#fff"/>
+</symbol>
+</svg>
+
+<!-- Mockup chrome. Dark and outside the app on purpose — nothing here is part
+     of the product, and a reader should never wonder which is which. -->
+<div class="mk">
+  <span class="mk-lb">Direction</span>
+  <div class="mk-tabs" id="mkTabs"></div>
+  <span class="mk-note">Same audience, same data, same window — only the drawing changes.</span>
+  <button class="mk-tog" id="themeTog" type="button">☾ Dark</button>
+</div>
+
+<div class="app">
+  <aside class="rail">
+    <div class="rl-brand">
+      <span class="rl-lg"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#ic-moments"/></svg></span>
+      <span class="rl-nm">LTP Moments</span>
+      <span class="modpill">6.2</span>
+    </div>
+
+    <div class="rl-hd">Target audience</div>
+    <div id="audList"></div>
+    <p class="aud-def" id="audDef"></p>
+
+    <div class="rl-hd gap">Categories</div>
+    <div class="cats" id="catList"></div>
+
+    <div class="rl-foot" id="railFoot"></div>
+  </aside>
+
+  <main class="main">
+    <header class="hd">
+      <div class="hd-tx">
+        <div class="kick" id="dirKick"></div>
+        <h1 id="dirTitle"></h1>
+        <p id="dirLede"></p>
+      </div>
+      <div class="hd-right" id="hdRight"></div>
+    </header>
+    <div class="body" id="body"></div>
+  </main>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
