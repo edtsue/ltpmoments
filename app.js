@@ -64,7 +64,7 @@ const H = fromHash();
 
 const S = {
   aud: H.aud || AUDIENCES[0].id,
-  dir: H.dir || 1,
+  dir: H.dir || 3,
   off: new Set(),          // categories switched off
   showWatch: false,        // direction 01: draw the Watch band too
   rankShown: 25,

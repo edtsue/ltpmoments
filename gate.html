@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LTP Moments — Restricted</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14.5' fill='%23B0299B'/%3E%3Crect x='12' y='41' width='40' height='3.5' rx='1.75' fill='%23fff' opacity='.45'/%3E%3Ccircle cx='20' cy='42.75' r='4.5' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='33' cy='42.75' r='6.5' fill='%23fff'/%3E%3Ccircle cx='46' cy='42.75' r='3.5' fill='%23fff' opacity='.55'/%3E%3Crect x='30.5' y='16' width='5' height='18' rx='2.5' fill='%23fff'/%3E%3C/svg%3E">
+
+<!-- Styling is inline on purpose: this is the one page served before
+     authentication, so it must not depend on a stylesheet the middleware
+     would then have to let through. Tokens are the same Atlas set the tool
+     uses, pared to what this page actually draws. -->
+<style>
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --shell: #EEF0F5;
+    --card: #FFFFFF;
+    --ink: #14161F;
+    --ink2: #3D4256;
+    --ink3: #5C6279;
+    --line: rgba(20, 22, 31, .12);
+    --sunken: #F7F8FB;
+    --mark: #B0299B;
+    --danger: #A50E0E;
+    --focus: #6D5DE0;
+    --shadow: 0 1px 2px rgba(20,22,31,.05), 0 22px 60px rgba(20,22,31,.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --shell: #0E1014;
+      --card: #171A21;
+      --ink: #E8EAF0;
+      --ink2: #AEB4C6;
+      --ink3: #8B92A6;
+      --line: rgba(232, 234, 240, .14);
+      --sunken: #1E222B;
+      --mark: #E56ACE;
+      --danger: #F2A6A2;
+      --focus: #A99BFF;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 60px rgba(0,0,0,.55);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--shell);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* A single ribbon rule behind the card — the tool's own drawing, at the size
+     a lock screen can carry. It says what is behind the door without being a
+     decoration borrowed from somewhere else. */
+  .rib {
+    position: fixed;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--line);
+    pointer-events: none;
+  }
+  .rib i {
+    position: absolute;
+    top: -3px;
+    height: 7px;
+    border-radius: 4px;
+    background: var(--mark);
+    opacity: .22;
+  }
+
+  form {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 26px 26px 22px;
+  }
+
+  .mark { width: 38px; height: 38px; display: block; border-radius: 11px; }
+  h1 {
+    margin: 15px 0 0;
+    font-size: 20px;
+    font-weight: 680;
+    letter-spacing: -.025em;
+  }
+  .sub {
+    margin: 5px 0 20px;
+    font-size: 12.5px;
+    color: var(--ink3);
+    line-height: 1.5;
+  }
+
+  label.f { display: block; }
+  label.f span {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 6px;
+  }
+  input[type="password"] {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--sunken);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  input[type="password"]:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  .rem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 13px 0 18px;
+    font-size: 12.5px;
+    color: var(--ink2);
+    cursor: pointer;
+  }
+  .rem input { accent-color: var(--mark); }
+
+  button {
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: var(--ink);
+    color: var(--card);
+    font-family: var(--sans);
+    font-size: 13.5px;
+    font-weight: 620;
+    cursor: pointer;
+    transition: opacity .14s;
+  }
+  button:hover { opacity: .88; }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .msg {
+    margin: 11px 0 0;
+    min-height: 17px;
+    font-size: 12px;
+    color: var(--ink3);
+    text-align: center;
+  }
+  .msg.bad { color: var(--danger); }
+
+  .foot {
+    margin: 18px 0 0;
+    padding-top: 13px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="rib" aria-hidden="true">
+  <i style="left:4%;width:9%"></i><i style="left:17%;width:3%"></i>
+  <i style="left:24%;width:14%"></i><i style="left:41%;width:2%"></i>
+  <i style="left:47%;width:7%"></i><i style="left:58%;width:11%"></i>
+  <i style="left:72%;width:2%"></i><i style="left:77%;width:6%"></i>
+  <i style="left:87%;width:9%"></i>
+</div>
+
+<form id="form" autocomplete="on">
+  <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" rx="14.5" fill="#B0299B"/>
+    <rect x="12" y="41" width="40" height="3.5" rx="1.75" fill="#fff" opacity=".45"/>
+    <circle cx="20" cy="42.75" r="4.5" fill="#fff" opacity=".55"/>
+    <circle cx="33" cy="42.75" r="6.5" fill="#fff"/>
+    <circle cx="46" cy="42.75" r="3.5" fill="#fff" opacity=".55"/>
+    <rect x="30.5" y="16" width="5" height="18" rx="2.5" fill="#fff"/>
+  </svg>
+
+  <h1>LTP Moments</h1>
+  <p class="sub">Cultural moments, read against a target audience. Stage 6.2 of the long-term planning process.</p>
+
+  <label class="f">
+    <span>Password</span>
+    <input type="password" id="pw" name="password" autocomplete="current-password" autofocus required>
+  </label>
+
+  <label class="rem">
+    <input type="checkbox" id="remember" name="remember">
+    Remember me for 7 days
+  </label>
+
+  <button type="submit" id="go">Unlock</button>
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
+
+  <div class="foot"><span>MFG</span><span>Step 02 · 6.2</span></div>
+</form>
+
+<noscript><p style="font-family:sans-serif">This page needs JavaScript.</p></noscript>
+
+<script>
+(function () {
+  var form = document.getElementById('form');
+  var pw = document.getElementById('pw');
+  var remember = document.getElementById('remember');
+  var go = document.getElementById('go');
+  var msg = document.getElementById('msg');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!pw.value) return;
+    go.disabled = true;
+    msg.className = 'msg';
+    msg.textContent = 'Checking…';
+
+    fetch('/api/gate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ password: pw.value, remember: remember.checked })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (d) {
+        if (d && d.ok) {
+          /* The tool is hash-routed, so there is no deeper path to return to.
+             replace(), not assign(), so Back does not land on the lock screen
+             of a session that is now unlocked. */
+          msg.textContent = 'Unlocked';
+          window.location.replace('/');
+          return;
+        }
+        go.disabled = false;
+        msg.className = 'msg bad';
+        msg.textContent = 'Not that one. Try again.';
+        pw.value = '';
+        pw.focus();
+      })
+      .catch(function () {
+        go.disabled = false;
+        msg.className = 'msg bad';
+        msg.textContent = 'Could not reach the gate. Check your connection.';
+      });
+  });
+})();
+</script>
+</body>
+</html>

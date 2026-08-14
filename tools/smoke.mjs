@@ -35,7 +35,7 @@ globalThis.matchMedia = () => ({ matches: false });
 globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 
-const { AUDIENCES } = await import('../mockups/data/audiences.js');
+const { AUDIENCES } = await import('../data/audiences.js');
 
 /* app.js reads its opening direction and audience off the hash, so each
    combination is booted by setting the hash and re-importing with a cache-
@@ -48,7 +48,7 @@ for (const aud of AUDIENCES) {
     els.get('dirTitle').textContent = '';
     globalThis.location.hash = `#/${dir}/${aud.id}`;
     try {
-      await import(`../mockups/app.js?a=${aud.id}&d=${dir}`);
+      await import(`../app.js?a=${aud.id}&d=${dir}`);
       const html = els.get('body').innerHTML;
       checked++;
       const problems = [];

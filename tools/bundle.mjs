@@ -16,10 +16,10 @@ const read = p => readFileSync(new URL(p, root), 'utf8');
 /* Dependency order, hand-declared. Four files with a linear graph do not need
    a resolver, and a resolver would be the more likely thing to be wrong. */
 const ORDER = [
-  'mockups/data/moments.js',
-  'mockups/data/audiences.js',
-  'mockups/data/relevance.js',
-  'mockups/app.js'
+  'data/moments.js',
+  'data/audiences.js',
+  'data/relevance.js',
+  'app.js'
 ];
 
 const strip = src => src
@@ -42,8 +42,8 @@ if (/\bimport\s|\bexport\s/.test(js)) {
   process.exit(1);
 }
 
-const css = read('mockups/style.css');
-const html = read('mockups/index.html');
+const css = read('style.css');
+const html = read('index.html');
 
 /* The page body, between </head> and </body>, minus the tags the publisher
    supplies itself. */
