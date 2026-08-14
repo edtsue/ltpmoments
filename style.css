@@ -1189,3 +1189,93 @@ button, input, select { font-family: inherit; }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn:disabled:hover { border-color: var(--shell-line); opacity: .45; }
 .btn:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; }
+
+/* ============================================================
+   THE GEMINI LAYER
+   Deliberately quiet. It is a second way in, not the headline — the typed and
+   pasted paths are the ones that need no trust, and the design should not
+   suggest otherwise. One accent, violet, and only on the control itself.
+   ============================================================ */
+.gem-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; }
+.gem {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--vi);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vi) 10%, transparent);
+  color: var(--vi-ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .14s, color .14s;
+}
+.gem::before { content: "✦"; font-size: 11px; }
+.gem:hover:not(:disabled) { background: var(--vi); color: #fff; }
+.gem:disabled { opacity: .55; cursor: default; }
+.gem:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; }
+.gem.sm { height: 26px; padding: 0 11px; font-size: 11.5px; }
+.gem-note { font-size: 10.5px; line-height: 1.45; color: var(--shell-ink3); }
+
+/* The extraction result, told apart from the literal parse. Violet edge, so a
+   reader can see at a glance which numbers came from where. */
+.rd.gem { border-color: color-mix(in srgb, var(--vi) 40%, transparent); background: color-mix(in srgb, var(--vi) 7%, transparent); }
+.rd.gem + .rd { margin-top: 8px; }
+
+/* The line the number was read from, under the number it produced. This is the
+   whole safeguard made visible: a figure that landed on the wrong category is
+   obvious here and invisible without it. */
+.gr.q { grid-template-areas: "sw name input tag" "q q q q"; row-gap: 2px; padding-bottom: 5px; }
+.gr.q .sw { grid-area: sw; }
+.gr.q .gn { grid-area: name; }
+.gr.q input { grid-area: input; }
+.gr.q .gt { grid-area: tag; }
+.gq {
+  grid-area: q;
+  padding-left: 18px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--vi-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gr .gt { color: var(--pill-green); }
+.gr.q .gt { color: var(--vi-ink); }
+
+.clr {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font-size: 11px;
+  color: var(--shell-ink3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.clr:hover { color: #A50E0E; }
+
+/* The read, in the popover. */
+.pop-read { margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--shell-line); }
+.rdtxt { margin: 0 0 8px; font-size: 12px; line-height: 1.55; color: var(--shell-ink2); }
+.rdtxt.bad { color: #A50E0E; }
+.copy {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+  cursor: pointer;
+}
+.copy:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }

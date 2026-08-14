@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LTP Moments — Restricted</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14.5' fill='%23B0299B'/%3E%3Crect x='12' y='41' width='40' height='3.5' rx='1.75' fill='%23fff' opacity='.45'/%3E%3Ccircle cx='20' cy='42.75' r='4.5' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='33' cy='42.75' r='6.5' fill='%23fff'/%3E%3Ccircle cx='46' cy='42.75' r='3.5' fill='%23fff' opacity='.55'/%3E%3Crect x='30.5' y='16' width='5' height='18' rx='2.5' fill='%23fff'/%3E%3C/svg%3E">
+<script>
+  try {
+    var t0 = localStorage.getItem('ltpm.theme');
+    document.documentElement.dataset.theme = (t0 === 'dark') ? 'dark' : 'light';
+  } catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <!-- Styling is inline on purpose: this is the one page served before
      authentication, so it must not depend on a stylesheet the middleware
@@ -22,25 +28,25 @@
     --ink3: #5C6279;
     --line: rgba(20, 22, 31, .12);
     --sunken: #F7F8FB;
-    --mark: #B0299B;
+    --mark: #7C4DCC;
     --danger: #A50E0E;
     --focus: #6D5DE0;
     --shadow: 0 1px 2px rgba(20,22,31,.05), 0 22px 60px rgba(20,22,31,.14);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --shell: #0E1014;
-      --card: #171A21;
-      --ink: #E8EAF0;
-      --ink2: #AEB4C6;
-      --ink3: #8B92A6;
-      --line: rgba(232, 234, 240, .14);
-      --sunken: #1E222B;
-      --mark: #E56ACE;
-      --danger: #F2A6A2;
-      --focus: #A99BFF;
-      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 60px rgba(0,0,0,.55);
-    }
+  /* Light unless the reader has explicitly chosen dark in the tool. The gate
+     shares the tool's key so the two do not disagree across the unlock. */
+  :root[data-theme="dark"] {
+    --shell: #0E1014;
+    --card: #171A21;
+    --ink: #E8EAF0;
+    --ink2: #AEB4C6;
+    --ink3: #8B92A6;
+    --line: rgba(232, 234, 240, .14);
+    --sunken: #1E222B;
+    --mark: #A98BFF;
+    --danger: #F2A6A2;
+    --focus: #A99BFF;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 22px 60px rgba(0,0,0,.55);
   }
 
   * { box-sizing: border-box; }
@@ -193,12 +199,15 @@
 
 <form id="form" autocomplete="on">
   <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
-    <rect width="64" height="64" rx="14.5" fill="#B0299B"/>
-    <rect x="12" y="41" width="40" height="3.5" rx="1.75" fill="#fff" opacity=".45"/>
-    <circle cx="20" cy="42.75" r="4.5" fill="#fff" opacity=".55"/>
-    <circle cx="33" cy="42.75" r="6.5" fill="#fff"/>
-    <circle cx="46" cy="42.75" r="3.5" fill="#fff" opacity=".55"/>
-    <rect x="30.5" y="16" width="5" height="18" rx="2.5" fill="#fff"/>
+    <defs><clipPath id="gclip"><rect width="64" height="64" rx="14.5"/></clipPath>
+      <g id="gsil"><rect x="9" y="29" width="46" height="6" rx="3"/><circle cx="19" cy="32" r="7"/><circle cx="33.5" cy="32" r="10.5"/><circle cx="48" cy="32" r="6"/></g>
+    </defs>
+    <rect width="64" height="64" rx="14.5" fill="#7C4DCC"/>
+    <g clip-path="url(#gclip)" opacity=".2" fill="#000"><use href="#gsil" x="48.0" y="48.0"/><use href="#gsil" x="45.6" y="45.6"/><use href="#gsil" x="43.2" y="43.2"/><use href="#gsil" x="40.8" y="40.8"/><use href="#gsil" x="38.4" y="38.4"/><use href="#gsil" x="36.0" y="36.0"/><use href="#gsil" x="33.6" y="33.6"/><use href="#gsil" x="31.2" y="31.2"/><use href="#gsil" x="28.8" y="28.8"/><use href="#gsil" x="26.4" y="26.4"/><use href="#gsil" x="24.0" y="24.0"/><use href="#gsil" x="21.6" y="21.6"/><use href="#gsil" x="19.2" y="19.2"/><use href="#gsil" x="16.8" y="16.8"/><use href="#gsil" x="14.4" y="14.4"/><use href="#gsil" x="12.0" y="12.0"/><use href="#gsil" x="9.6" y="9.6"/><use href="#gsil" x="7.2" y="7.2"/><use href="#gsil" x="4.8" y="4.8"/><use href="#gsil" x="2.4" y="2.4"/></g>
+    <rect x="9" y="29" width="46" height="6" rx="3" fill="#fff" opacity=".5"/>
+    <circle cx="19" cy="32" r="7" fill="#fff" opacity=".5"/>
+    <circle cx="48" cy="32" r="6" fill="#fff" opacity=".5"/>
+    <circle cx="33.5" cy="32" r="10.5" fill="#fff"/>
   </svg>
 
   <h1>LTP Moments</h1>

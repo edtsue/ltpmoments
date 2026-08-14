@@ -579,7 +579,7 @@ function drawIO() {
 let draft = null;
 
 function openAudPanel() {
-  draft = { name: '', def: '', size: '', text: '', parsed: null, aff: {}, ent: {} };
+  draft = { name: '', def: '', size: '', text: '', parsed: null, aff: {}, ent: {}, quotes: {}, busy: false };
   const el = document.getElementById('panel');
   el.hidden = false;
   el.innerHTML = `
@@ -621,6 +621,15 @@ function openAudPanel() {
             <p class="hint">Two columns: a category or a name, then an index on a 100 base.
               Commas, tabs, colons and pipes all work. Anything that isn't a category is
               offered as an entity override.</p>
+            <!-- For the other case: the cut is real but it is a paragraph, not a
+                 table. Gemini's whole job is to find the two columns hiding in
+                 the prose — it hands them back and the SAME parser above reads
+                 them, so nothing it returns skips a check a pasted CSV faces. -->
+            <div class="gem-row">
+              <button type="button" class="gem" id="pnGem">Read it with Gemini</button>
+              <span class="gem-note">For prose. It only ever extracts numbers already in your text —
+                every one is checked back against it, and anything it cannot find is dropped.</span>
+            </div>
           </div>
         </div>
 
@@ -661,13 +670,17 @@ function closeAudPanel() {
 function renderGrid() {
   document.getElementById('pnGrid').innerHTML = CATS.map(c => {
     const v = draft.aff[c];
+    const q = draft.quotes[c];
     const from = draft.parsed && draft.parsed.aff[c] !== undefined;
-    return `<div class="gr ${v === undefined ? 'par' : ''}">
+    const tag = q ? 'quoted' : from ? 'read' : v === undefined ? 'par' : 'typed';
+    return `<div class="gr ${v === undefined ? 'par' : ''} ${q ? 'q' : ''}">
       <span class="sw" style="--c:${CAT_COLOR[c]}"></span>
       <span class="gn">${esc(c)}</span>
       <input type="number" data-aff="${esc(c)}" value="${v === undefined ? '' : v}"
-        placeholder="100" min="0" max="400" step="1" inputmode="numeric">
-      <span class="gt">${from ? 'read' : v === undefined ? 'par' : 'typed'}</span>
+        placeholder="100" min="0" max="400" step="1" inputmode="numeric"
+        aria-label="${esc(c)} affinity index">
+      <span class="gt">${tag}</span>
+      ${q ? `<span class="gq" title="${esc(q)}">&ldquo;${esc(q)}&rdquo;</span>` : ''}
     </div>`;
   }).join('');
 }
@@ -678,15 +691,30 @@ function renderGrid() {
 function renderRead() {
   const p = draft.parsed;
   const el = document.getElementById('pnRead');
-  if (!p) { el.innerHTML = `<div class="rd empty">Drop or paste the cut and it will be read here, line by line.</div>`; return; }
+  const g = draft.gem;
+  const gemBlock = !g ? '' : `
+    <div class="rd gem">
+      <div class="rd-row"><b>${g.pairs.length}</b> read by Gemini, each confirmed against your text</div>
+      ${g.rejected.length ? `<div class="rd-row warn"><b>${g.rejected.length}</b> dropped —
+        ${g.rejected.slice(0, 3).map(r => `${esc(r.label || 'unnamed')} (${esc(r.why)})`).join('; ')}${g.rejected.length > 3 ? '…' : ''}</div>` : ''}
+      ${g.notes ? `<div class="rd-row"><i>${esc(g.notes)}</i></div>` : ''}
+    </div>`;
+  const clearBtn = (Object.keys(draft.aff).length || draft.text)
+    ? `<button type="button" class="clr" id="pnClear">Clear and start again</button>` : '';
+  if (!p) {
+    el.innerHTML = gemBlock +
+      (g ? '' : `<div class="rd empty">Drop or paste the cut and it will be read here, line by line.</div>`) +
+      clearBtn;
+    return;
+  }
   const bad = p.ignored.filter(Boolean);
-  el.innerHTML = `
+  el.innerHTML = gemBlock + `
     <div class="rd">
       <div class="rd-row"><b>${p.matched.length}</b> of ${CATS.length} categories read${p.asMultiplier ? ' <i>· column read as multipliers of par, ×100</i>' : ''}</div>
       ${p.missing.length ? `<div class="rd-row warn"><b>${p.missing.length}</b> not mentioned — left at par: ${p.missing.map(esc).join(', ')}</div>` : ''}
       ${p.unmatched.length ? `<div class="rd-row">${p.unmatched.length} name${p.unmatched.length === 1 ? '' : 's'} kept as entity override${p.unmatched.length === 1 ? '' : 's'}</div>` : ''}
       ${bad.length ? `<div class="rd-row bad"><b>${bad.length}</b> line${bad.length === 1 ? '' : 's'} not used: ${bad.slice(0, 4).map(x => esc(x.slice(0, 42))).join(' · ')}${bad.length > 4 ? ' …' : ''}</div>` : ''}
-    </div>`;
+    </div>` + clearBtn;
   const ent = document.getElementById('pnEnt');
   ent.innerHTML = p.unmatched.length ? `
     <div class="fld"><span>Entity overrides <i>sharper than a category</i></span>
@@ -696,13 +724,28 @@ function renderRead() {
     </div>` : '';
 }
 
-function reparse(text) {
+/* Both readers write into the same draft and NEITHER clears it. A literal
+   parse of prose finds nothing, so replacing on every keystroke would wipe a
+   Gemini read the moment somebody corrected a typo in the source. Merging is
+   the non-destructive rule; Clear is the explicit way to start again. */
+function reparse(text, opts) {
   draft.text = text;
   draft.parsed = text.trim() ? parseAudienceData(text) : null;
   if (draft.parsed) {
-    draft.aff = { ...draft.parsed.aff };
-    draft.ent = { ...draft.parsed.entities };
+    draft.aff = { ...draft.aff, ...draft.parsed.aff };
+    draft.ent = { ...draft.ent, ...draft.parsed.entities };
+    for (const c of Object.keys(draft.parsed.aff)) delete draft.quotes[c];   // typed beats quoted
   }
+  renderRead(opts && opts.gem);
+  renderGrid();
+  validate();
+}
+
+function clearDraftData() {
+  draft.aff = {}; draft.ent = {}; draft.quotes = {}; draft.parsed = null; draft.gem = null;
+  const t = document.getElementById('pnText');
+  if (t) t.value = '';
+  draft.text = '';
   renderRead();
   renderGrid();
   validate();
@@ -719,6 +762,67 @@ function validate() {
     : n === 0 ? 'No affinity numbers yet — drop a cut, paste one, or type at least one.'
     : `${name} · ${n} categor${n === 1 ? 'y' : 'ies'} set, ${CATS.length - n} left at par.`;
   note.className = 'pn-note' + (ok ? '' : ' warn');
+}
+
+/* One place the browser talks to the function. Errors come back as the
+   message the server wrote — a 503 "not configured" and a 502 "Gemini 429" are
+   different problems and a single "something went wrong" hides which. */
+async function callGemini(payload) {
+  const r = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let j = null;
+  try { j = await r.json(); } catch (e) { void e; }
+  if (!r.ok || !j || !j.ok) {
+    throw new Error((j && j.error) || `The reader is unavailable (${r.status}).`);
+  }
+  return j;
+}
+
+async function readWithGemini() {
+  const btn = document.getElementById('pnGem');
+  const src = document.getElementById('pnText').value;
+  if (draft.busy) return;
+  draft.busy = true;
+  btn.disabled = true;
+  btn.textContent = 'Reading…';
+  try {
+    const j = await callGemini({ action: 'read-cut', source: src });
+    /* Gemini's only output is label/value pairs. They are turned back into the
+       two-column text the tested parser expects and read by THAT — so category
+       matching, the multiplier rule and the entity handling are all the same
+       code a pasted CSV goes through, and there is no second path to audit. */
+    const lines = j.pairs.map(x => `${x.label},${x.value}`).join('\n');
+    const before = { ...draft.aff };
+    draft.gem = { pairs: j.pairs, rejected: j.rejected || [], notes: j.notes || '' };
+    const parsed = parseAudienceData(lines);
+    draft.aff = { ...draft.aff, ...parsed.aff };
+    draft.ent = { ...draft.ent, ...parsed.entities };
+    void before;
+    /* Keep each quote against the category it ended up in, not against the
+       label Gemini used — the parser is what decides which category a label
+       belongs to, so that is the mapping the panel has to show. */
+    draft.quotes = {};
+    for (const x of j.pairs) {
+      const one = parseAudienceData(`${x.label},${x.value}`);
+      const cat = one.matched[0];
+      if (cat) draft.quotes[cat] = x.quote;
+    }
+    renderRead();
+    renderGrid();
+    validate();
+  } catch (err) {
+    draft.gem = null;
+    renderRead();
+    const el = document.getElementById('pnRead');
+    el.innerHTML = `<div class="rd"><div class="rd-row bad">${esc(err.message)}</div></div>` + el.innerHTML;
+  } finally {
+    draft.busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Read it with Gemini';
+  }
 }
 
 function wirePanel() {
@@ -764,6 +868,13 @@ function wirePanel() {
   });
 
   P('pnSave').addEventListener('click', commitAudience);
+  P('pnGem').addEventListener('click', readWithGemini);
+  /* Clear is drawn inside the read panel, which is re-rendered constantly, so
+     it is caught on the way up rather than bound to an element that will not
+     exist by the time the click happens. */
+  document.getElementById('pnRead').addEventListener('click', e => {
+    if (e.target.id === 'pnClear') clearDraftData();
+  });
 }
 
 function readFile(file) {
@@ -838,7 +949,10 @@ function openPop(m, anchor) {
       ${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''} · ${esc(m.conf)}</div>
     <div class="row"><span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span></div>
     ${partsBlock(m)}
-    ${m.notes ? `<div class="note">${esc(m.notes)}</div>` : ''}`;
+    ${m.notes ? `<div class="note">${esc(m.notes)}</div>` : ''}
+    <div class="pop-read" id="popRead">
+      <button type="button" class="gem sm" data-read="${m.id}">Write the read</button>
+    </div>`;
   document.body.appendChild(popEl);
   const w = popEl.offsetWidth, h = popEl.offsetHeight;
   let x = Math.min(window.innerWidth - w - 12, Math.max(12, r.left));
@@ -846,6 +960,33 @@ function openPop(m, anchor) {
   if (y + h > window.innerHeight - 12) y = Math.max(12, r.top - h - 8);
   popEl.style.left = x + 'px';
   popEl.style.top = y + 'px';
+}
+
+/* The paragraph a planner pastes into a deck. Every number in it was computed
+   here and handed to the model in the prompt; the function checks the reply for
+   any digit it did not supply and refuses the whole thing rather than let an
+   invented figure reach a client deck. So this is only ever presented as what
+   it is — the tool's own numbers, in sentences. */
+async function writeTheRead(m, btn) {
+  const box = document.getElementById('popRead');
+  if (!box) return;
+  btn.disabled = true;
+  btn.textContent = 'Writing…';
+  try {
+    const j = await callGemini({
+      action: 'read-moment',
+      moment: { name: m.name, cat: m.cat, start: m.start, end: m.end, conf: m.conf, plat: m.plat },
+      audience: { name: audience().name, def: audience().def },
+      score: m.score, band: m.band.label, parts: m.parts
+    });
+    box.innerHTML = `<p class="rdtxt">${esc(j.read)}</p>
+      <button type="button" class="copy" data-copy="1">Copy</button>`;
+    box.querySelector('[data-copy]').addEventListener('click', ev => {
+      navigator.clipboard.writeText(j.read).then(() => { ev.target.textContent = 'Copied'; }, () => {});
+    });
+  } catch (err) {
+    box.innerHTML = `<p class="rdtxt bad">${esc(err.message)}</p>`;
+  }
 }
 
 /* ============================================================
@@ -885,10 +1026,12 @@ document.addEventListener('click', e => {
   if (t.id === 'wallWatch') { S.showWatch = !S.showWatch; return render(); }
   if (t.id === 'rankMore')  { S.rankShown += 25; return render(); }
   if (t.id === 'themeTog')  {
-    const cur = document.documentElement.dataset.theme;
-    const next = cur === 'dark' ? 'light' : cur === 'light' ? 'dark'
-      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark');
+    /* Light is the default, so the toggle is a straight flip of a stamp that
+       is always present — there is no unstamped third state to reason about.
+       Saved, because a choice that does not survive a reload is not a choice. */
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('ltpm.theme', next); } catch (e) { void e; }
     t.textContent = next === 'dark' ? '☀ Light' : '☾ Dark';
     return;
   }
@@ -921,6 +1064,11 @@ document.addEventListener('click', e => {
     const [id, to] = t.dataset.io.split('|');
     S.io[id] = to;
     return render();
+  }
+  if (t.dataset.read) {
+    const m = SCORED.find(x => x.id === t.dataset.read);
+    if (m) writeTheRead(m, t);
+    return;
   }
   if (t.dataset.id) {
     const m = SCORED.find(x => x.id === t.dataset.id);
