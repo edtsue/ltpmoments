@@ -45,6 +45,24 @@
   --on-fill: #FFFFFF;
   --lede-ink: #262A38;
   --rail-w: 248px;
+
+  /* THE CATEGORY COLOURS DO NOT INVERT — a category's hue is how a reader maps
+     one direction onto another, and a hue that moved between themes would break
+     that. What moves is the depth they are drawn AT, and only where the colour
+     is thin: an 8px swatch, a 3px rule, a hairline border. #0B7A67 is chosen to
+     hold as a fill under white type, which it does in both themes; as a dot on
+     near-black it disappears.
+
+     So: solid fills keep the colour exactly. Thin uses take `--ci`, which is
+     the same hue lifted toward white by an amount that is zero in light. */
+  --lift: #FFFFFF;
+  --lift-amt: 0%;
+}
+
+/* Anything carrying a category colour computes its thin variant once, here,
+   rather than each rule mixing its own and drifting. */
+.sw, .dot, .chip, .bar, .mcard, .pm-cell {
+  --ci: color-mix(in srgb, var(--c, currentColor), var(--lift) var(--lift-amt));
 }
 
 :root[data-theme="dark"], html[data-theme="dark"] { color-scheme: dark; }
@@ -77,6 +95,7 @@
     --pill-amber: #F7C56B; --pill-amber-line: rgba(247, 197, 107, .38);
     --pill-green: #5FD3B4; --pill-green-line: rgba(95, 211, 180, .38);
     --lede-ink: #C6CBDA;
+    --lift-amt: 34%;
   }
 }
 :root[data-theme="dark"] {
@@ -105,6 +124,7 @@
   --pill-amber: #F7C56B; --pill-amber-line: rgba(247, 197, 107, .38);
   --pill-green: #5FD3B4; --pill-green-line: rgba(95, 211, 180, .38);
   --lede-ink: #C6CBDA;
+  --lift-amt: 34%;
 }
 
 * { box-sizing: border-box; }
@@ -301,7 +321,7 @@ button, input, select { font-family: inherit; }
   cursor: pointer;
   transition: border-color .14s, color .14s, opacity .14s;
 }
-.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ci); }
 .cat.off { opacity: .4; }
 .cat:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
@@ -452,7 +472,7 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink2);
   line-height: 1.2;
 }
-.wall-cat .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.wall-cat .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
 .wall-cat .n {
   margin-left: auto;
   font-family: var(--mono);
@@ -476,7 +496,7 @@ button, input, select { font-family: inherit; }
   width: 100%;
   text-align: left;
   border: 1px solid transparent;
-  border-left: 3px solid var(--c, var(--shell-ink3));
+  border-left: 3px solid var(--ci);
   border-radius: 5px;
   padding: 3px 6px;
   font-size: 10.5px;
@@ -492,7 +512,7 @@ button, input, select { font-family: inherit; }
 /* Anchor filled, Play outlined, Watch faint. The band has to be legible at
    10px in a cell 90px wide, which rules out a pill — so it is carried by the
    chip's own weight instead. */
-.chip.anchor { background: color-mix(in srgb, var(--c) 15%, var(--card)); font-weight: 620; color: var(--shell-ink); }
+.chip.anchor { background: color-mix(in srgb, var(--ci) 15%, var(--card)); font-weight: 620; color: var(--shell-ink); }
 .chip.play   { font-weight: 560; }
 .chip.watch  { opacity: .62; font-size: 10px; }
 .chip.skip   { opacity: .42; font-size: 10px; }
@@ -573,7 +593,7 @@ button, input, select { font-family: inherit; }
   font-size: 11px;
   color: var(--shell-ink3);
 }
-.rk-nm .s .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.rk-nm .s .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--ci); }
 .rk-dt { font-family: var(--mono); font-size: 10.5px; color: var(--shell-ink3); white-space: nowrap; }
 .rk-cv { font-family: var(--mono); font-size: 14px; color: var(--shell-ink3); }
 
@@ -661,7 +681,7 @@ button, input, select { font-family: inherit; }
   font-weight: 600;
   color: var(--shell-ink2);
 }
-.rib-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.rib-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
 .rib-tr { position: relative; padding: 6px 0; }
 /* The month gridlines, drawn behind the bars rather than as elements between
    them, so a bar can cross a boundary — which is the whole reason a ribbon
@@ -686,8 +706,8 @@ button, input, select { font-family: inherit; }
   color: var(--on-fill);
   background: var(--c);
 }
-.bar.play  { background: color-mix(in srgb, var(--c) 22%, var(--card)); color: var(--shell-ink); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
-.bar.watch { background: transparent; color: var(--shell-ink3); border-color: color-mix(in srgb, var(--c) 34%, transparent); }
+.bar.play  { background: color-mix(in srgb, var(--ci) 22%, var(--card)); color: var(--shell-ink); border-color: color-mix(in srgb, var(--ci) 55%, transparent); }
+.bar.watch { background: transparent; color: var(--shell-ink3); border-color: color-mix(in srgb, var(--ci) 48%, transparent); }
 .bar.skip  { background: transparent; color: var(--shell-ink3); border-color: var(--shell-line); opacity: .55; }
 .bar:hover { outline: 2px solid var(--shell-ink); outline-offset: 1px; z-index: 3; }
 /* A single-day moment has no width to give a label, so it is a tick and the
@@ -708,14 +728,14 @@ button, input, select { font-family: inherit; }
 .pm-row { display: grid; grid-template-columns: 132px repeat(var(--weeks), minmax(9px, 1fr)); gap: 2px; align-items: center; }
 .pm-row + .pm-row { margin-top: 2px; }
 .pm-lb { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--shell-ink2); padding-right: 8px; }
-.pm-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pm-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
 .pm-cell {
   height: 22px;
   border-radius: 3px;
   border: none;
   padding: 0;
   cursor: pointer;
-  background: var(--f, var(--a04));
+  background: color-mix(in srgb, var(--ci) var(--t, 0%), transparent);
 }
 .pm-cell.zero { background: transparent; box-shadow: inset 0 0 0 1px var(--a06); cursor: default; }
 .pm-cell:hover:not(.zero) { outline: 2px solid var(--shell-ink); outline-offset: 1px; }
@@ -785,7 +805,7 @@ button, input, select { font-family: inherit; }
 .col-bd { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 460px; overflow-y: auto; }
 .mcard {
   border: 1px solid var(--shell-line);
-  border-left: 3px solid var(--c, var(--shell-ink3));
+  border-left: 3px solid var(--ci);
   border-radius: 9px;
   padding: 8px 10px;
   background: var(--card);
@@ -841,7 +861,7 @@ button, input, select { font-family: inherit; }
 }
 .pop .t { font-size: 14px; font-weight: 650; letter-spacing: -.015em; line-height: 1.25; }
 .pop .meta { font-family: var(--mono); font-size: 10px; color: var(--shell-ink3); margin-top: 5px; line-height: 1.6; }
-.pop .meta .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.pop .meta .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--ci); }
 .pop .row { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
 .pop .sc { font-size: 22px; font-weight: 680; letter-spacing: -.03em; }
 .pop .parts { grid-template-columns: 1fr 1fr; gap: 8px 14px; padding-top: 10px; margin-top: 9px; border-top: 1px dashed var(--shell-line); }

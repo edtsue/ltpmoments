@@ -99,13 +99,13 @@ function renderRail() {
   document.getElementById('catList').innerHTML = CATS.map(c => `
     <button class="cat ${S.off.has(c) ? 'off' : ''}" data-cat="${esc(c)}" type="button"
       aria-pressed="${!S.off.has(c)}">
-      <span class="sw" style="background:${CAT_COLOR[c] || '#5C6279'}"></span>${esc(c)}
+      <span class="sw" style="--c:${CAT_COLOR[c] || '#5C6279'}"></span>${esc(c)}
     </button>`).join('');
 
   const v = visible();
   document.getElementById('railFoot').innerHTML =
     `${v.length} moments in window<br>${MONTHS[0].label} ${MONTHS[0].y} — ${MONTHS[11].label} ${MONTHS[11].y}<br>` +
-    `<span style="opacity:.7">508 total to 2030</span>`;
+    `<span style="opacity:.7">${MOMENTS.length} total to ${MOMENTS[MOMENTS.length - 1].start.slice(0, 4)}</span>`;
 }
 /* The two categories this audience over-indexes on hardest. It is the fastest
    honest summary of a cut, and it fits on the rail's second line. */
@@ -203,7 +203,7 @@ function drawWall() {
       ${cats.map(c => `
         <div class="wall-row">
           <div class="wall-cat">
-            <span class="sw" style="background:${CAT_COLOR[c]}"></span>
+            <span class="sw" style="--c:${CAT_COLOR[c]}"></span>
             <span>${esc(c)}</span>
             <span class="n">${shown.filter(m => m.cat === c).length}</span>
           </div>
@@ -256,7 +256,7 @@ function rankRow(m, n) {
       <span class="rk-sc"><b>${m.score}</b><i style="width:${m.score}%;--bc:${m.band.color}"></i></span>
       <span class="rk-nm">
         <span class="t">${esc(m.name)}</span>
-        <span class="s"><span class="dot" style="background:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}</span>
+        <span class="s"><span class="dot" style="--c:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}</span>
       </span>
       <span class="rk-dt">${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''}</span>
       <span class="bandpill ${m.band.id}">${m.band.label}</span>
@@ -303,7 +303,7 @@ function drawRibbon() {
     if (!rows.length) rows.push({ bars: [] });
     return `
       <div class="rib-lane">
-        <div class="rib-lb"><span class="sw" style="background:${CAT_COLOR[c]}"></span>${esc(c)}</div>
+        <div class="rib-lb"><span class="sw" style="--c:${CAT_COLOR[c]}"></span>${esc(c)}</div>
         <div class="rib-tr">
           <div class="rib-grid" style="grid-template-columns:repeat(${MONTHS.length},1fr)">${MONTHS.map(() => '<span></span>').join('')}</div>
           ${rows.map(row => `<div class="rib-sub">${row.bars.map(b => {
@@ -405,14 +405,14 @@ function drawPressure() {
         <div style="--weeks:${weeks.length}">
         ${cats.map(c => `
           <div class="pm-row">
-            <div class="pm-lb"><span class="sw" style="background:${CAT_COLOR[c]}"></span>${esc(c)}</div>
+            <div class="pm-lb"><span class="sw" style="--c:${CAT_COLOR[c]}"></span>${esc(c)}</div>
             ${weeks.map((w, i) => {
               const val = cellv.get(key(c, w.key)) || 0;
               if (!val) return `<button class="pm-cell zero" disabled aria-label="${esc(c)}, ${w.label}: nothing"></button>`;
               const t = Math.min(1, val / vMax);
               const sel = S.pmSel && S.pmSel[0] === c && S.pmSel[1] === i ? ' sel' : '';
               return `<button class="pm-cell${sel}" data-pm="${esc(c)}|${i}"
-                style="--f:color-mix(in srgb, ${CAT_COLOR[c]} ${Math.round(18 + t * 82)}%, transparent)"
+                style="--c:${CAT_COLOR[c]};--t:${Math.round(18 + t * 82)}%"
                 title="${esc(c)} · ${w.label} — ${Math.round(val)}"></button>`;
             }).join('')}
           </div>`).join('')}
@@ -533,7 +533,7 @@ function openPop(m, anchor) {
   popEl.className = 'pop';
   popEl.innerHTML = `
     <div class="t">${esc(m.name)}</div>
-    <div class="meta"><span class="dot" style="background:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}<br>
+    <div class="meta"><span class="dot" style="--c:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}<br>
       ${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''} · ${esc(m.conf)}</div>
     <div class="row"><span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span></div>
     ${partsBlock(m)}
