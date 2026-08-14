@@ -24,9 +24,11 @@
 
 export const config = {
   matcher: [
-    // Everything except the unlock page and its endpoint. The unlock page
-    // carries its own styling inline, so it needs no other exemption.
-    '/((?!api/gate|gate\\.html|gate$|_vercel).*)',
+    // Everything except the unlock page, its endpoint, and the one asset that
+    // page loads. The styling is inline so no stylesheet has to be let out —
+    // but the tab icon is a file, and gating it left the lock screen showing a
+    // blank favicon while the browser quietly followed a 307 to an HTML page.
+    '/((?!api/gate|gate\\.html|gate$|favicon\\.svg|_vercel).*)',
   ],
 };
 
