@@ -61,7 +61,7 @@
 
 /* Anything carrying a category colour computes its thin variant once, here,
    rather than each rule mixing its own and drifting. */
-.sw, .dot, .chip, .bar, .mcard, .pm-cell {
+.sw, .dot, .bar {
   --ci: color-mix(in srgb, var(--c, currentColor), var(--lift) var(--lift-amt));
 }
 
@@ -141,79 +141,13 @@ body {
 button, input, select { font-family: inherit; }
 
 /* ============================================================
-   MOCKUP CHROME
-   Dark, and above everything, because it is not part of the product. A reader
-   should never be a moment unsure whether the switcher is a feature.
-   ============================================================ */
-.mk {
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 9px 18px;
-  background: #14161F;
-  color: #F2F3F7;
-  border-bottom: 1px solid rgba(255, 255, 255, .14);
-}
-.mk-lb {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(242, 243, 247, .52);
-}
-.mk-tabs { display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 auto; }
-.mk-tab {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(242, 243, 247, .78);
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .14s, color .14s, border-color .14s;
-}
-.mk-tab i {
-  font-style: normal;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  opacity: .6;
-}
-.mk-tab:hover { background: rgba(255, 255, 255, .1); color: #fff; }
-.mk-tab.on { background: #F2F3F7; border-color: #F2F3F7; color: #14161F; font-weight: 600; }
-.mk-tab.on i { opacity: .55; }
-.mk-note { font-size: 11.5px; color: rgba(242, 243, 247, .58); }
-.mk-tog {
-  height: 30px;
-  padding: 0 11px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(242, 243, 247, .78);
-  font-size: 12px;
-  cursor: pointer;
-}
-.mk-tog:hover { background: rgba(255, 255, 255, .1); color: #fff; }
-
-/* ============================================================
    SHELL
    ============================================================ */
 .app {
   display: grid;
   grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  height: calc(100dvh - 49px);
-  min-height: 620px;
+  height: 100dvh;
+  min-height: 560px;
 }
 
 /* ---------- rail ---------- */
@@ -265,22 +199,44 @@ button, input, select { font-family: inherit; }
 /* The audience switch. One at a time, and the whole board answers to it — so
    it is a radio in behaviour and reads as one, with the selected row carrying
    the same blue fill the LTP rail uses for the stage you are standing on. */
+/* Several audiences can be on at once, so the row reads as a checkbox rather
+   than a radio — a tick column that is always there, empty when it is off, so
+   the list does not reflow as things are selected. */
 .aud {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   width: 100%;
   text-align: left;
   border: 1px solid transparent;
   background: none;
   border-radius: 11px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   cursor: pointer;
   color: var(--shell-ink2);
   transition: background .16s, color .16s, border-color .16s;
 }
-.aud + .aud { margin-top: 2px; }
 .aud:hover { background: var(--a04); }
-.aud .an { font-size: 12.8px; font-weight: 600; line-height: 1.25; display: block; }
+.aud .tick {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border: 1.5px solid var(--shell-line);
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 12px;
+  text-align: center;
+  color: transparent;
+}
+.aud.on .tick {
+  background: var(--pill-blue);
+  border-color: var(--pill-blue);
+  color: #fff;
+}
+.aud .at { min-width: 0; flex: 1 1 auto; }
+.aud .an { font-size: 12.6px; font-weight: 600; line-height: 1.25; display: block; }
 .aud .as {
   display: block;
   margin-top: 3px;
@@ -290,13 +246,47 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink3);
 }
 .aud.on {
-  background: rgba(66, 133, 244, .14);
-  border-color: rgba(66, 133, 244, .3);
+  background: rgba(66, 133, 244, .12);
+  border-color: rgba(66, 133, 244, .28);
   color: var(--pill-blue);
 }
 .aud.on .an { color: inherit; }
 .aud.on .as { color: inherit; opacity: .8; }
+/* The last one on cannot be switched off, so it should not offer to be. */
+.aud[aria-disabled="true"] { cursor: default; }
+.aud[aria-disabled="true"]:hover { background: rgba(66, 133, 244, .12); }
 .aud:focus-visible { outline: 2px solid var(--vi); outline-offset: -2px; }
+
+/* How the selected audiences are put together. Three buttons and a sentence —
+   blended and overlapped are different questions, not a display preference. */
+.rl-mode { margin-top: 4px; }
+.seg { display: flex; gap: 3px; padding: 0 2px; }
+.seg button {
+  flex: 1 1 0;
+  height: 27px;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--shell-ink3);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.seg button:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.seg button.on {
+  background: var(--shell-ink);
+  border-color: var(--shell-ink);
+  color: var(--shell-2);
+  font-weight: 600;
+}
+.seg button:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+.seg-note {
+  margin: 7px 3px 0;
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink3);
+}
+.seg-note b { color: var(--pill-amber); font-weight: 700; }
 
 .aud-def {
   margin: 8px 3px 0;
@@ -304,26 +294,6 @@ button, input, select { font-family: inherit; }
   line-height: 1.5;
   color: var(--shell-ink3);
 }
-
-/* Category filter. Chips rather than checkboxes: ten of them fit in the rail
-   only as chips, and the colour is doing the identifying anyway. */
-.cats { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 2px; }
-.cat {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border: 1px solid var(--shell-line);
-  border-radius: 999px;
-  background: var(--card);
-  font-size: 10.5px;
-  color: var(--shell-ink3);
-  cursor: pointer;
-  transition: border-color .14s, color .14s, opacity .14s;
-}
-.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ci); }
-.cat.off { opacity: .4; }
-.cat:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
 .rl-foot {
   margin-top: auto;
@@ -343,49 +313,63 @@ button, input, select { font-family: inherit; }
   min-width: 0;
   overflow: hidden;
 }
+/* One row above the board: what is drawn, how much of it, and the two
+   switches. Everything here acts on the board to its right. */
 .hd {
   flex: none;
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  padding: 20px 26px 16px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--shell-line);
+  background: var(--shell-2);
 }
-.hd-tx { min-width: 0; flex: 1 1 auto; }
-.hd h1 {
-  margin: 0;
-  font-size: 23px;
-  letter-spacing: -.025em;
-  font-weight: 680;
+/* Scrolled, never wrapped. Ten chips on a narrow window would wrap to a second
+   row and push the board down every time one was toggled. */
+.cats {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
 }
-.hd .kick {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  margin-bottom: 5px;
+.cats::-webkit-scrollbar { height: 5px; }
+.cats::-webkit-scrollbar-thumb { background: var(--a12); border-radius: 3px; }
+.cat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 11px;
+  color: var(--shell-ink2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .14s, color .14s, opacity .14s;
 }
-.hd p {
-  margin: 7px 0 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--lede-ink);
-  max-width: 78ch;
-}
-.hd-right { display: flex; gap: 8px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ci); }
+.cat.off { opacity: .38; }
+.cat:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.cat:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+
+.hd-right { display: flex; gap: 6px; flex: none; }
 .hd-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
-  padding: 0 12px;
+  height: 26px;
+  padding: 0 10px;
   border: 1px solid var(--pill-line, var(--shell-line));
   border-radius: 999px;
   background: var(--shell-2);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -394,7 +378,24 @@ button, input, select { font-family: inherit; }
 }
 .hd-pill b { font-weight: 700; color: var(--shell-ink); letter-spacing: 0; font-size: 11px; }
 
-.body { flex: 1 1 auto; overflow: auto; padding: 20px 26px 60px; }
+.hd-tools { display: flex; gap: 6px; flex: none; }
+.tool {
+  height: 26px;
+  min-width: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--shell-ink3);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.tool:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.tool.on { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+.tool:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+
+.body { flex: 1 1 auto; overflow: auto; padding: 16px 20px 60px; }
 
 /* ---------- band vocabulary, shared by all five ---------- */
 .bandpill {
@@ -428,179 +429,9 @@ button, input, select { font-family: inherit; }
 .legend .li b { font-weight: 600; color: var(--shell-ink2); }
 
 /* ============================================================
-   01 — THE YEAR WALL
-   ============================================================ */
-.wall { min-width: 1020px; }
-.wall-row {
-  display: grid;
-  grid-template-columns: 128px repeat(var(--months, 12), minmax(0, 1fr));
-  gap: 6px;
-  align-items: stretch;
-}
-.wall-row + .wall-row { margin-top: 6px; }
-.wall-hd { position: sticky; top: 0; z-index: 5; background: var(--shell); padding-bottom: 6px; }
-.wall-mo {
-  padding: 6px 8px 7px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-}
-.wall-mo .m {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink2);
-}
-.wall-mo .y { font-size: 8.5px; opacity: .55; margin-left: 4px; }
-/* A weight bar under the month name — the month's total relevance for this
-   audience, as a share of the loudest month. It is what turns twelve equal
-   columns into a shape. */
-.wall-mo .bar { height: 4px; border-radius: 3px; background: var(--a08); margin-top: 5px; overflow: hidden; }
-.wall-mo .bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
-.wall-cat {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 9px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--shell-ink2);
-  line-height: 1.2;
-}
-.wall-cat .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
-.wall-cat .n {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--shell-ink3);
-}
-.wall-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 5px;
-  border-radius: 9px;
-  background: var(--sunken);
-  border: 1px solid transparent;
-  min-height: 44px;
-}
-.wall-cell.empty { background: transparent; border-style: dashed; border-color: var(--shell-line); }
-.chip {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: 1px solid transparent;
-  border-left: 3px solid var(--ci);
-  border-radius: 5px;
-  padding: 3px 6px;
-  font-size: 10.5px;
-  line-height: 1.3;
-  cursor: pointer;
-  color: var(--shell-ink2);
-  background: var(--card);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.chip:hover { border-color: var(--shell-ink3); }
-/* Anchor filled, Play outlined, Watch faint. The band has to be legible at
-   10px in a cell 90px wide, which rules out a pill — so it is carried by the
-   chip's own weight instead. */
-.chip.anchor { background: color-mix(in srgb, var(--ci) 15%, var(--card)); font-weight: 620; color: var(--shell-ink); }
-.chip.play   { font-weight: 560; }
-.chip.watch  { opacity: .62; font-size: 10px; }
-.chip.skip   { opacity: .42; font-size: 10px; }
-.wall-more {
-  border: none;
-  background: none;
-  padding: 1px 6px;
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: .08em;
-  color: var(--shell-ink3);
-  cursor: pointer;
-  text-align: left;
-}
-.wall-more:hover { color: var(--shell-ink); }
-
-/* ============================================================
    02 — THE RANKED BRIEF
    ============================================================ */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 18px; }
-.tile {
-  padding: 13px 15px 14px;
-  border-radius: 14px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-  box-shadow: 0 1px 2px var(--a04), 0 14px 38px var(--a06);
-  border-top: 3px solid var(--tc, var(--shell-ink3));
-}
-.tile .k {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--tc, var(--shell-ink3));
-}
-.tile .v { font-size: 30px; font-weight: 680; letter-spacing: -.03em; line-height: 1.1; margin-top: 4px; }
-.tile .d { font-size: 11.5px; color: var(--shell-ink3); margin-top: 3px; line-height: 1.4; }
-
-.rank { display: flex; flex-direction: column; gap: 5px; }
-.rk {
-  border: 1px solid var(--shell-line);
-  border-radius: 12px;
-  background: var(--card);
-  overflow: hidden;
-}
-.rk-hd {
-  display: grid;
-  grid-template-columns: 34px 46px minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 9px 13px;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-}
-.rk-hd:hover { background: var(--a04); }
-.rk-no { font-family: var(--mono); font-size: 10.5px; color: var(--shell-ink3); }
-/* The score, as a number that is also a bar. Neither alone works: the number
-   is exact and unscannable, the bar is scannable and imprecise. */
-.rk-sc { position: relative; }
-.rk-sc b { font-size: 17px; font-weight: 680; letter-spacing: -.02em; }
-.rk-sc i {
-  display: block;
-  height: 3px;
-  border-radius: 2px;
-  margin-top: 2px;
-  background: var(--bc, var(--shell-ink3));
-}
-.rk-nm { min-width: 0; }
-.rk-nm .t { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; display: block; }
-.rk-nm .s {
-  display: block;
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--shell-ink3);
-}
-.rk-nm .s .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--ci); }
-.rk-dt { font-family: var(--mono); font-size: 10.5px; color: var(--shell-ink3); white-space: nowrap; }
-.rk-cv { font-family: var(--mono); font-size: 14px; color: var(--shell-ink3); }
-
-/* The five components, opened. This is the argument — the row above it is only
-   the headline — so it gets the well treatment rather than more white. */
-.rk-bd { padding: 4px 13px 14px; background: var(--sunken); border-top: 1px solid var(--shell-line); }
-.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; padding-top: 11px; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px 16px; padding-top: 10px; }
 .part .pk {
   display: flex;
   justify-content: space-between;
@@ -615,35 +446,6 @@ button, input, select { font-family: inherit; }
 .part .pb { height: 5px; border-radius: 3px; background: var(--a08); margin-top: 4px; overflow: hidden; }
 .part .pb i { display: block; height: 100%; border-radius: 3px; background: var(--pc, var(--shell-ink3)); }
 .part .pw { font-size: 10.5px; color: var(--shell-ink3); margin-top: 3px; line-height: 1.4; }
-.rk-eq {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--shell-line);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  line-height: 1.6;
-  color: var(--shell-ink3);
-}
-.rk-eq b { color: var(--shell-ink); }
-.rk-meta { margin-top: 8px; font-size: 11.5px; color: var(--shell-ink3); line-height: 1.5; }
-
-.more {
-  margin: 14px auto 0;
-  display: block;
-  height: 34px;
-  padding: 0 18px;
-  border: 1px solid var(--shell-line);
-  border-radius: 999px;
-  background: var(--card);
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  cursor: pointer;
-}
-.more:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
 /* ============================================================
    03 — THE RIBBON
@@ -741,135 +543,7 @@ button, input, select { font-family: inherit; }
 .cong-bars { display: flex; align-items: flex-end; gap: 1px; height: 62px; }
 .cong-bars i { flex: 1 1 0; border-radius: 2px 2px 0 0; background: var(--cb, var(--a16)); min-height: 2px; }
 
-/* ============================================================
-   04 — THE PRESSURE MAP
-   ============================================================ */
-.pm { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-.pm-grid { min-width: 0; overflow-x: auto; }
-.pm-row { display: grid; grid-template-columns: 132px repeat(var(--weeks), minmax(9px, 1fr)); gap: 2px; align-items: center; }
-.pm-row + .pm-row { margin-top: 2px; }
-.pm-lb { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--shell-ink2); padding-right: 8px; }
-.pm-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
-.pm-cell {
-  height: 22px;
-  border-radius: 3px;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--ci) var(--t, 0%), transparent);
-}
-.pm-cell.zero { background: transparent; box-shadow: inset 0 0 0 1px var(--a06); cursor: default; }
-.pm-cell:hover:not(.zero) { outline: 2px solid var(--shell-ink); outline-offset: 1px; }
-.pm-cell.sel { outline: 2px solid var(--shell-ink); outline-offset: 1px; }
-.pm-mos { display: grid; grid-template-columns: 132px minmax(0, 1fr); margin-bottom: 6px; position: sticky; top: 0; background: var(--shell); z-index: 4; padding-bottom: 4px; }
-.pm-mos .mos { display: grid; }
-.pm-mos .mo {
-  border-left: 1px solid var(--shell-line);
-  padding-left: 6px;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-}
-.pm-mos .mo:first-child { border-left: none; }
-
-.pm-side { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; }
-.panel {
-  border: 1px solid var(--shell-line);
-  border-radius: 14px;
-  background: var(--card);
-  padding: 14px 15px 15px;
-  box-shadow: 0 1px 2px var(--a04), 0 14px 38px var(--a06);
-}
-.panel.eg { background: var(--eg); border-color: var(--eg-line); box-shadow: none; }
-.panel h3 {
-  margin: 0 0 3px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-}
-.panel .sub { margin: 0 0 11px; font-size: 11.5px; line-height: 1.5; color: var(--shell-ink3); }
-.panel ol, .panel ul { margin: 0; padding: 0; list-style: none; }
-.uc { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--shell-line); }
-.uc:first-child { border-top: none; padding-top: 0; }
-.uc .n { font-family: var(--mono); font-size: 10px; color: var(--shell-ink3); flex: none; width: 16px; }
-.uc .t { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
-.uc .m { font-family: var(--mono); font-size: 9.5px; color: var(--shell-ink3); margin-top: 2px; }
-.uc .m b { color: var(--pill-green); }
-
-/* ============================================================
-   05 — THE IN / OUT BOARD
-   ============================================================ */
-.io { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.col { border-radius: 14px; border: 1px solid var(--shell-line); background: var(--card); display: flex; flex-direction: column; min-height: 260px; }
-.col.in  { border-top: 3px solid var(--pill-green); }
-.col.und { border-top: 3px solid var(--pill-amber); }
-.col.out { border-top: 3px solid var(--shell-ink3); }
-.col-hd { padding: 12px 14px 10px; border-bottom: 1px solid var(--shell-line); }
-.col-hd .k {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.col.in  .col-hd .k { color: var(--pill-green); }
-.col.und .col-hd .k { color: var(--pill-amber); }
-.col.out .col-hd .k { color: var(--shell-ink3); }
-.col-hd .c { font-size: 24px; font-weight: 680; letter-spacing: -.03em; margin-top: 2px; }
-.col-hd .d { font-size: 11.5px; color: var(--shell-ink3); line-height: 1.45; margin-top: 2px; }
-.col-bd { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 460px; overflow-y: auto; }
-.mcard {
-  border: 1px solid var(--shell-line);
-  border-left: 3px solid var(--ci);
-  border-radius: 9px;
-  padding: 8px 10px;
-  background: var(--card);
-}
-.col.out .mcard { opacity: .62; }
-.mcard .t { font-size: 12.5px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
-.mcard .r { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
-.mcard .dt { font-family: var(--mono); font-size: 9.5px; color: var(--shell-ink3); }
-.mcard .sc { font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--shell-ink2); margin-left: auto; }
-.mcard .mv { display: flex; gap: 4px; margin-top: 7px; }
-.mv button {
-  flex: 1 1 0;
-  height: 22px;
-  border: 1px solid var(--shell-line);
-  border-radius: 6px;
-  background: var(--sunken);
-  font-family: var(--mono);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  cursor: pointer;
-}
-.mv button:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
-.col-empty { padding: 22px 12px; text-align: center; font-size: 11.5px; color: var(--shell-ink3); }
-
-.io-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
-.feed {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--eg-line);
-  background: var(--eg);
-}
-.feed .ar { font-family: var(--mono); font-size: 15px; color: var(--pill-blue); flex: none; }
-.feed .k { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--pill-blue); }
-.feed .t { font-size: 12.5px; font-weight: 600; margin-top: 1px; }
-.feed .d { font-size: 11px; color: var(--shell-ink3); line-height: 1.4; margin-top: 1px; }
-
-/* ---------- detail popover, shared by 01 / 03 / 04 ---------- */
+/* ---------- the moment detail popover ---------- */
 .pop {
   position: fixed;
   z-index: 80;
@@ -1279,3 +953,39 @@ button, input, select { font-family: inherit; }
   cursor: pointer;
 }
 .copy:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+
+/* Where a combined affinity came from. */
+.affby {
+  margin: 10px 0 2px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--sunken);
+  border: 1px solid var(--shell-line);
+}
+.affby-k {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+  margin-bottom: 6px;
+}
+.affby-r {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px 26px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.affby-r + .affby-r { margin-top: 3px; }
+.affby-r .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--shell-ink2); }
+.affby-r .b { height: 5px; border-radius: 3px; background: var(--a08); overflow: hidden; }
+.affby-r .b i { display: block; height: 100%; border-radius: 3px; background: var(--pill-blue); }
+.affby-r .v {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--shell-ink);
+}

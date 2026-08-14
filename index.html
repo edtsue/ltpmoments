@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LTP Moments — five directions</title>
-<meta name="description" content="Five UI directions for the cultural moments module: pick an audience, see the year that audience actually cares about.">
+<title>LTP Moments</title>
+<meta name="description" content="Cultural moments across the year, read against the target audiences you choose.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <!-- LIGHT IS THE DEFAULT, not the system's preference. Stamped before the
      stylesheet and before anything is painted, so a reader on a dark OS does
@@ -64,15 +64,6 @@
 </symbol>
 </svg>
 
-<!-- Mockup chrome. Dark and outside the app on purpose — nothing here is part
-     of the product, and a reader should never wonder which is which. -->
-<div class="mk">
-  <span class="mk-lb">Direction</span>
-  <div class="mk-tabs" id="mkTabs"></div>
-  <span class="mk-note">Same audience, same data, same window — only the drawing changes.</span>
-  <button class="mk-tog" id="themeTog" type="button">☾ Dark</button>
-</div>
-
 <div class="app">
   <aside class="rail">
     <div class="rl-brand">
@@ -81,24 +72,28 @@
       <span class="modpill">6.2</span>
     </div>
 
-    <div class="rl-hd">Target audience</div>
+    <div class="rl-hd">Target audiences</div>
     <div id="audList"></div>
     <p class="aud-def" id="audDef"></p>
 
-    <div class="rl-hd gap">Categories</div>
-    <div class="cats" id="catList"></div>
+    <div class="rl-mode" id="audMode" hidden></div>
 
     <div class="rl-foot" id="railFoot"></div>
   </aside>
 
   <main class="main">
     <header class="hd">
-      <div class="hd-tx">
-        <div class="kick" id="dirKick"></div>
-        <h1 id="dirTitle"></h1>
-        <p id="dirLede"></p>
-      </div>
+      <!-- Categories sit above the board rather than in the rail: they filter
+           what is drawn to the right of them, and a filter reads better beside
+           the thing it filters. One row, scrolled rather than wrapped, so the
+           board never moves down as chips are toggled. -->
+      <div class="cats" id="catStrip"></div>
       <div class="hd-right" id="hdRight"></div>
+      <div class="hd-tools">
+        <button class="tool" id="watchTog" type="button"
+          title="Also draw the Watch band, not just Anchor and Play">Watch</button>
+        <button class="tool" id="themeTog" type="button" aria-label="Switch theme">&#9790;</button>
+      </div>
     </header>
     <div class="body" id="body"></div>
   </main>

@@ -51,10 +51,12 @@ const html = read('index.html');
 let body = html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>'))
   .replace(/<script[\s\S]*?<\/script>/g, '')
   .trim();
-/* Say what this copy is. A reader comparing directions should not wonder why
-   the Gemini button they were told about is not on the page. */
-body = body.replace('</div>\n\n<div class="app">',
-  '<span class="mk-note">Static copy — the Gemini reader needs the live site.</span></div>\n\n<div class="app">');
+/* Say what this copy is, rather than leaving a reader wondering why the Gemini
+   controls they were told about are not on the page. Appended to the rail's
+   foot, which is the one place on the board that is already metadata. */
+body = body.replace('<div class="rl-foot" id="railFoot"></div>',
+  '<div class="rl-foot" id="railFoot"></div>' +
+  '<p class="rl-static">Static copy \u2014 the Gemini reader needs the live site.</p>');
 
 /* The flattened page has no server behind it, so the two Gemini controls would
    offer something that can only fail. They are hidden rather than removed: the
@@ -62,6 +64,10 @@ body = body.replace('</div>\n\n<div class="app">',
    that is genuinely different about it is stated on the page. */
 const STATIC_NOTE = `<style>
   .gem-row, .pop-read { display: none; }
+  .rl-static {
+    margin: 8px 3px 0; font-size: 10px; line-height: 1.45;
+    color: var(--shell-ink3); font-family: var(--mono);
+  }
 </style>`;
 
 const out = `<title>LTP Moments</title>

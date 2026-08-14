@@ -18,7 +18,8 @@ const mk = (id) => {
   };
   return el;
 };
-for (const id of ['audList', 'audDef', 'catList', 'railFoot', 'dirTitle', 'dirLede', 'dirKick', 'hdRight', 'body', 'mkTabs', 'pmDetail']) {
+for (const id of ['audList', 'audDef', 'audMode', 'catStrip', 'railFoot',
+                  'hdRight', 'hdTools', 'watchTog', 'themeTog', 'body', 'panel']) {
   els.set(id, mk(id));
 }
 
@@ -37,18 +38,28 @@ globalThis.history = { replaceState() {} };
 
 const { AUDIENCES } = await import('../data/audiences.js');
 
-/* app.js reads its opening direction and audience off the hash, so each
-   combination is booted by setting the hash and re-importing with a cache-
-   busting query. Crude, and correct: every import is a clean first paint,
-   which is the state most likely to be broken. */
+/* app.js reads its opening selection off the hash, so each case is booted by
+   setting the hash and re-importing with a cache-busting query. Crude, and
+   correct: every import is a clean first paint, the state most likely to be
+   broken.
+
+   Every audience on its own, then every combine mode over a pair — the pair is
+   what exercises the code single selection never reaches. */
+const CASES = [
+  ...AUDIENCES.map(a => ({ hash: `#/3/${a.id}`, name: a.id })),
+  ...['blend', 'overlap', 'any'].map(m => ({ hash: `#/3/sports+gamers/${m}`, name: `sports+gamers ${m}` })),
+  { hash: '#/3/nonexistent', name: 'bad id falls back' },
+  { hash: '', name: 'no hash at all' }
+];
+
 let fail = 0, checked = 0;
-for (const aud of AUDIENCES) {
-  for (let dir = 1; dir <= 5; dir++) {
+for (const c of CASES) {
+  {
     els.get('body').innerHTML = '';
-    els.get('dirTitle').textContent = '';
-    globalThis.location.hash = `#/${dir}/${aud.id}`;
+    globalThis.location.hash = c.hash;
+    const aud = { id: c.name };
     try {
-      await import(`../app.js?a=${aud.id}&d=${dir}`);
+      await import(`../app.js?c=${encodeURIComponent(c.hash)}`);
       const html = els.get('body').innerHTML;
       checked++;
       const problems = [];
@@ -56,12 +67,12 @@ for (const aud of AUDIENCES) {
       if (/undefined|NaN|\[object Object\]/.test(html)) {
         problems.push('rendered ' + (html.match(/undefined|NaN|\[object Object\]/) || [])[0]);
       }
-      if (!els.get('dirTitle').textContent) problems.push('no title');
-      if (problems.length) { fail++; console.log(`FAIL  ${aud.id} / dir ${dir}: ${problems.join('; ')}`); }
-      else console.log(`ok    ${aud.id.padEnd(9)} dir ${dir}  ${String(html.length).padStart(6)} chars  "${els.get('dirTitle').textContent}"`);
+      if (!els.get('audList').innerHTML) problems.push('empty rail');
+      if (problems.length) { fail++; console.log(`FAIL  ${c.name}: ${problems.join('; ')}`); }
+      else console.log(`ok    ${c.name.padEnd(24)} ${String(html.length).padStart(6)} chars`);
     } catch (e) {
       fail++; checked++;
-      console.log(`THROW ${aud.id} / dir ${dir}: ${e.message}`);
+      console.log(`THROW ${c.name}: ${e.message}`);
     }
   }
 }

@@ -155,3 +155,55 @@ test('parse then build round-trips', () => {
   assert.deepEqual(a.ent, { 'Taylor Swift': 180 });
   assert.equal(a.custom, true);
 });
+
+/* ---------- combining several audiences ---------- */
+import { combineAffinity, sizeOf, MODES } from '../data/relevance.js';
+
+test('reads a size the way a rail writes one', () => {
+  assert.equal(sizeOf({ size: '31.4M' }), 31400000);
+  assert.equal(sizeOf({ size: '2.4K' }), 2400);
+  assert.equal(sizeOf({ size: '1,200' }), 1200);
+  assert.equal(sizeOf({ size: '48.9m' }), 48900000);
+});
+
+test('an unreadable or missing size is null, never a guess', () => {
+  assert.equal(sizeOf({ size: '' }), null);
+  assert.equal(sizeOf({}), null);
+  assert.equal(sizeOf({ size: 'lots' }), null);
+  assert.equal(sizeOf({ size: '0' }), null);
+});
+
+test('one audience combines to itself whatever the mode', () => {
+  for (const m of MODES) assert.equal(combineAffinity([72], [1e6], m.id).value, 72);
+});
+
+test('overlap takes the lowest — only what works for all of them', () => {
+  assert.equal(combineAffinity([80, 40, 60], null, 'overlap').value, 40);
+});
+
+test('any takes the highest — what works for at least one', () => {
+  assert.equal(combineAffinity([80, 40, 60], null, 'any').value, 80);
+});
+
+test('blend weights by size', () => {
+  // 90 at 3x the weight of 50 sits at 80, not at the midpoint 70.
+  const r = combineAffinity([90, 50], [3e6, 1e6], 'blend');
+  assert.equal(r.value, 80);
+  assert.equal(r.weighted, true);
+});
+
+test('blend falls back to an unweighted mean when a size is missing, and says so', () => {
+  const r = combineAffinity([90, 50], [3e6, null], 'blend');
+  assert.equal(r.value, 70);
+  assert.equal(r.weighted, false);   // the UI reports this rather than implying precision
+});
+
+test('no audiences is zero, not a crash', () => {
+  assert.equal(combineAffinity([], [], 'blend').value, 0);
+});
+
+test('the three modes genuinely disagree', () => {
+  const v = [88, 41];
+  const got = MODES.map(m => combineAffinity(v, null, m.id).value);
+  assert.equal(new Set(got).size, 3);
+});

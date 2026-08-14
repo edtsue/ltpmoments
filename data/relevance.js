@@ -175,11 +175,20 @@ export const BANDS = [
 ];
 export const bandOf = s => BANDS.find(b => s >= b.min) || BANDS[BANDS.length - 1];
 
-export function scoreMoments(moments, aud) {
+/* `aud` may be one audience or several. One is the ordinary case and behaves
+   exactly as it always did; several combines their affinities by `mode` and
+   keeps each one's own figure on the result, because a blended number nobody
+   can take apart is precisely the kind of number this model refuses to
+   produce. */
+export function scoreMoments(moments, aud, mode) {
+  const auds = Array.isArray(aud) ? aud.filter(Boolean) : [aud];
+  const weights = auds.map(sizeOf);
   const cong = congestionIndex(moments);
   return moments.map(m => {
+    const each = auds.map(a => ({ id: a.id, name: a.name, value: affinityOf(m, a) }));
+    const combined = combineAffinity(each.map(e => e.value), weights, mode || 'blend');
     const parts = {
-      aff:   affinityOf(m, aud),
+      aff:   combined.value,
       scale: scaleOf(m),
       act:   actionabilityOf(m),
       tim:   timingOf(m),
@@ -188,7 +197,11 @@ export function scoreMoments(moments, aud) {
     const base = parts.aff * WEIGHTS.aff + parts.scale * WEIGHTS.scale
                + parts.act * WEIGHTS.act + parts.tim * WEIGHTS.tim;
     const score = Math.round(base * (1 - (parts.cong / 100) * CONGESTION_MAX));
-    return { ...m, parts, score, band: bandOf(score) };
+    return {
+      ...m, parts, score, band: bandOf(score),
+      affBy: each.length > 1 ? each : null,
+      affWeighted: combined.weighted
+    };
   });
 }
 
@@ -200,4 +213,63 @@ export function unclaimed(scored) {
     .filter(m => m.parts.aff >= 55 && m.parts.tim >= 80)
     .sort((a, b) => (b.parts.aff - b.parts.cong * 1.4) - (a.parts.aff - a.parts.cong * 1.4))
     .slice(0, 6);
+}
+
+/* ============================================================
+   MORE THAN ONE AUDIENCE
+   ============================================================
+
+   Only affinity combines. The other four components are facts about the
+   moment — its scale, whether there is a way in, how firm the date is, how
+   loud that week is — and they do not change because a second audience is
+   selected. That falls straight out of the model's central rule and is what
+   keeps a multi-audience score comparable with a single-audience one.
+
+   Three ways to combine, because they answer three different briefs and a
+   planner means a different thing each time:
+
+     BLEND    the combined audience. A size-weighted mean, which is literally
+              what a target audience made of two groups is. The default.
+     OVERLAP  the lowest of them. "Where does ONE buy serve all of them?" —
+              a moment only survives if every selected audience cares.
+     ANY      the highest of them. "Where do we reach at least one of them
+              well?" — the reach brief rather than the efficiency one.
+
+   Blend needs sizes, and a user-defined audience may not have given one.
+   Rather than invent a weight, an incomplete set falls back to an unweighted
+   mean and says so — `weighted: false` travels with the result so the UI can
+   report it instead of quietly implying a precision it does not have. */
+
+export const MODES = [
+  { id: 'blend',   label: 'Blend',   note: 'The combined audience — size-weighted.' },
+  { id: 'overlap', label: 'Overlap', note: 'Only what works for every one of them.' },
+  { id: 'any',     label: 'Any',     note: 'What works for at least one of them.' }
+];
+
+/* "31.4M" -> 31400000. Returns null for anything it cannot read, which is the
+   signal to stop weighting rather than to guess a number. */
+export function sizeOf(a) {
+  const m = /^\s*([\d.,]+)\s*([kmb])?/i.exec(String((a && a.size) || ''));
+  if (!m) return null;
+  const n = Number(m[1].replace(/,/g, ''));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const mult = { k: 1e3, m: 1e6, b: 1e9 }[(m[2] || '').toLowerCase()] || 1;
+  return n * mult;
+}
+
+export function combineAffinity(values, weights, mode) {
+  if (!values.length) return { value: 0, weighted: false };
+  if (values.length === 1) return { value: values[0], weighted: false };
+  if (mode === 'overlap') return { value: Math.min(...values), weighted: false };
+  if (mode === 'any') return { value: Math.max(...values), weighted: false };
+
+  const usable = weights && weights.length === values.length && weights.every(w => w > 0);
+  if (!usable) {
+    return { value: values.reduce((s, v) => s + v, 0) / values.length, weighted: false };
+  }
+  const total = weights.reduce((s, w) => s + w, 0);
+  return {
+    value: values.reduce((s, v, i) => s + v * weights[i], 0) / total,
+    weighted: true
+  };
 }

@@ -63,7 +63,7 @@
 
 /* Anything carrying a category colour computes its thin variant once, here,
    rather than each rule mixing its own and drifting. */
-.sw, .dot, .chip, .bar, .mcard, .pm-cell {
+.sw, .dot, .bar {
   --ci: color-mix(in srgb, var(--c, currentColor), var(--lift) var(--lift-amt));
 }
 
@@ -143,79 +143,13 @@ body {
 button, input, select { font-family: inherit; }
 
 /* ============================================================
-   MOCKUP CHROME
-   Dark, and above everything, because it is not part of the product. A reader
-   should never be a moment unsure whether the switcher is a feature.
-   ============================================================ */
-.mk {
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 9px 18px;
-  background: #14161F;
-  color: #F2F3F7;
-  border-bottom: 1px solid rgba(255, 255, 255, .14);
-}
-.mk-lb {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(242, 243, 247, .52);
-}
-.mk-tabs { display: flex; gap: 6px; flex-wrap: wrap; flex: 1 1 auto; }
-.mk-tab {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(242, 243, 247, .78);
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .14s, color .14s, border-color .14s;
-}
-.mk-tab i {
-  font-style: normal;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  opacity: .6;
-}
-.mk-tab:hover { background: rgba(255, 255, 255, .1); color: #fff; }
-.mk-tab.on { background: #F2F3F7; border-color: #F2F3F7; color: #14161F; font-weight: 600; }
-.mk-tab.on i { opacity: .55; }
-.mk-note { font-size: 11.5px; color: rgba(242, 243, 247, .58); }
-.mk-tog {
-  height: 30px;
-  padding: 0 11px;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(242, 243, 247, .78);
-  font-size: 12px;
-  cursor: pointer;
-}
-.mk-tog:hover { background: rgba(255, 255, 255, .1); color: #fff; }
-
-/* ============================================================
    SHELL
    ============================================================ */
 .app {
   display: grid;
   grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  height: calc(100dvh - 49px);
-  min-height: 620px;
+  height: 100dvh;
+  min-height: 560px;
 }
 
 /* ---------- rail ---------- */
@@ -267,22 +201,44 @@ button, input, select { font-family: inherit; }
 /* The audience switch. One at a time, and the whole board answers to it — so
    it is a radio in behaviour and reads as one, with the selected row carrying
    the same blue fill the LTP rail uses for the stage you are standing on. */
+/* Several audiences can be on at once, so the row reads as a checkbox rather
+   than a radio — a tick column that is always there, empty when it is off, so
+   the list does not reflow as things are selected. */
 .aud {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   width: 100%;
   text-align: left;
   border: 1px solid transparent;
   background: none;
   border-radius: 11px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   cursor: pointer;
   color: var(--shell-ink2);
   transition: background .16s, color .16s, border-color .16s;
 }
-.aud + .aud { margin-top: 2px; }
 .aud:hover { background: var(--a04); }
-.aud .an { font-size: 12.8px; font-weight: 600; line-height: 1.25; display: block; }
+.aud .tick {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border: 1.5px solid var(--shell-line);
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 12px;
+  text-align: center;
+  color: transparent;
+}
+.aud.on .tick {
+  background: var(--pill-blue);
+  border-color: var(--pill-blue);
+  color: #fff;
+}
+.aud .at { min-width: 0; flex: 1 1 auto; }
+.aud .an { font-size: 12.6px; font-weight: 600; line-height: 1.25; display: block; }
 .aud .as {
   display: block;
   margin-top: 3px;
@@ -292,13 +248,47 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink3);
 }
 .aud.on {
-  background: rgba(66, 133, 244, .14);
-  border-color: rgba(66, 133, 244, .3);
+  background: rgba(66, 133, 244, .12);
+  border-color: rgba(66, 133, 244, .28);
   color: var(--pill-blue);
 }
 .aud.on .an { color: inherit; }
 .aud.on .as { color: inherit; opacity: .8; }
+/* The last one on cannot be switched off, so it should not offer to be. */
+.aud[aria-disabled="true"] { cursor: default; }
+.aud[aria-disabled="true"]:hover { background: rgba(66, 133, 244, .12); }
 .aud:focus-visible { outline: 2px solid var(--vi); outline-offset: -2px; }
+
+/* How the selected audiences are put together. Three buttons and a sentence —
+   blended and overlapped are different questions, not a display preference. */
+.rl-mode { margin-top: 4px; }
+.seg { display: flex; gap: 3px; padding: 0 2px; }
+.seg button {
+  flex: 1 1 0;
+  height: 27px;
+  border: 1px solid var(--shell-line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--shell-ink3);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.seg button:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.seg button.on {
+  background: var(--shell-ink);
+  border-color: var(--shell-ink);
+  color: var(--shell-2);
+  font-weight: 600;
+}
+.seg button:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+.seg-note {
+  margin: 7px 3px 0;
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink3);
+}
+.seg-note b { color: var(--pill-amber); font-weight: 700; }
 
 .aud-def {
   margin: 8px 3px 0;
@@ -306,26 +296,6 @@ button, input, select { font-family: inherit; }
   line-height: 1.5;
   color: var(--shell-ink3);
 }
-
-/* Category filter. Chips rather than checkboxes: ten of them fit in the rail
-   only as chips, and the colour is doing the identifying anyway. */
-.cats { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 2px; }
-.cat {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border: 1px solid var(--shell-line);
-  border-radius: 999px;
-  background: var(--card);
-  font-size: 10.5px;
-  color: var(--shell-ink3);
-  cursor: pointer;
-  transition: border-color .14s, color .14s, opacity .14s;
-}
-.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ci); }
-.cat.off { opacity: .4; }
-.cat:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
 .rl-foot {
   margin-top: auto;
@@ -345,49 +315,63 @@ button, input, select { font-family: inherit; }
   min-width: 0;
   overflow: hidden;
 }
+/* One row above the board: what is drawn, how much of it, and the two
+   switches. Everything here acts on the board to its right. */
 .hd {
   flex: none;
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  padding: 20px 26px 16px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--shell-line);
+  background: var(--shell-2);
 }
-.hd-tx { min-width: 0; flex: 1 1 auto; }
-.hd h1 {
-  margin: 0;
-  font-size: 23px;
-  letter-spacing: -.025em;
-  font-weight: 680;
+/* Scrolled, never wrapped. Ten chips on a narrow window would wrap to a second
+   row and push the board down every time one was toggled. */
+.cats {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
 }
-.hd .kick {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  margin-bottom: 5px;
+.cats::-webkit-scrollbar { height: 5px; }
+.cats::-webkit-scrollbar-thumb { background: var(--a12); border-radius: 3px; }
+.cat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 11px;
+  color: var(--shell-ink2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .14s, color .14s, opacity .14s;
 }
-.hd p {
-  margin: 7px 0 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--lede-ink);
-  max-width: 78ch;
-}
-.hd-right { display: flex; gap: 8px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+.cat .sw { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ci); }
+.cat.off { opacity: .38; }
+.cat:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.cat:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+
+.hd-right { display: flex; gap: 6px; flex: none; }
 .hd-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
-  padding: 0 12px;
+  height: 26px;
+  padding: 0 10px;
   border: 1px solid var(--pill-line, var(--shell-line));
   border-radius: 999px;
   background: var(--shell-2);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -396,7 +380,24 @@ button, input, select { font-family: inherit; }
 }
 .hd-pill b { font-weight: 700; color: var(--shell-ink); letter-spacing: 0; font-size: 11px; }
 
-.body { flex: 1 1 auto; overflow: auto; padding: 20px 26px 60px; }
+.hd-tools { display: flex; gap: 6px; flex: none; }
+.tool {
+  height: 26px;
+  min-width: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--shell-ink3);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.tool:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
+.tool.on { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+.tool:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+
+.body { flex: 1 1 auto; overflow: auto; padding: 16px 20px 60px; }
 
 /* ---------- band vocabulary, shared by all five ---------- */
 .bandpill {
@@ -430,179 +431,9 @@ button, input, select { font-family: inherit; }
 .legend .li b { font-weight: 600; color: var(--shell-ink2); }
 
 /* ============================================================
-   01 — THE YEAR WALL
-   ============================================================ */
-.wall { min-width: 1020px; }
-.wall-row {
-  display: grid;
-  grid-template-columns: 128px repeat(var(--months, 12), minmax(0, 1fr));
-  gap: 6px;
-  align-items: stretch;
-}
-.wall-row + .wall-row { margin-top: 6px; }
-.wall-hd { position: sticky; top: 0; z-index: 5; background: var(--shell); padding-bottom: 6px; }
-.wall-mo {
-  padding: 6px 8px 7px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-}
-.wall-mo .m {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink2);
-}
-.wall-mo .y { font-size: 8.5px; opacity: .55; margin-left: 4px; }
-/* A weight bar under the month name — the month's total relevance for this
-   audience, as a share of the loudest month. It is what turns twelve equal
-   columns into a shape. */
-.wall-mo .bar { height: 4px; border-radius: 3px; background: var(--a08); margin-top: 5px; overflow: hidden; }
-.wall-mo .bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
-.wall-cat {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 9px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--shell-ink2);
-  line-height: 1.2;
-}
-.wall-cat .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
-.wall-cat .n {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--shell-ink3);
-}
-.wall-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 5px;
-  border-radius: 9px;
-  background: var(--sunken);
-  border: 1px solid transparent;
-  min-height: 44px;
-}
-.wall-cell.empty { background: transparent; border-style: dashed; border-color: var(--shell-line); }
-.chip {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: 1px solid transparent;
-  border-left: 3px solid var(--ci);
-  border-radius: 5px;
-  padding: 3px 6px;
-  font-size: 10.5px;
-  line-height: 1.3;
-  cursor: pointer;
-  color: var(--shell-ink2);
-  background: var(--card);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.chip:hover { border-color: var(--shell-ink3); }
-/* Anchor filled, Play outlined, Watch faint. The band has to be legible at
-   10px in a cell 90px wide, which rules out a pill — so it is carried by the
-   chip's own weight instead. */
-.chip.anchor { background: color-mix(in srgb, var(--ci) 15%, var(--card)); font-weight: 620; color: var(--shell-ink); }
-.chip.play   { font-weight: 560; }
-.chip.watch  { opacity: .62; font-size: 10px; }
-.chip.skip   { opacity: .42; font-size: 10px; }
-.wall-more {
-  border: none;
-  background: none;
-  padding: 1px 6px;
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: .08em;
-  color: var(--shell-ink3);
-  cursor: pointer;
-  text-align: left;
-}
-.wall-more:hover { color: var(--shell-ink); }
-
-/* ============================================================
    02 — THE RANKED BRIEF
    ============================================================ */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 18px; }
-.tile {
-  padding: 13px 15px 14px;
-  border-radius: 14px;
-  background: var(--card);
-  border: 1px solid var(--shell-line);
-  box-shadow: 0 1px 2px var(--a04), 0 14px 38px var(--a06);
-  border-top: 3px solid var(--tc, var(--shell-ink3));
-}
-.tile .k {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--tc, var(--shell-ink3));
-}
-.tile .v { font-size: 30px; font-weight: 680; letter-spacing: -.03em; line-height: 1.1; margin-top: 4px; }
-.tile .d { font-size: 11.5px; color: var(--shell-ink3); margin-top: 3px; line-height: 1.4; }
-
-.rank { display: flex; flex-direction: column; gap: 5px; }
-.rk {
-  border: 1px solid var(--shell-line);
-  border-radius: 12px;
-  background: var(--card);
-  overflow: hidden;
-}
-.rk-hd {
-  display: grid;
-  grid-template-columns: 34px 46px minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 9px 13px;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-}
-.rk-hd:hover { background: var(--a04); }
-.rk-no { font-family: var(--mono); font-size: 10.5px; color: var(--shell-ink3); }
-/* The score, as a number that is also a bar. Neither alone works: the number
-   is exact and unscannable, the bar is scannable and imprecise. */
-.rk-sc { position: relative; }
-.rk-sc b { font-size: 17px; font-weight: 680; letter-spacing: -.02em; }
-.rk-sc i {
-  display: block;
-  height: 3px;
-  border-radius: 2px;
-  margin-top: 2px;
-  background: var(--bc, var(--shell-ink3));
-}
-.rk-nm { min-width: 0; }
-.rk-nm .t { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; display: block; }
-.rk-nm .s {
-  display: block;
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--shell-ink3);
-}
-.rk-nm .s .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--ci); }
-.rk-dt { font-family: var(--mono); font-size: 10.5px; color: var(--shell-ink3); white-space: nowrap; }
-.rk-cv { font-family: var(--mono); font-size: 14px; color: var(--shell-ink3); }
-
-/* The five components, opened. This is the argument — the row above it is only
-   the headline — so it gets the well treatment rather than more white. */
-.rk-bd { padding: 4px 13px 14px; background: var(--sunken); border-top: 1px solid var(--shell-line); }
-.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px; padding-top: 11px; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px 16px; padding-top: 10px; }
 .part .pk {
   display: flex;
   justify-content: space-between;
@@ -617,35 +448,6 @@ button, input, select { font-family: inherit; }
 .part .pb { height: 5px; border-radius: 3px; background: var(--a08); margin-top: 4px; overflow: hidden; }
 .part .pb i { display: block; height: 100%; border-radius: 3px; background: var(--pc, var(--shell-ink3)); }
 .part .pw { font-size: 10.5px; color: var(--shell-ink3); margin-top: 3px; line-height: 1.4; }
-.rk-eq {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--shell-line);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  line-height: 1.6;
-  color: var(--shell-ink3);
-}
-.rk-eq b { color: var(--shell-ink); }
-.rk-meta { margin-top: 8px; font-size: 11.5px; color: var(--shell-ink3); line-height: 1.5; }
-
-.more {
-  margin: 14px auto 0;
-  display: block;
-  height: 34px;
-  padding: 0 18px;
-  border: 1px solid var(--shell-line);
-  border-radius: 999px;
-  background: var(--card);
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  cursor: pointer;
-}
-.more:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
 /* ============================================================
    03 — THE RIBBON
@@ -743,135 +545,7 @@ button, input, select { font-family: inherit; }
 .cong-bars { display: flex; align-items: flex-end; gap: 1px; height: 62px; }
 .cong-bars i { flex: 1 1 0; border-radius: 2px 2px 0 0; background: var(--cb, var(--a16)); min-height: 2px; }
 
-/* ============================================================
-   04 — THE PRESSURE MAP
-   ============================================================ */
-.pm { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-.pm-grid { min-width: 0; overflow-x: auto; }
-.pm-row { display: grid; grid-template-columns: 132px repeat(var(--weeks), minmax(9px, 1fr)); gap: 2px; align-items: center; }
-.pm-row + .pm-row { margin-top: 2px; }
-.pm-lb { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--shell-ink2); padding-right: 8px; }
-.pm-lb .sw { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ci); }
-.pm-cell {
-  height: 22px;
-  border-radius: 3px;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--ci) var(--t, 0%), transparent);
-}
-.pm-cell.zero { background: transparent; box-shadow: inset 0 0 0 1px var(--a06); cursor: default; }
-.pm-cell:hover:not(.zero) { outline: 2px solid var(--shell-ink); outline-offset: 1px; }
-.pm-cell.sel { outline: 2px solid var(--shell-ink); outline-offset: 1px; }
-.pm-mos { display: grid; grid-template-columns: 132px minmax(0, 1fr); margin-bottom: 6px; position: sticky; top: 0; background: var(--shell); z-index: 4; padding-bottom: 4px; }
-.pm-mos .mos { display: grid; }
-.pm-mos .mo {
-  border-left: 1px solid var(--shell-line);
-  padding-left: 6px;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-}
-.pm-mos .mo:first-child { border-left: none; }
-
-.pm-side { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 0; }
-.panel {
-  border: 1px solid var(--shell-line);
-  border-radius: 14px;
-  background: var(--card);
-  padding: 14px 15px 15px;
-  box-shadow: 0 1px 2px var(--a04), 0 14px 38px var(--a06);
-}
-.panel.eg { background: var(--eg); border-color: var(--eg-line); box-shadow: none; }
-.panel h3 {
-  margin: 0 0 3px;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-}
-.panel .sub { margin: 0 0 11px; font-size: 11.5px; line-height: 1.5; color: var(--shell-ink3); }
-.panel ol, .panel ul { margin: 0; padding: 0; list-style: none; }
-.uc { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--shell-line); }
-.uc:first-child { border-top: none; padding-top: 0; }
-.uc .n { font-family: var(--mono); font-size: 10px; color: var(--shell-ink3); flex: none; width: 16px; }
-.uc .t { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
-.uc .m { font-family: var(--mono); font-size: 9.5px; color: var(--shell-ink3); margin-top: 2px; }
-.uc .m b { color: var(--pill-green); }
-
-/* ============================================================
-   05 — THE IN / OUT BOARD
-   ============================================================ */
-.io { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.col { border-radius: 14px; border: 1px solid var(--shell-line); background: var(--card); display: flex; flex-direction: column; min-height: 260px; }
-.col.in  { border-top: 3px solid var(--pill-green); }
-.col.und { border-top: 3px solid var(--pill-amber); }
-.col.out { border-top: 3px solid var(--shell-ink3); }
-.col-hd { padding: 12px 14px 10px; border-bottom: 1px solid var(--shell-line); }
-.col-hd .k {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.col.in  .col-hd .k { color: var(--pill-green); }
-.col.und .col-hd .k { color: var(--pill-amber); }
-.col.out .col-hd .k { color: var(--shell-ink3); }
-.col-hd .c { font-size: 24px; font-weight: 680; letter-spacing: -.03em; margin-top: 2px; }
-.col-hd .d { font-size: 11.5px; color: var(--shell-ink3); line-height: 1.45; margin-top: 2px; }
-.col-bd { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 460px; overflow-y: auto; }
-.mcard {
-  border: 1px solid var(--shell-line);
-  border-left: 3px solid var(--ci);
-  border-radius: 9px;
-  padding: 8px 10px;
-  background: var(--card);
-}
-.col.out .mcard { opacity: .62; }
-.mcard .t { font-size: 12.5px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
-.mcard .r { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
-.mcard .dt { font-family: var(--mono); font-size: 9.5px; color: var(--shell-ink3); }
-.mcard .sc { font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--shell-ink2); margin-left: auto; }
-.mcard .mv { display: flex; gap: 4px; margin-top: 7px; }
-.mv button {
-  flex: 1 1 0;
-  height: 22px;
-  border: 1px solid var(--shell-line);
-  border-radius: 6px;
-  background: var(--sunken);
-  font-family: var(--mono);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--shell-ink3);
-  cursor: pointer;
-}
-.mv button:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
-.col-empty { padding: 22px 12px; text-align: center; font-size: 11.5px; color: var(--shell-ink3); }
-
-.io-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
-.feed {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--eg-line);
-  background: var(--eg);
-}
-.feed .ar { font-family: var(--mono); font-size: 15px; color: var(--pill-blue); flex: none; }
-.feed .k { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--pill-blue); }
-.feed .t { font-size: 12.5px; font-weight: 600; margin-top: 1px; }
-.feed .d { font-size: 11px; color: var(--shell-ink3); line-height: 1.4; margin-top: 1px; }
-
-/* ---------- detail popover, shared by 01 / 03 / 04 ---------- */
+/* ---------- the moment detail popover ---------- */
 .pop {
   position: fixed;
   z-index: 80;
@@ -1282,9 +956,49 @@ button, input, select { font-family: inherit; }
 }
 .copy:hover { border-color: var(--shell-ink3); color: var(--shell-ink); }
 
+/* Where a combined affinity came from. */
+.affby {
+  margin: 10px 0 2px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--sunken);
+  border: 1px solid var(--shell-line);
+}
+.affby-k {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+  margin-bottom: 6px;
+}
+.affby-r {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px 26px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.affby-r + .affby-r { margin-top: 3px; }
+.affby-r .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--shell-ink2); }
+.affby-r .b { height: 5px; border-radius: 3px; background: var(--a08); overflow: hidden; }
+.affby-r .b i { display: block; height: 100%; border-radius: 3px; background: var(--pill-blue); }
+.affby-r .v {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--shell-ink);
+}
+
 </style>
 <style>
   .gem-row, .pop-read { display: none; }
+  .rl-static {
+    margin: 8px 3px 0; font-size: 10px; line-height: 1.45;
+    color: var(--shell-ink3); font-family: var(--mono);
+  }
 </style>
 
 <!-- The module's mark, in the same language as the other LTP step icons: a
@@ -1331,15 +1045,6 @@ button, input, select { font-family: inherit; }
 </symbol>
 </svg>
 
-<!-- Mockup chrome. Dark and outside the app on purpose — nothing here is part
-     of the product, and a reader should never wonder which is which. -->
-<div class="mk">
-  <span class="mk-lb">Direction</span>
-  <div class="mk-tabs" id="mkTabs"></div>
-  <span class="mk-note">Same audience, same data, same window — only the drawing changes.</span>
-  <button class="mk-tog" id="themeTog" type="button">☾ Dark</button>
-<span class="mk-note">Static copy — the Gemini reader needs the live site.</span></div>
-
 <div class="app">
   <aside class="rail">
     <div class="rl-brand">
@@ -1348,24 +1053,28 @@ button, input, select { font-family: inherit; }
       <span class="modpill">6.2</span>
     </div>
 
-    <div class="rl-hd">Target audience</div>
+    <div class="rl-hd">Target audiences</div>
     <div id="audList"></div>
     <p class="aud-def" id="audDef"></p>
 
-    <div class="rl-hd gap">Categories</div>
-    <div class="cats" id="catList"></div>
+    <div class="rl-mode" id="audMode" hidden></div>
 
-    <div class="rl-foot" id="railFoot"></div>
+    <div class="rl-foot" id="railFoot"></div><p class="rl-static">Static copy — the Gemini reader needs the live site.</p>
   </aside>
 
   <main class="main">
     <header class="hd">
-      <div class="hd-tx">
-        <div class="kick" id="dirKick"></div>
-        <h1 id="dirTitle"></h1>
-        <p id="dirLede"></p>
-      </div>
+      <!-- Categories sit above the board rather than in the rail: they filter
+           what is drawn to the right of them, and a filter reads better beside
+           the thing it filters. One row, scrolled rather than wrapped, so the
+           board never moves down as chips are toggled. -->
+      <div class="cats" id="catStrip"></div>
       <div class="hd-right" id="hdRight"></div>
+      <div class="hd-tools">
+        <button class="tool" id="watchTog" type="button"
+          title="Also draw the Watch band, not just Anchor and Play">Watch</button>
+        <button class="tool" id="themeTog" type="button" aria-label="Switch theme">&#9790;</button>
+      </div>
     </header>
     <div class="body" id="body"></div>
   </main>
@@ -2144,11 +1853,20 @@ const BANDS = [
 ];
 const bandOf = s => BANDS.find(b => s >= b.min) || BANDS[BANDS.length - 1];
 
-function scoreMoments(moments, aud) {
+/* `aud` may be one audience or several. One is the ordinary case and behaves
+   exactly as it always did; several combines their affinities by `mode` and
+   keeps each one's own figure on the result, because a blended number nobody
+   can take apart is precisely the kind of number this model refuses to
+   produce. */
+function scoreMoments(moments, aud, mode) {
+  const auds = Array.isArray(aud) ? aud.filter(Boolean) : [aud];
+  const weights = auds.map(sizeOf);
   const cong = congestionIndex(moments);
   return moments.map(m => {
+    const each = auds.map(a => ({ id: a.id, name: a.name, value: affinityOf(m, a) }));
+    const combined = combineAffinity(each.map(e => e.value), weights, mode || 'blend');
     const parts = {
-      aff:   affinityOf(m, aud),
+      aff:   combined.value,
       scale: scaleOf(m),
       act:   actionabilityOf(m),
       tim:   timingOf(m),
@@ -2157,7 +1875,11 @@ function scoreMoments(moments, aud) {
     const base = parts.aff * WEIGHTS.aff + parts.scale * WEIGHTS.scale
                + parts.act * WEIGHTS.act + parts.tim * WEIGHTS.tim;
     const score = Math.round(base * (1 - (parts.cong / 100) * CONGESTION_MAX));
-    return { ...m, parts, score, band: bandOf(score) };
+    return {
+      ...m, parts, score, band: bandOf(score),
+      affBy: each.length > 1 ? each : null,
+      affWeighted: combined.weighted
+    };
   });
 }
 
@@ -2169,6 +1891,65 @@ function unclaimed(scored) {
     .filter(m => m.parts.aff >= 55 && m.parts.tim >= 80)
     .sort((a, b) => (b.parts.aff - b.parts.cong * 1.4) - (a.parts.aff - a.parts.cong * 1.4))
     .slice(0, 6);
+}
+
+/* ============================================================
+   MORE THAN ONE AUDIENCE
+   ============================================================
+
+   Only affinity combines. The other four components are facts about the
+   moment — its scale, whether there is a way in, how firm the date is, how
+   loud that week is — and they do not change because a second audience is
+   selected. That falls straight out of the model's central rule and is what
+   keeps a multi-audience score comparable with a single-audience one.
+
+   Three ways to combine, because they answer three different briefs and a
+   planner means a different thing each time:
+
+     BLEND    the combined audience. A size-weighted mean, which is literally
+              what a target audience made of two groups is. The default.
+     OVERLAP  the lowest of them. "Where does ONE buy serve all of them?" —
+              a moment only survives if every selected audience cares.
+     ANY      the highest of them. "Where do we reach at least one of them
+              well?" — the reach brief rather than the efficiency one.
+
+   Blend needs sizes, and a user-defined audience may not have given one.
+   Rather than invent a weight, an incomplete set falls back to an unweighted
+   mean and says so — `weighted: false` travels with the result so the UI can
+   report it instead of quietly implying a precision it does not have. */
+
+const MODES = [
+  { id: 'blend',   label: 'Blend',   note: 'The combined audience — size-weighted.' },
+  { id: 'overlap', label: 'Overlap', note: 'Only what works for every one of them.' },
+  { id: 'any',     label: 'Any',     note: 'What works for at least one of them.' }
+];
+
+/* "31.4M" -> 31400000. Returns null for anything it cannot read, which is the
+   signal to stop weighting rather than to guess a number. */
+function sizeOf(a) {
+  const m = /^\s*([\d.,]+)\s*([kmb])?/i.exec(String((a && a.size) || ''));
+  if (!m) return null;
+  const n = Number(m[1].replace(/,/g, ''));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const mult = { k: 1e3, m: 1e6, b: 1e9 }[(m[2] || '').toLowerCase()] || 1;
+  return n * mult;
+}
+
+function combineAffinity(values, weights, mode) {
+  if (!values.length) return { value: 0, weighted: false };
+  if (values.length === 1) return { value: values[0], weighted: false };
+  if (mode === 'overlap') return { value: Math.min(...values), weighted: false };
+  if (mode === 'any') return { value: Math.max(...values), weighted: false };
+
+  const usable = weights && weights.length === values.length && weights.every(w => w > 0);
+  if (!usable) {
+    return { value: values.reduce((s, v) => s + v, 0) / values.length, weighted: false };
+  }
+  const total = weights.reduce((s, w) => s + w, 0);
+  return {
+    value: values.reduce((s, v, i) => s + v * weights[i], 0) / total,
+    weighted: true
+  };
 }
 
 /* ── data/parse.js ── */
@@ -2425,36 +2206,44 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
    looking at — which is the whole point of five mockups: somebody has to be
    able to send back "03, sports superfans, this bar". */
 function fromHash() {
-  const m = /^#\/(\d)\/([a-z]+)/.exec(location.hash || '');
+  /* `[a-z]+` here would not match a user-defined audience — their ids are
+     slugged from the name and "women1834" has digits in it — so a custom
+     audience never survived a reload. Several ids join on `+`, and the combine
+     mode is the third segment. */
+  const m = /^#\/(\d)\/([a-z0-9+]+)(?:\/([a-z]+))?/.exec(location.hash || '');
   if (!m) return {};
-  const dir = +m[1], aud = m[2];
+  const dir = +m[1];
+  const ids = m[2].split('+').filter(id => ROSTER().some(a => a.id === id));
   return {
     dir: dir >= 1 && dir <= 5 ? dir : undefined,
-    aud: ROSTER().some(a => a.id === aud) ? aud : undefined
+    auds: ids.length ? ids : undefined,
+    mode: MODES.some(x => x.id === m[3]) ? m[3] : undefined
   };
 }
 const H = fromHash();
 
 const S = {
-  aud: H.aud || AUDIENCES[0].id,   // resolved against the roster on boot
+  auds: H.auds || [AUDIENCES[0].id],   // one or several; never none
+  mode: H.mode || 'blend',
   dir: H.dir || 3,
   off: new Set(),          // categories switched off
-  showWatch: false,        // direction 01: draw the Watch band too
-  rankShown: 25,
-  pmSel: null,             // pressure map: selected [cat, weekIndex]
-  io: null                 // in/out board: id -> 'in' | 'und' | 'out'
+  showWatch: false         // draw the Watch band as well as Anchor and Play
 };
 
-/* Falls back rather than returning undefined: a custom audience deleted in
-   another tab leaves a hash pointing at nothing, and the board must still draw. */
-const audience = () => ROSTER().find(a => a.id === S.aud) || ROSTER()[0];
+/* Falls back rather than returning empty: a custom audience deleted in another
+   tab leaves a hash pointing at nothing, and the board must still draw. There
+   is always at least one selected audience — a board with none has nothing to
+   say, so the last one cannot be switched off. */
+function audiences() {
+  const list = S.auds.map(id => ROSTER().find(a => a.id === id)).filter(Boolean);
+  return list.length ? list : [ROSTER()[0]];
+}
+const audience = () => audiences()[0];
+const multi = () => audiences().length > 1;
 
 let SCORED = [];
 function recompute() {
-  SCORED = scoreMoments(IN_WINDOW, audience());
-  S.io = null;
-  S.rankShown = 25;
-  S.pmSel = null;
+  SCORED = scoreMoments(IN_WINDOW, audiences(), S.mode);
 }
 const visible = () => SCORED.filter(m => !S.off.has(m.cat));
 
@@ -2463,25 +2252,48 @@ const visible = () => SCORED.filter(m => !S.off.has(m.cat));
    ============================================================ */
 function renderRail() {
   const a = audience();
+  const sel = new Set(S.auds);
+  const only = S.auds.length === 1;
   document.getElementById('audList').innerHTML = ROSTER().map(x => `
     <div class="aud-row">
-      <button class="aud ${x.id === S.aud ? 'on' : ''}" data-aud="${x.id}" type="button"
-        aria-pressed="${x.id === S.aud}">
-        <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}</span>
-        <span class="as">${esc(x.size || '—')} · ${topCats(x)}</span>
+      <button class="aud ${sel.has(x.id) ? 'on' : ''}" data-aud="${x.id}" type="button"
+        role="checkbox" aria-checked="${sel.has(x.id)}"
+        ${sel.has(x.id) && only ? 'aria-disabled="true" title="At least one audience has to stay on"' : ''}>
+        <span class="tick" aria-hidden="true">${sel.has(x.id) ? '\u2713' : ''}</span>
+        <span class="at">
+          <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}</span>
+          <span class="as">${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}</span>
+        </span>
       </button>
       ${x.custom ? `<button class="aud-x" data-del="${esc(x.id)}" type="button"
-        title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">×</button>` : ''}
+        title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">\u00d7</button>` : ''}
     </div>`).join('') +
     `<button class="aud-add" id="audAdd" type="button">
        <span aria-hidden="true">+</span> New target audience</button>`;
-  document.getElementById('audDef').textContent = a.def || '';
 
-  document.getElementById('catList').innerHTML = CATS.map(c => `
-    <button class="cat ${S.off.has(c) ? 'off' : ''}" data-cat="${esc(c)}" type="button"
-      aria-pressed="${!S.off.has(c)}">
-      <span class="sw" style="--c:${CAT_COLOR[c] || '#5C6279'}"></span>${esc(c)}
-    </button>`).join('');
+  document.getElementById('audDef').textContent = multi()
+    ? audiences().map(x => x.name).join('  +  ')
+    : (a.def || '');
+
+  /* The combine control only exists once there is something to combine, and it
+     says what it does in a sentence — three audiences blended and three
+     audiences overlapped are different questions, not a display preference. */
+  const mode = document.getElementById('audMode');
+  if (multi()) {
+    const m = MODES.find(x => x.id === S.mode) || MODES[0];
+    const unweighted = S.mode === 'blend' && SCORED.length && !SCORED[0].affWeighted;
+    mode.hidden = false;
+    mode.innerHTML = `
+      <div class="rl-hd gap">Combine ${S.auds.length} audiences</div>
+      <div class="seg">${MODES.map(x => `
+        <button type="button" data-mode="${x.id}" class="${x.id === S.mode ? 'on' : ''}"
+          aria-pressed="${x.id === S.mode}">${x.label}</button>`).join('')}</div>
+      <p class="seg-note">${esc(m.note)}${unweighted
+        ? ' <b>Unweighted</b> \u2014 one of these has no size, so each counts equally.' : ''}</p>`;
+  } else {
+    mode.hidden = true;
+    mode.innerHTML = '';
+  }
 
   const v = visible();
   document.getElementById('railFoot').innerHTML =
@@ -2497,164 +2309,74 @@ function topCats(a) {
 /* ============================================================
    HEADER
    ============================================================ */
-const DIRS = [
-  { n: 1, id: 'wall', tab: 'The Year Wall',
-    title: 'The Year Wall',
-    lede: 'Ten categories down, twelve months across, one audience at a time. Every moment the audience has a claim on, in the cell where it lands — so the shape of the year is legible before a single row is read. Anchors are filled, Play is outlined, Watch is faint.' },
-  { n: 2, id: 'rank', tab: 'The Ranked Brief',
-    title: 'The Ranked Brief',
-    lede: 'The same year as an argued list. Every row opens onto the five components behind its score, because a planner has to be able to disagree with a number and say which part of it is wrong.' },
-  { n: 3, id: 'rib', tab: 'The Ribbon',
-    title: 'The Ribbon',
-    lede: 'Time as a continuous axis rather than twelve boxes, so a window reads as a window and a single day reads as a tick. Under it, how loud each week is — which is the half of the picture a ranked list cannot show.' },
-  { n: 4, id: 'pm', tab: 'The Pressure Map',
-    title: 'The Pressure Map',
-    lede: 'Fifty-two weeks by ten categories, inked by how much this audience cares about what lands there. Built to answer the one question the process asks and a ranked list never can: which week is loud, and which week is empty.' },
-  { n: 5, id: 'io', tab: 'The In / Out Board',
-    title: 'The In / Out Board',
-    lede: 'The year after a decision has been taken on it. Moments in, moments out, and the ones still open — which is the artefact stage 6.2 is supposed to produce, and the thing Big Ideas and Flighting are actually waiting for.' }
-];
-
+/* The header is a control strip now, not a title block. The kicker, the big
+   name and the explanatory lede belonged to a mockup being compared against
+   four others; in the tool they cost 90px of height that the lanes need —
+   Tours & Concerts alone runs to eighteen rows. */
 function renderHead() {
-  const d = DIRS[S.dir - 1];
-  document.getElementById('dirTitle').textContent = d.title;
-  document.getElementById('dirLede').textContent = d.lede;
-  document.getElementById('dirKick').textContent = `Direction 0${d.n} — ${audience().name}`;
+  document.getElementById('catStrip').innerHTML = CATS.map(c => `
+    <button class="cat ${S.off.has(c) ? 'off' : ''}" data-cat="${esc(c)}" type="button"
+      aria-pressed="${!S.off.has(c)}">
+      <span class="sw" style="--c:${CAT_COLOR[c] || '#5C6279'}"></span>${esc(c)}
+    </button>`).join('');
+
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.getElementById('themeTog').innerHTML = dark ? '&#9728;' : '&#9790;';
 
   const v = visible();
   const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
+  const w = document.getElementById('watchTog');
+  w.classList.toggle('on', S.showWatch);
+  w.setAttribute('aria-pressed', String(S.showWatch));
+
   document.getElementById('hdRight').innerHTML = `
     <span class="hd-pill" style="--pill-ink:var(--pill-green);--pill-line:var(--pill-green-line)">Anchor <b>${b.anchor}</b></span>
     <span class="hd-pill" style="--pill-ink:var(--pill-blue);--pill-line:var(--pill-blue-line)">Play <b>${b.play}</b></span>
     <span class="hd-pill" style="--pill-ink:var(--pill-amber);--pill-line:var(--pill-amber-line)">Watch <b>${b.watch}</b></span>
     <span class="hd-pill">Skip <b>${b.skip}</b></span>`;
-
-  document.querySelectorAll('.mk-tab').forEach(t => t.classList.toggle('on', +t.dataset.dir === S.dir));
 }
 
 const bandLegend = () => BANDS.map(b =>
   `<span class="li"><span class="bandpill ${b.id}">${b.label}</span> ${b.note}</span>`).join('');
 
 /* ============================================================
-   01 — THE YEAR WALL
-   ============================================================ */
-function drawWall() {
-  const v = visible();
-  const min = S.showWatch ? 40 : 56;
-  const shown = v.filter(m => m.score >= min);
-
-  const byMonth = new Map();
-  for (const m of shown) {
-    const k = m.start < WIN_START ? MONTHS[0].key : m.start.slice(0, 7);
-    if (!byMonth.has(k)) byMonth.set(k, []);
-    byMonth.get(k).push(m);
-  }
-  const weight = MONTHS.map(mo => (byMonth.get(mo.key) || []).reduce((s, m) => s + m.score, 0));
-  const wMax = Math.max(1, ...weight);
-
-  const cats = CATS.filter(c => !S.off.has(c));
-  const cell = (c, mo) => {
-    const list = (byMonth.get(mo.key) || []).filter(m => m.cat === c).sort((a, b) => b.score - a.score);
-    if (!list.length) return `<div class="wall-cell empty"></div>`;
-    const cap = 4;
-    const head = list.slice(0, cap).map(m => chip(m)).join('');
-    const rest = list.length > cap
-      ? `<button class="wall-more" data-more="${esc(c)}|${mo.key}">+${list.length - cap} more</button>` : '';
-    return `<div class="wall-cell">${head}${rest}</div>`;
-  };
-
-  return `
-    <div class="legend">
-      ${bandLegend()}
-      <span class="li" style="margin-left:auto">
-        <button class="mk-tog" id="wallWatch" style="background:var(--card);color:var(--shell-ink3);border-color:var(--shell-line)">
-          ${S.showWatch ? '✓ ' : ''}Include Watch
-        </button>
-      </span>
-    </div>
-    <div class="wall" style="--months:${MONTHS.length}">
-      <div class="wall-row wall-hd">
-        <div></div>
-        ${MONTHS.map((mo, i) => `
-          <div class="wall-mo">
-            <span class="m">${mo.label}</span><span class="y">'${mo.yy}</span>
-            <div class="bar"><i style="width:${Math.round(weight[i] / wMax * 100)}%"></i></div>
-          </div>`).join('')}
-      </div>
-      ${cats.map(c => `
-        <div class="wall-row">
-          <div class="wall-cat">
-            <span class="sw" style="--c:${CAT_COLOR[c]}"></span>
-            <span>${esc(c)}</span>
-            <span class="n">${shown.filter(m => m.cat === c).length}</span>
-          </div>
-          ${MONTHS.map(mo => cell(c, mo)).join('')}
-        </div>`).join('')}
-    </div>`;
-}
-const chip = m =>
-  `<button class="chip ${m.band.id}" data-id="${m.id}" style="--c:${CAT_COLOR[m.cat]}" title="${esc(m.name)} — ${m.score}">${esc(m.name)}</button>`;
-
-/* ============================================================
-   02 — THE RANKED BRIEF
+   THE FIVE COMPONENTS, WRITTEN OUT
+   Shared vocabulary rather than one view's furniture: wherever a score is
+   shown, the thing that produced it has to be openable.
    ============================================================ */
 const PART_META = {
   aff:   { k: 'Affinity',      c: '#1A67D2', w: WEIGHTS.aff,   why: 'Category index for this audience, sharpened by any entity read.' },
   scale: { k: 'Scale',         c: '#0B7A67', w: WEIGHTS.scale, why: 'How many of them actually show up.' },
-  act:   { k: 'Actionability', c: '#946200', w: WEIGHTS.act,   why: 'Whether there is a door in — a distributor, a sponsorship.' },
+  act:   { k: 'Actionability', c: '#946200', w: WEIGHTS.act,   why: 'Whether there is a door in \u2014 a distributor, a sponsorship.' },
   tim:   { k: 'Timing',        c: '#6D5DE0', w: WEIGHTS.tim,   why: "The sheet's own date confirmation." },
   cong:  { k: 'Congestion',    c: '#C5221F', w: null,          why: 'Everything else fighting for the same week. A tax, not a term.' }
 };
 
+/* With several audiences selected, affinity is a combination \u2014 so the panel
+   shows what it was combined FROM. A blended figure nobody can take apart is
+   exactly the kind of number this tool refuses to produce anywhere else. */
+function affByBlock(m) {
+  if (!m.affBy) return '';
+  const mode = MODES.find(x => x.id === S.mode) || MODES[0];
+  const top = Math.max(...m.affBy.map(x => x.value)) || 1;
+  return `<div class="affby">
+    <div class="affby-k">Affinity by audience \u00b7 ${esc(mode.label.toLowerCase())}</div>
+    ${m.affBy.map(x => `
+      <div class="affby-r">
+        <span class="n">${esc(x.name)}</span>
+        <span class="b"><i style="width:${Math.round(x.value / top * 100)}%"></i></span>
+        <span class="v">${Math.round(x.value)}</span>
+      </div>`).join('')}
+  </div>`;
+}
+
 function partsBlock(m) {
-  return `<div class="parts">${Object.entries(PART_META).map(([k, p]) => `
+  return affByBlock(m) + `<div class="parts">${Object.entries(PART_META).map(([k, p]) => `
     <div class="part">
-      <div class="pk"><span>${p.k}${p.w ? ` · ${Math.round(p.w * 100)}%` : ' · −25% max'}</span><b>${Math.round(m.parts[k])}</b></div>
+      <div class="pk"><span>${p.k}${p.w ? ` \u00b7 ${Math.round(p.w * 100)}%` : ' \u00b7 \u221225% max'}</span><b>${Math.round(m.parts[k])}</b></div>
       <div class="pb"><i style="width:${Math.round(m.parts[k])}%;--pc:${p.c}"></i></div>
       <div class="pw">${p.why}</div>
     </div>`).join('')}</div>`;
-}
-
-function drawRank() {
-  const v = visible().sort((a, b) => b.score - a.score || a.start.localeCompare(b.start));
-  const list = v.slice(0, S.rankShown);
-  const tile = (b) => {
-    const n = v.filter(m => m.band.id === b.id).length;
-    return `<div class="tile" style="--tc:${b.color}">
-      <div class="k">${b.label}</div><div class="v">${n}</div><div class="d">${b.note}</div></div>`;
-  };
-  return `
-    <div class="tiles">${BANDS.map(tile).join('')}</div>
-    <div class="rank">${list.map((m, i) => rankRow(m, i + 1)).join('')}</div>
-    ${S.rankShown < v.length ? `<button class="more" id="rankMore">Show 25 more — ${v.length - S.rankShown} left</button>` : ''}`;
-}
-
-function rankRow(m, n) {
-  return `
-  <div class="rk" data-rk="${m.id}">
-    <button class="rk-hd" type="button" data-open="${m.id}" aria-expanded="false">
-      <span class="rk-no">${String(n).padStart(2, '0')}</span>
-      <span class="rk-sc"><b>${m.score}</b><i style="width:${m.score}%;--bc:${m.band.color}"></i></span>
-      <span class="rk-nm">
-        <span class="t">${esc(m.name)}</span>
-        <span class="s"><span class="dot" style="--c:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}</span>
-      </span>
-      <span class="rk-dt">${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''}</span>
-      <span class="bandpill ${m.band.id}">${m.band.label}</span>
-      <span class="rk-cv">▾</span>
-    </button>
-    <div class="rk-bd" hidden>
-      ${partsBlock(m)}
-      <div class="rk-eq">
-        (${Math.round(m.parts.aff)}×.40 + ${Math.round(m.parts.scale)}×.25 + ${Math.round(m.parts.act)}×.20 + ${Math.round(m.parts.tim)}×.15)
-        × (1 − ${(m.parts.cong / 100 * CONGESTION_MAX).toFixed(2)}) = <b>${m.score}</b>
-      </div>
-      <div class="rk-meta">
-        ${esc(m.conf)} · ${esc(m.type)}${m.src ? ' · ' + esc(m.src) : ''}${m.spons ? ' · sponsorship: ' + esc(m.spons) : ''}
-        ${m.notes ? '<br>' + esc(m.notes) : ''}
-      </div>
-    </div>
-  </div>`;
 }
 
 /* ============================================================
@@ -2718,12 +2440,7 @@ function drawRibbon() {
   const lMax = Math.max(1, ...load);
 
   return `
-    <div class="legend">${bandLegend()}
-      <span class="li" style="margin-left:auto">
-        <button class="mk-tog" id="wallWatch" style="background:var(--card);color:var(--shell-ink3);border-color:var(--shell-line)">
-          ${S.showWatch ? '✓ ' : ''}Include Watch</button>
-      </span>
-    </div>
+    <div class="legend">${bandLegend()}</div>
     <div class="rib">
       <div class="rib-ax">
         <div></div>
@@ -2759,159 +2476,6 @@ function weekAxis() {
     d = new Date(d.getTime() + 7 * 86400000);
   }
   return out;
-}
-
-/* ============================================================
-   04 — THE PRESSURE MAP
-   ============================================================ */
-function drawPressure() {
-  const v = visible();
-  const weeks = weekAxis();
-  const cats = CATS.filter(c => !S.off.has(c));
-  const key = (c, w) => c + '|' + w;
-  const cellv = new Map();
-  for (const m of v) {
-    const k = key(m.cat, weekKey(m.start < WIN_START ? WIN_START : m.start));
-    cellv.set(k, (cellv.get(k) || 0) + m.score);
-  }
-  const vMax = Math.max(1, ...cellv.values());
-
-  /* Month rules across the top rather than a week label every column — 52
-     labels do not fit and would not be read if they did. */
-  const monthSpan = MONTHS.map(mo => weeks.filter(w => `${w.y}-${String(w.m + 1).padStart(2, '0')}` === mo.key).length);
-
-  const uc = unclaimed(v);
-
-  return `
-    <div class="legend">
-      <span class="li"><b>Ink</b> = total relevance landing in that week, for this audience.</span>
-      <span class="li"><b>Empty</b> = nothing this audience has a claim on. That is a finding, not a gap.</span>
-    </div>
-    <div class="pm">
-      <div class="pm-grid">
-        <div class="pm-mos">
-          <div></div>
-          <div class="mos" style="grid-template-columns:${monthSpan.map(s => s + 'fr').join(' ')}">
-            ${MONTHS.map(mo => `<div class="mo">${mo.label}</div>`).join('')}
-          </div>
-        </div>
-        <div style="--weeks:${weeks.length}">
-        ${cats.map(c => `
-          <div class="pm-row">
-            <div class="pm-lb"><span class="sw" style="--c:${CAT_COLOR[c]}"></span>${esc(c)}</div>
-            ${weeks.map((w, i) => {
-              const val = cellv.get(key(c, w.key)) || 0;
-              if (!val) return `<button class="pm-cell zero" disabled aria-label="${esc(c)}, ${w.label}: nothing"></button>`;
-              const t = Math.min(1, val / vMax);
-              const sel = S.pmSel && S.pmSel[0] === c && S.pmSel[1] === i ? ' sel' : '';
-              return `<button class="pm-cell${sel}" data-pm="${esc(c)}|${i}"
-                style="--c:${CAT_COLOR[c]};--t:${Math.round(18 + t * 82)}%"
-                title="${esc(c)} · ${w.label} — ${Math.round(val)}"></button>`;
-            }).join('')}
-          </div>`).join('')}
-        </div>
-      </div>
-      <div class="pm-side">
-        <div class="panel eg">
-          <h3>The unclaimed moment</h3>
-          <p class="sub">Highest affinity sitting in the quietest weeks — not the highest score. This is the question stage 6.2 asks that a ranked list will never answer.</p>
-          ${uc.map((m, i) => `
-            <div class="uc">
-              <span class="n">${String(i + 1).padStart(2, '0')}</span>
-              <span>
-                <span class="t">${esc(m.name)}</span>
-                <span class="m">${fmtDate(m.start)} · affinity <b>${Math.round(m.parts.aff)}</b> · congestion ${Math.round(m.parts.cong)}</span>
-              </span>
-            </div>`).join('')}
-        </div>
-        <div class="panel" id="pmDetail">
-          <h3>Week detail</h3>
-          <p class="sub">Pick a cell to see what lands in it.</p>
-        </div>
-      </div>
-    </div>`;
-}
-
-function pmDetail() {
-  const el = document.getElementById('pmDetail');
-  if (!el || !S.pmSel) return;
-  const [c, i] = S.pmSel;
-  const weeks = weekAxis();
-  const w = weeks[i];
-  const list = visible().filter(m => m.cat === c && weekKey(m.start < WIN_START ? WIN_START : m.start) === w.key)
-    .sort((a, b) => b.score - a.score);
-  el.innerHTML = `
-    <h3>${esc(c)} · week of ${w.label}</h3>
-    <p class="sub">${list.length} moment${list.length === 1 ? '' : 's'}, ${Math.round(list.reduce((s, m) => s + m.score, 0))} total relevance.</p>
-    ${list.map(m => `
-      <div class="uc">
-        <span class="n">${m.score}</span>
-        <span><span class="t">${esc(m.name)}</span>
-        <span class="m">${fmtDate(m.start)} · ${esc(m.conf)}</span></span>
-      </div>`).join('')}`;
-}
-
-/* ============================================================
-   05 — THE IN / OUT BOARD
-   ============================================================ */
-function seedIO() {
-  S.io = {};
-  for (const m of visible()) {
-    S.io[m.id] = m.band.id === 'anchor' ? 'in' : m.band.id === 'skip' ? 'out' : 'und';
-  }
-}
-
-function drawIO() {
-  if (!S.io) seedIO();
-  const v = visible().sort((a, b) => b.score - a.score);
-  const lane = id => v.filter(m => (S.io[m.id] || 'und') === id);
-  const cols = [
-    { id: 'in',  k: 'Moments in',  d: 'We are buying into these. Each one needs a line in the plan.' },
-    { id: 'und', k: 'Undecided',   d: 'Still arguable. Nothing leaves this board undecided.' },
-    { id: 'out', k: 'Moments out', d: 'Deliberately skipped, and said out loud so nobody re-opens it in November.' }
-  ];
-  const card = m => `
-    <div class="mcard" style="--c:${CAT_COLOR[m.cat]}">
-      <div class="t">${esc(m.name)}</div>
-      <div class="r">
-        <span class="dt">${fmtDate(m.start)}</span>
-        <span class="bandpill ${m.band.id}">${m.band.label}</span>
-        <span class="sc">${m.score}</span>
-      </div>
-      <div class="mv">
-        ${['in', 'und', 'out'].filter(t => t !== (S.io[m.id] || 'und'))
-          .map(t => `<button data-io="${m.id}|${t}" type="button">${t === 'in' ? 'In' : t === 'out' ? 'Out' : 'Undecided'}</button>`).join('')}
-      </div>
-    </div>`;
-
-  const CAP = 14;
-  return `
-    <div class="legend">
-      <span class="li">Seeded from the score — <b>Anchor → in</b>, <b>Skip → out</b>, everything else open — and then argued with. The seed is a starting position, not a verdict.</span>
-    </div>
-    <div class="io">
-      ${cols.map(c => {
-        const list = lane(c.id);
-        return `<div class="col ${c.id}">
-          <div class="col-hd"><div class="k">${c.k}</div><div class="c">${list.length}</div><div class="d">${c.d}</div></div>
-          <div class="col-bd">
-            ${list.length ? list.slice(0, CAP).map(card).join('') : '<div class="col-empty">Nothing here yet.</div>'}
-            ${list.length > CAP ? `<div class="col-empty">+${list.length - CAP} more below the fold</div>` : ''}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="io-foot">
-      <div class="feed"><span class="ar">→</span><span>
-        <span class="k">Feeds 6.3</span><span class="t">Big Ideas &amp; Partnerships</span>
-        <span class="d">The in-list is the shortlist a partnership is proposed against.</span></span></div>
-      <div class="feed"><span class="ar">→</span><span>
-        <span class="k">Feeds step 03</span><span class="t">Flighting</span>
-        <span class="d">Dates and weights, straight into the annual scenario.</span></span></div>
-      <div class="feed"><span class="ar">→</span><span>
-        <span class="k">Produces</span><span class="t">The Calendar</span>
-        <span class="d">Which is what stage 6.2 is defined as producing.</span></span></div>
-    </div>`;
 }
 
 /* ============================================================
@@ -3268,7 +2832,7 @@ function commitAudience() {
   const rec = buildAudience({ ...draft, name, ent }, CATS, ROSTER().map(a => a.id));
   CUSTOM.push(rec);
   saveCustom();
-  S.aud = rec.id;
+  S.auds = [rec.id];
   closeAudPanel();
   recompute();
   render();
@@ -3280,7 +2844,8 @@ function deleteAudience(id) {
   if (!confirm(`Remove "${a.name}"? Its numbers are only in this browser and cannot be recovered.`)) return;
   CUSTOM = CUSTOM.filter(x => x.id !== id);
   saveCustom();
-  if (S.aud === id) S.aud = AUDIENCES[0].id;
+  S.auds = S.auds.filter(x => x !== id);
+  if (!S.auds.length) S.auds = [AUDIENCES[0].id];
   recompute();
   render();
 }
@@ -3349,34 +2914,43 @@ function render() {
   /* replaceState rather than assigning location.hash: this is where you ARE,
      not somewhere you went, and a back button that walks through every rail
      click is worse than one that leaves the page. */
-  try { history.replaceState(null, '', `#/${S.dir}/${S.aud}`); } catch (e) { void e; }
+  try {
+    const q = S.auds.join('+') + (multi() ? '/' + S.mode : '');
+    history.replaceState(null, '', '#/' + q);
+  } catch (e) { void e; }
   renderRail();
   renderHead();
   const body = document.getElementById('body');
-  body.innerHTML = [drawWall, drawRank, drawRibbon, drawPressure, drawIO][S.dir - 1]();
-  if (S.dir === 4 && S.pmSel) pmDetail();
+  body.innerHTML = drawRibbon();
   body.scrollTop = 0;
 }
 
 /* ---------- one delegated listener ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-dir],[data-id],[data-open],[data-pm],[data-io],[data-more],[data-del],[data-close],#rankMore,#wallWatch,#themeTog,#audAdd');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode]');
   if (!t) { closePop(); return; }
 
   if (t.id === 'audAdd')   return openAudPanel();
   if (t.dataset.close)     return closeAudPanel();
   if (t.dataset.del)       return deleteAudience(t.dataset.del);
 
-  if (t.dataset.aud)  { S.aud = t.dataset.aud; recompute(); return render(); }
-  if (t.dataset.dir)  { S.dir = +t.dataset.dir; return render(); }
+  if (t.dataset.aud)  {
+    const id = t.dataset.aud;
+    const i = S.auds.indexOf(id);
+    /* The last one cannot be switched off — a board with no audience has
+       nothing to say, and an empty rail reads as a bug rather than a choice. */
+    if (i >= 0) { if (S.auds.length === 1) return; S.auds.splice(i, 1); }
+    else S.auds.push(id);
+    recompute();
+    return render();
+  }
   if (t.dataset.cat)  {
     const c = t.dataset.cat;
     S.off.has(c) ? S.off.delete(c) : S.off.add(c);
-    if (S.dir === 5) S.io = null;
     return render();
   }
-  if (t.id === 'wallWatch') { S.showWatch = !S.showWatch; return render(); }
-  if (t.id === 'rankMore')  { S.rankShown += 25; return render(); }
+  if (t.dataset.mode) { S.mode = t.dataset.mode; recompute(); return render(); }
+  if (t.id === 'watchTog') { S.showWatch = !S.showWatch; return render(); }
   if (t.id === 'themeTog')  {
     /* Light is the default, so the toggle is a straight flip of a stamp that
        is always present — there is no unstamped third state to reason about.
@@ -3384,7 +2958,7 @@ document.addEventListener('click', e => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem('ltpm.theme', next); } catch (e) { void e; }
-    t.textContent = next === 'dark' ? '☀ Light' : '☾ Dark';
+    renderHead();
     return;
   }
   if (t.dataset.more) {
@@ -3404,18 +2978,6 @@ document.addEventListener('click', e => {
     t.setAttribute('aria-expanded', String(!open));
     t.querySelector('.rk-cv').textContent = open ? '▾' : '▴';
     return;
-  }
-  if (t.dataset.pm) {
-    const [c, i] = t.dataset.pm.split('|');
-    S.pmSel = [c, +i];
-    document.querySelectorAll('.pm-cell.sel').forEach(x => x.classList.remove('sel'));
-    t.classList.add('sel');
-    return pmDetail();
-  }
-  if (t.dataset.io) {
-    const [id, to] = t.dataset.io.split('|');
-    S.io[id] = to;
-    return render();
   }
   if (t.dataset.read) {
     const m = SCORED.find(x => x.id === t.dataset.read);
@@ -3439,8 +3001,6 @@ document.addEventListener('keydown', e => {
 window.addEventListener('resize', closePop, { passive: true });
 
 /* ---------- boot ---------- */
-document.getElementById('mkTabs').innerHTML = DIRS.map(d =>
-  `<button class="mk-tab" data-dir="${d.n}" type="button"><i>0${d.n}</i>${d.tab}</button>`).join('');
 recompute();
 render();
 </script>
