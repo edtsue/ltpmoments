@@ -104,6 +104,27 @@ ${source}
 """`;
 }
 
+/* THE MODEL SAYS WHAT THE NUMBERS MEAN, NOT GEMINI.
+
+   The first version of this prompt listed the five components as bare figures.
+   Every number in the reply validated, and the sentence was still wrong: it
+   called a congestion of 31 "a crowded media landscape". Four of the five
+   components are better when high and congestion is worse when high, and
+   nothing in a list of numbers says so — so the model defaulted to
+   higher-is-better and inverted the one term that runs the other way.
+
+   Validating digits cannot catch that. The fix is to stop asking for the
+   judgment: each figure is turned into a word HERE, with its polarity built
+   in, and the prompt hands over both. Gemini is left with the sentence. */
+function band5(v, invert) {
+  const x = invert ? 100 - v : v;
+  if (x >= 85) return invert ? 'very quiet' : 'very high';
+  if (x >= 65) return invert ? 'quiet' : 'high';
+  if (x >= 45) return invert ? 'average' : 'moderate';
+  if (x >= 25) return invert ? 'busy' : 'low';
+  return invert ? 'very busy' : 'very low';
+}
+
 function readPrompt(b) {
   const m = b.moment || {};
   const a = b.audience || {};
@@ -120,13 +141,18 @@ Distributor: ${m.plat || 'not recorded'}
 THE AUDIENCE
 ${a.name}${a.def ? ` — ${a.def}` : ''}
 
-WHAT THE MODEL SCORED, out of 100
+WHAT THE MODEL SCORED, out of 100. The reading in brackets is the model's, not
+yours — use it, do not second-guess it, and do not re-interpret a figure against
+it.
 Overall: ${b.score} (band: ${b.band})
-Affinity ${Math.round(p.aff)} — does this audience care
-Scale ${Math.round(p.scale)} — how many of them show up
-Actionability ${Math.round(p.act)} — is there a way to buy in
-Timing ${Math.round(p.tim)} — is the date firm enough to plan against
-Congestion ${Math.round(p.cong)} — how much else lands that week
+Affinity ${Math.round(p.aff)} [${band5(p.aff)}] — does this audience care. Higher is better.
+Scale ${Math.round(p.scale)} [${band5(p.scale)}] — how many of them show up. Higher is better.
+Actionability ${Math.round(p.act)} [${band5(p.act)}] — is there a way to buy in. Higher is better.
+Timing ${Math.round(p.tim)} [${band5(p.tim)}] — is the date firm enough to plan against. Higher is better.
+Congestion ${Math.round(p.cong)} [${band5(p.cong, true)} week] — how much else lands that week.
+  HIGHER IS WORSE. It is a penalty on the overall score, not a virtue. A low
+  congestion figure means the week is QUIET and the moment has room; a high one
+  means the week is crowded. Do not describe it the other way round.
 
 RULES:
 - Two or three sentences. No preamble, no heading, no bullet points.
@@ -346,3 +372,4 @@ module.exports = async (req, res) => {
 module.exports.verifyPairs = verifyPairs;
 module.exports.verifyRead = verifyRead;
 module.exports.numberInSource = numberInSource;
+module.exports.band5 = band5;

@@ -141,3 +141,25 @@ test('allows digits that are part of the moment name or its date', () => {
 test('a read with no numbers at all is fine', () => {
   assert.deepEqual(verifyRead('Strong on affinity, weak on timing.', [88]), []);
 });
+
+/* ---------- band5: the polarity that a digit check cannot catch ---------- */
+const { band5 } = require('../api/gemini.js');
+
+test('congestion reads inverted — low is quiet, high is busy', () => {
+  assert.equal(band5(31, true), 'quiet');
+  assert.equal(band5(5, true), 'very quiet');
+  assert.equal(band5(90, true), 'very busy');
+  assert.equal(band5(70, true), 'busy');
+});
+
+test('the other four read the normal way round', () => {
+  assert.equal(band5(92), 'very high');
+  assert.equal(band5(70), 'high');
+  assert.equal(band5(50), 'moderate');
+  assert.equal(band5(10), 'very low');
+});
+
+test('a quiet week and a high score never share a word', () => {
+  // The bug this exists to prevent: congestion 31 described as "crowded".
+  assert.notEqual(band5(31, true), band5(31));
+});
