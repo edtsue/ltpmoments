@@ -9,6 +9,27 @@
 import { MOMENTS } from './data/moments.js';
 import { AUDIENCES, CAT_COLOR } from './data/audiences.js';
 import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed } from './data/relevance.js';
+import { parseAudienceData, buildAudience } from './data/parse.js';
+
+/* ---------- audiences the user has added ---------- */
+/* The six that ship are placeholders and are marked as such. An audience the
+   user defines is theirs, lives in their browser, and is never mixed in with
+   the built-ins — it carries `custom` so the rail can say which is which and
+   only offer to delete the ones it is safe to delete. */
+const LS_KEY = 'ltpm.audiences.v1';
+
+function loadCustom() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter(a => a && a.id && a.name && a.aff) : [];
+  } catch (e) { void e; return []; }
+}
+function saveCustom() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(CUSTOM)); }
+  catch (e) { void e; }        // a full or blocked store must not lose the session
+}
+let CUSTOM = loadCustom();
+const ROSTER = () => [...AUDIENCES, ...CUSTOM];
 
 /* ---------- window: the planning year opens in July 2026 ---------- */
 const WIN_START = '2026-07-01';
@@ -57,13 +78,13 @@ function fromHash() {
   const dir = +m[1], aud = m[2];
   return {
     dir: dir >= 1 && dir <= 5 ? dir : undefined,
-    aud: AUDIENCES.some(a => a.id === aud) ? aud : undefined
+    aud: ROSTER().some(a => a.id === aud) ? aud : undefined
   };
 }
 const H = fromHash();
 
 const S = {
-  aud: H.aud || AUDIENCES[0].id,
+  aud: H.aud || AUDIENCES[0].id,   // resolved against the roster on boot
   dir: H.dir || 3,
   off: new Set(),          // categories switched off
   showWatch: false,        // direction 01: draw the Watch band too
@@ -72,7 +93,9 @@ const S = {
   io: null                 // in/out board: id -> 'in' | 'und' | 'out'
 };
 
-const audience = () => AUDIENCES.find(a => a.id === S.aud);
+/* Falls back rather than returning undefined: a custom audience deleted in
+   another tab leaves a hash pointing at nothing, and the board must still draw. */
+const audience = () => ROSTER().find(a => a.id === S.aud) || ROSTER()[0];
 
 let SCORED = [];
 function recompute() {
@@ -88,13 +111,19 @@ const visible = () => SCORED.filter(m => !S.off.has(m.cat));
    ============================================================ */
 function renderRail() {
   const a = audience();
-  document.getElementById('audList').innerHTML = AUDIENCES.map(x => `
-    <button class="aud ${x.id === S.aud ? 'on' : ''}" data-aud="${x.id}" type="button"
-      aria-pressed="${x.id === S.aud}">
-      <span class="an">${esc(x.name)}</span>
-      <span class="as">${esc(x.size)} · ${topCats(x)}</span>
-    </button>`).join('');
-  document.getElementById('audDef').textContent = a.def;
+  document.getElementById('audList').innerHTML = ROSTER().map(x => `
+    <div class="aud-row">
+      <button class="aud ${x.id === S.aud ? 'on' : ''}" data-aud="${x.id}" type="button"
+        aria-pressed="${x.id === S.aud}">
+        <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}</span>
+        <span class="as">${esc(x.size || '—')} · ${topCats(x)}</span>
+      </button>
+      ${x.custom ? `<button class="aud-x" data-del="${esc(x.id)}" type="button"
+        title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">×</button>` : ''}
+    </div>`).join('') +
+    `<button class="aud-add" id="audAdd" type="button">
+       <span aria-hidden="true">+</span> New target audience</button>`;
+  document.getElementById('audDef').textContent = a.def || '';
 
   document.getElementById('catList').innerHTML = CATS.map(c => `
     <button class="cat ${S.off.has(c) ? 'off' : ''}" data-cat="${esc(c)}" type="button"
@@ -286,24 +315,36 @@ function drawRibbon() {
 
   const lane = c => {
     const list = v.filter(m => m.cat === c).sort((a, b) => a.start.localeCompare(b.start));
-    /* Greedy packing into sub-rows: a bar goes in the first row whose last bar
-       has already finished, with a small gutter so two touching moments do not
-       read as one. Three rows maximum — beyond that the lane stops being a
-       lane and the reader should be in the Pressure Map instead. */
+    /* Greedy packing into sub-rows: sorted by start, each bar goes in the first
+       row whose last bar has already finished, plus a small gutter so two
+       touching moments do not read as one. Sorted-by-start first-fit is optimal
+       for intervals — it never uses more rows than the deepest overlap.
+
+       THE ROW COUNT IS NOT CAPPED. It was capped at three, and the fourth
+       onward were dumped into the last row on top of each other: Tours &
+       Concerts genuinely needs 18 rows because tours are long windows that all
+       run at once, and TV & Streaming needs 43 with Watch switched on. A cap
+       does not make a lane shorter, it makes it a lie — the bars are still
+       there, just drawn over one another. A tall lane you can scroll is the
+       honest drawing, and the categories nobody asked for are one click off in
+       the rail. */
     const rows = [];
     for (const m of list) {
       const s = Math.max(0, dayNo(m.start));
       const e = Math.min(WIN_DAYS, dayNo(m.end) + 1);
       const w = Math.max(e - s, 3);
       let r = rows.find(row => row.end <= s - 4);
-      if (!r) { if (rows.length >= 3) { r = rows[rows.length - 1]; } else { r = { end: 0, bars: [] }; rows.push(r); } }
-      r.end = Math.max(r.end, s + w);
+      if (!r) { r = { end: 0, bars: [] }; rows.push(r); }
+      r.end = s + w;
       r.bars.push({ m, s, w });
     }
     if (!rows.length) rows.push({ bars: [] });
     return `
       <div class="rib-lane">
-        <div class="rib-lb"><span class="sw" style="--c:${CAT_COLOR[c]}"></span>${esc(c)}</div>
+        <div class="rib-lb">
+          <span class="sw" style="--c:${CAT_COLOR[c]}"></span>
+          <span class="t">${esc(c)}<span class="n">${list.length} moment${list.length === 1 ? '' : 's'} · ${rows.length} row${rows.length === 1 ? '' : 's'}</span></span>
+        </div>
         <div class="rib-tr">
           <div class="rib-grid" style="grid-template-columns:repeat(${MONTHS.length},1fr)">${MONTHS.map(() => '<span></span>').join('')}</div>
           ${rows.map(row => `<div class="rib-sub">${row.bars.map(b => {
@@ -522,6 +563,266 @@ function drawIO() {
 }
 
 /* ============================================================
+   ADD AN AUDIENCE
+   An audience is a name and ten numbers. The numbers are the whole argument,
+   so the panel is built around getting them in and SHOWING what arrived —
+   never around getting the dialog closed quickly. Three ways in, one result:
+
+     drop a file    a CSV or TSV exported from wherever the cut lives
+     paste a table  a cell range straight out of Sheets
+     type them      ten boxes, for when there are only two numbers worth having
+
+   Whatever comes in is parsed live and reported back line by line, because the
+   failure this panel has to prevent is a number arriving wrong and never being
+   noticed. A category the data does not mention stays at par and says so.
+   ============================================================ */
+let draft = null;
+
+function openAudPanel() {
+  draft = { name: '', def: '', size: '', text: '', parsed: null, aff: {}, ent: {} };
+  const el = document.getElementById('panel');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="pn-scrim" data-close="1"></div>
+    <div class="pn-card" role="dialog" aria-modal="true" aria-labelledby="pnTitle">
+      <div class="pn-hd">
+        <div>
+          <div class="pn-kick">New target audience</div>
+          <h2 id="pnTitle">Who are they, and what do they care about?</h2>
+        </div>
+        <button class="pn-x" data-close="1" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="pn-bd">
+        <div class="pn-col">
+          <label class="fld">
+            <span>Name</span>
+            <input id="pnName" type="text" placeholder="e.g. Women 18–34, urban" autocomplete="off">
+          </label>
+          <label class="fld">
+            <span>Who they are</span>
+            <textarea id="pnDef" rows="3" placeholder="One or two lines. What defines this group, and what a planner should remember about them."></textarea>
+          </label>
+          <label class="fld">
+            <span>Size <i>optional</i></span>
+            <input id="pnSize" type="text" placeholder="e.g. 24.8M" autocomplete="off">
+          </label>
+
+          <div class="fld">
+            <span>The data that defines them</span>
+            <div class="drop" id="pnDrop">
+              <b>Drop a CSV or TSV here</b>
+              <span>or paste a range from a spreadsheet below</span>
+              <input type="file" id="pnFile" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
+              <button type="button" id="pnPick">Choose a file</button>
+            </div>
+            <textarea id="pnText" rows="7" spellcheck="false"
+              placeholder="Sports, 145&#10;TV &amp; Streaming, 110&#10;Gaming, 162&#10;Taylor Swift, 180"></textarea>
+            <p class="hint">Two columns: a category or a name, then an index on a 100 base.
+              Commas, tabs, colons and pipes all work. Anything that isn't a category is
+              offered as an entity override.</p>
+          </div>
+        </div>
+
+        <div class="pn-col">
+          <div class="pn-read" id="pnRead"></div>
+          <div class="fld">
+            <span>Category affinity <i>index, 100 = par</i></span>
+            <div class="grid" id="pnGrid"></div>
+          </div>
+          <div id="pnEnt"></div>
+        </div>
+      </div>
+
+      <div class="pn-ft">
+        <p class="pn-note" id="pnNote">Nothing read yet.</p>
+        <div class="pn-acts">
+          <button class="btn" data-close="1" type="button">Cancel</button>
+          <button class="btn pri" id="pnSave" type="button" disabled>Add audience</button>
+        </div>
+      </div>
+    </div>`;
+
+  renderGrid();
+  renderRead();
+  document.getElementById('pnName').focus();
+  wirePanel();
+}
+
+function closeAudPanel() {
+  const el = document.getElementById('panel');
+  el.hidden = true;
+  el.innerHTML = '';
+  draft = null;
+}
+
+/* The ten boxes. Prefilled from whatever was parsed, and each one says where
+   its number came from — read from the data, typed by hand, or left at par. */
+function renderGrid() {
+  document.getElementById('pnGrid').innerHTML = CATS.map(c => {
+    const v = draft.aff[c];
+    const from = draft.parsed && draft.parsed.aff[c] !== undefined;
+    return `<div class="gr ${v === undefined ? 'par' : ''}">
+      <span class="sw" style="--c:${CAT_COLOR[c]}"></span>
+      <span class="gn">${esc(c)}</span>
+      <input type="number" data-aff="${esc(c)}" value="${v === undefined ? '' : v}"
+        placeholder="100" min="0" max="400" step="1" inputmode="numeric">
+      <span class="gt">${from ? 'read' : v === undefined ? 'par' : 'typed'}</span>
+    </div>`;
+  }).join('');
+}
+
+/* What the parser actually did with the input. This is the part that stops a
+   wrong number sliding through: counts, the scale it inferred, and every line
+   it could not use, listed rather than summarised. */
+function renderRead() {
+  const p = draft.parsed;
+  const el = document.getElementById('pnRead');
+  if (!p) { el.innerHTML = `<div class="rd empty">Drop or paste the cut and it will be read here, line by line.</div>`; return; }
+  const bad = p.ignored.filter(Boolean);
+  el.innerHTML = `
+    <div class="rd">
+      <div class="rd-row"><b>${p.matched.length}</b> of ${CATS.length} categories read${p.asMultiplier ? ' <i>· column read as multipliers of par, ×100</i>' : ''}</div>
+      ${p.missing.length ? `<div class="rd-row warn"><b>${p.missing.length}</b> not mentioned — left at par: ${p.missing.map(esc).join(', ')}</div>` : ''}
+      ${p.unmatched.length ? `<div class="rd-row">${p.unmatched.length} name${p.unmatched.length === 1 ? '' : 's'} kept as entity override${p.unmatched.length === 1 ? '' : 's'}</div>` : ''}
+      ${bad.length ? `<div class="rd-row bad"><b>${bad.length}</b> line${bad.length === 1 ? '' : 's'} not used: ${bad.slice(0, 4).map(x => esc(x.slice(0, 42))).join(' · ')}${bad.length > 4 ? ' …' : ''}</div>` : ''}
+    </div>`;
+  const ent = document.getElementById('pnEnt');
+  ent.innerHTML = p.unmatched.length ? `
+    <div class="fld"><span>Entity overrides <i>sharper than a category</i></span>
+      <div class="ents">${p.unmatched.map(u => `
+        <label class="ent"><input type="checkbox" data-ent="${esc(u.label)}" checked>
+          <span>${esc(u.label)}</span><b>${u.value}</b></label>`).join('')}</div>
+    </div>` : '';
+}
+
+function reparse(text) {
+  draft.text = text;
+  draft.parsed = text.trim() ? parseAudienceData(text) : null;
+  if (draft.parsed) {
+    draft.aff = { ...draft.parsed.aff };
+    draft.ent = { ...draft.parsed.entities };
+  }
+  renderRead();
+  renderGrid();
+  validate();
+}
+
+function validate() {
+  const name = (draft.name || '').trim();
+  const n = Object.values(draft.aff).filter(v => Number.isFinite(v)).length;
+  const save = document.getElementById('pnSave');
+  const note = document.getElementById('pnNote');
+  const ok = !!name && n > 0;
+  save.disabled = !ok;
+  note.textContent = !name ? 'Give the audience a name.'
+    : n === 0 ? 'No affinity numbers yet — drop a cut, paste one, or type at least one.'
+    : `${name} · ${n} categor${n === 1 ? 'y' : 'ies'} set, ${CATS.length - n} left at par.`;
+  note.className = 'pn-note' + (ok ? '' : ' warn');
+}
+
+function wirePanel() {
+  const P = id => document.getElementById(id);
+  P('pnName').addEventListener('input', e => { draft.name = e.target.value; validate(); });
+  P('pnDef').addEventListener('input', e => { draft.def = e.target.value; });
+  P('pnSize').addEventListener('input', e => { draft.size = e.target.value; });
+  P('pnText').addEventListener('input', e => reparse(e.target.value));
+
+  P('pnPick').addEventListener('click', () => P('pnFile').click());
+  P('pnFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) readFile(f);
+  });
+
+  const drop = P('pnDrop');
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.remove('over');
+  }));
+  drop.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    if (!dt) return;
+    const f = dt.files && dt.files[0];
+    if (f) return readFile(f);
+    /* Dragged out of another window as text rather than as a file — a selection
+       from a sheet arrives this way, and refusing it would be arbitrary. */
+    const t = dt.getData('text/plain');
+    if (t) { P('pnText').value = t; reparse(t); }
+  });
+
+  P('pnGrid').addEventListener('input', e => {
+    const c = e.target.dataset.aff;
+    if (!c) return;
+    const v = e.target.value.trim();
+    if (v === '') delete draft.aff[c]; else draft.aff[c] = Number(v);
+    e.target.closest('.gr').classList.toggle('par', v === '');
+    const tag = e.target.closest('.gr').querySelector('.gt');
+    tag.textContent = v === '' ? 'par' : 'typed';
+    validate();
+  });
+
+  P('pnSave').addEventListener('click', commitAudience);
+}
+
+function readFile(file) {
+  /* A dropped spreadsheet is not a CSV. Reading a .xlsx as text produces zip
+     bytes, which the parser would dutifully report as 400 unusable lines — a
+     true statement that explains nothing. Say what happened instead. */
+  if (/\.(xlsx|xls|numbers|pdf|docx)$/i.test(file.name)) {
+    draft.parsed = null;
+    renderRead();
+    document.getElementById('pnRead').innerHTML =
+      `<div class="rd"><div class="rd-row bad"><b>${esc(file.name)}</b> is a spreadsheet, not a text file.
+       Export it as CSV, or select the cells and paste them below.</div></div>`;
+    return;
+  }
+  const r = new FileReader();
+  r.onload = () => {
+    const t = String(r.result || '');
+    document.getElementById('pnText').value = t;
+    reparse(t);
+  };
+  r.onerror = () => {
+    document.getElementById('pnRead').innerHTML =
+      `<div class="rd"><div class="rd-row bad">Could not read that file.</div></div>`;
+  };
+  r.readAsText(file);
+}
+
+function commitAudience() {
+  const name = draft.name.trim();
+  if (!name) return;
+
+  /* Only the overrides still ticked. Unticking one has to actually drop it, or
+     the checkbox is decoration. */
+  const ent = {};
+  document.querySelectorAll('[data-ent]').forEach(cb => {
+    if (cb.checked) ent[cb.dataset.ent] = draft.ent[cb.dataset.ent];
+  });
+
+  const rec = buildAudience({ ...draft, name, ent }, CATS, ROSTER().map(a => a.id));
+  CUSTOM.push(rec);
+  saveCustom();
+  S.aud = rec.id;
+  closeAudPanel();
+  recompute();
+  render();
+}
+
+function deleteAudience(id) {
+  const a = CUSTOM.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`Remove "${a.name}"? Its numbers are only in this browser and cannot be recovered.`)) return;
+  CUSTOM = CUSTOM.filter(x => x.id !== id);
+  saveCustom();
+  if (S.aud === id) S.aud = AUDIENCES[0].id;
+  recompute();
+  render();
+}
+
+/* ============================================================
    POPOVER — shared by the wall and the ribbon
    ============================================================ */
 let popEl = null;
@@ -566,8 +867,12 @@ function render() {
 
 /* ---------- one delegated listener ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-dir],[data-id],[data-open],[data-pm],[data-io],[data-more],#rankMore,#wallWatch,#themeTog');
+  const t = e.target.closest('[data-aud],[data-cat],[data-dir],[data-id],[data-open],[data-pm],[data-io],[data-more],[data-del],[data-close],#rankMore,#wallWatch,#themeTog,#audAdd');
   if (!t) { closePop(); return; }
+
+  if (t.id === 'audAdd')   return openAudPanel();
+  if (t.dataset.close)     return closeAudPanel();
+  if (t.dataset.del)       return deleteAudience(t.dataset.del);
 
   if (t.dataset.aud)  { S.aud = t.dataset.aud; recompute(); return render(); }
   if (t.dataset.dir)  { S.dir = +t.dataset.dir; return render(); }
@@ -623,7 +928,14 @@ document.addEventListener('click', e => {
     return;
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  /* The panel holds unsaved typing, so it takes Escape ahead of the popover —
+     closing a tooltip while a half-filled dialog sits behind it would read as
+     the key having done nothing. */
+  if (draft) return closeAudPanel();
+  closePop();
+});
 window.addEventListener('resize', closePop, { passive: true });
 
 /* ---------- boot ---------- */

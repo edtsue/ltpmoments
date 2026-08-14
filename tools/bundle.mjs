@@ -19,6 +19,7 @@ const ORDER = [
   'data/moments.js',
   'data/audiences.js',
   'data/relevance.js',
+  'data/parse.js',
   'app.js'
 ];
 
