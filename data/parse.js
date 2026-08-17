@@ -169,6 +169,19 @@ export function buildAudience(draft, categories, takenIds) {
   while (taken.has(id)) id = base + (n++);
 
   const read = categories.length - atPar.length;
+
+  /* ESTIMATED. Set when the indices were reasoned from a description rather
+     than read off a cut. It rides on the record itself rather than being
+     inferred later from how the panel happened to be used, because every
+     surface that draws this audience has to be able to say so — and an
+     estimate that loses its label on the way into storage is worse than no
+     label at all: it becomes indistinguishable from a real cut. */
+  const est = !!draft.est;
+
+  const provenance = read === 0
+    ? 'no categories set — every one at par'
+    : `${read} of ${categories.length} categories set, ${atPar.length} left at par`;
+
   return {
     id,
     name,
@@ -177,11 +190,13 @@ export function buildAudience(draft, categories, takenIds) {
     aff,
     ent: { ...(draft.ent || {}) },
     custom: true,
+    est,
+    /* Why each index is what it is, where anything said so. Kept per category
+       so the panel can put a reason under the number it explains. */
+    why: { ...(draft.why || {}) },
     /* What the numbers rest on, kept with them. A cut with no provenance is
        exactly what this tool exists to make impossible. */
-    read: read === 0
-      ? 'no categories set — every one at par'
-      : `${read} of ${categories.length} categories set, ${atPar.length} left at par`,
+    read: est ? `estimated from a description — ${provenance}` : provenance,
     atPar
   };
 }

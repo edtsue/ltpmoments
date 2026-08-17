@@ -587,7 +587,15 @@ function weekAxis() {
 let draft = null;
 
 function openAudPanel() {
-  draft = { name: '', def: '', size: '', text: '', parsed: null, aff: {}, ent: {}, quotes: {}, busy: false };
+  draft = {
+    name: '', def: '', size: '', text: '', parsed: null,
+    aff: {}, ent: {}, quotes: {},
+    /* Set only by the describe-it path, and carried onto the saved record by
+       buildAudience — an estimate that loses its label in the panel is an
+       estimate that reaches the rail looking like a cut. */
+    est: false, why: {}, defined: null,
+    busy: false
+  };
   const el = document.getElementById('panel');
   el.hidden = false;
   el.innerHTML = `
@@ -616,8 +624,26 @@ function openAudPanel() {
             <input id="pnSize" type="text" placeholder="e.g. 24.8M" autocomplete="off">
           </label>
 
+          <!-- The third way in, and the only one that does not need a cut at
+               all. Everything it produces is an estimate and is marked as one
+               everywhere it later appears; it exists because "no cut yet" is
+               the normal state of an audience early in a plan, and a rail that
+               can only hold measured audiences is a rail nobody can start
+               with. -->
           <div class="fld">
-            <span>The data that defines them</span>
+            <span>No cut yet? Describe them <i>Gemini estimates the indices</i></span>
+            <textarea id="pnDesc" rows="3" spellcheck="false"
+              placeholder="e.g. women 25–44 in the Southeast who watch college football, shop Target, and plan the family's year"></textarea>
+            <div class="gem-row">
+              <button type="button" class="gem" id="pnDefine">Define with Gemini</button>
+              <span class="gem-note">Reasons all twelve indices from your description and says why for each.
+                Everything it produces is marked <b>Estimated</b> — it is a considered guess, not a research cut,
+                and you can edit any number before saving.</span>
+            </div>
+          </div>
+
+          <div class="fld">
+            <span>Or the data that defines them</span>
             <div class="drop" id="pnDrop">
               <b>Drop a CSV or TSV here</b>
               <span>or paste a range from a spreadsheet below</span>
@@ -707,16 +733,31 @@ function renderRead() {
         ${g.rejected.slice(0, 3).map(r => `${esc(r.label || 'unnamed')} (${esc(r.why)})`).join('; ')}${g.rejected.length > 3 ? '…' : ''}</div>` : ''}
       ${g.notes ? `<div class="rd-row"><i>${esc(g.notes)}</i></div>` : ''}
     </div>`;
+  /* An estimated audience says so in the panel, before it is saved rather than
+     only after. The count matters as much as the label: a profile covering
+     eight of twelve leaves four at par, and that is the difference between an
+     audience that re-orders the board and one that barely moves it. */
+  const d = draft.defined;
+  const estBlock = !d ? '' : `
+    <div class="rd est">
+      <div class="rd-row"><b>Estimated</b> — reasoned from your description, not read off a cut.
+        Edit anything below before saving.</div>
+      <div class="rd-row"><b>${d.covered}</b> of ${d.of} categories given an index${
+        d.covered < d.of ? `, ${d.of - d.covered} left at par` : ''}</div>
+      ${d.dropped.length ? `<div class="rd-row warn"><b>${d.dropped.length}</b> dropped —
+        ${d.dropped.slice(0, 3).map(x => `${esc(x.label || 'unnamed')} (${esc(x.why)})`).join('; ')}</div>` : ''}
+    </div>`;
+
   const clearBtn = (Object.keys(draft.aff).length || draft.text)
     ? `<button type="button" class="clr" id="pnClear">Clear and start again</button>` : '';
   if (!p) {
-    el.innerHTML = gemBlock +
-      (g ? '' : `<div class="rd empty">Drop or paste the cut and it will be read here, line by line.</div>`) +
+    el.innerHTML = estBlock + gemBlock +
+      (g || d ? '' : `<div class="rd empty">Describe them above, or drop a cut and it will be read here line by line.</div>`) +
       clearBtn;
     return;
   }
   const bad = p.ignored.filter(Boolean);
-  el.innerHTML = gemBlock + `
+  el.innerHTML = estBlock + gemBlock + `
     <div class="rd">
       <div class="rd-row"><b>${p.matched.length}</b> of ${CATS.length} categories read${p.asMultiplier ? ' <i>· column read as multipliers of par, ×100</i>' : ''}</div>
       ${p.missing.length ? `<div class="rd-row warn"><b>${p.missing.length}</b> not mentioned — left at par: ${p.missing.map(esc).join(', ')}</div>` : ''}
@@ -833,6 +874,85 @@ async function readWithGemini() {
   }
 }
 
+/* Defining an audience from a sentence.
+
+   The one path in this tool where a number is produced rather than read, so it
+   is the one path that has to be loudest about it. Three things keep it
+   honest, and none of them is the prompt:
+
+     · the function validates the shape — real categories, indices clamped,
+       fewer than eight of twelve refused because the rest would sit at par and
+       the audience would re-order nothing;
+     · what comes back is turned into the same two-column text a pasted CSV
+       becomes and read by the SAME tested parser, so there is no second path
+       into an audience record; and
+     · the draft is marked estimated here, which buildAudience puts on the
+       record, which every surface that draws the audience reads.               */
+async function defineWithGemini() {
+  const btn = document.getElementById('pnDefine');
+  const desc = document.getElementById('pnDesc').value.trim();
+  if (draft.busy) return;
+
+  const box = document.getElementById('pnRead');
+  const fail = msg => {
+    box.innerHTML = `<div class="rd"><div class="rd-row bad">${esc(msg)}</div></div>` + box.innerHTML;
+  };
+
+  if (desc.length < 8) return fail('Describe the audience first — a sentence is enough.');
+
+  draft.busy = true;
+  btn.disabled = true;
+  btn.textContent = 'Thinking…';
+  try {
+    const j = await callGemini({ action: 'define-audience', description: desc });
+
+    const lines = j.pairs.map(x => `${x.label},${x.value}`).join('\n');
+    const parsed = parseAudienceData(lines);
+    draft.aff = { ...draft.aff, ...parsed.aff };
+
+    /* Entities go through the parser too rather than straight onto the draft,
+       so an override arriving from here faces the same handling as one typed
+       into the box. */
+    const entLines = (j.entities || []).map(x => `${x.label},${x.value}`).join('\n');
+    if (entLines) {
+      const pe = parseAudienceData(entLines);
+      draft.ent = { ...draft.ent, ...pe.entities, ...pe.aff };
+    }
+
+    /* The reason for each index, filed under the category the PARSER chose
+       rather than the label Gemini used — the parser decides where a label
+       lands, so that is the mapping the panel has to show. */
+    draft.why = draft.why || {};
+    for (const x of j.pairs) {
+      if (!x.why) continue;
+      const one = parseAudienceData(`${x.label},${x.value}`);
+      if (one.matched[0]) draft.why[one.matched[0]] = x.why;
+    }
+
+    /* Marked here, once, on the draft. Everything downstream reads it. */
+    draft.est = true;
+    draft.gem = null;
+    draft.defined = { covered: j.covered, of: j.of, dropped: j.dropped || [] };
+
+    /* Its name and definition fill only what is still blank — anything typed
+       was a decision and this must not overwrite it. */
+    const nameEl = document.getElementById('pnName');
+    const defEl = document.getElementById('pnDef');
+    if (!nameEl.value.trim() && j.name) { nameEl.value = j.name; draft.name = j.name; }
+    if (!defEl.value.trim() && j.def) { defEl.value = j.def; draft.def = j.def; }
+
+    renderRead();
+    renderGrid();
+    validate();
+  } catch (err) {
+    fail(err.message);
+  } finally {
+    draft.busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Define with Gemini';
+  }
+}
+
 function wirePanel() {
   const P = id => document.getElementById(id);
   P('pnName').addEventListener('input', e => { draft.name = e.target.value; validate(); });
@@ -877,6 +997,7 @@ function wirePanel() {
 
   P('pnSave').addEventListener('click', commitAudience);
   P('pnGem').addEventListener('click', readWithGemini);
+  P('pnDefine').addEventListener('click', defineWithGemini);
   /* Clear is drawn inside the read panel, which is re-rendered constantly, so
      it is caught on the way up rather than bound to an element that will not
      exist by the time the click happens. */

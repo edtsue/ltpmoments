@@ -207,3 +207,105 @@ test('the three modes genuinely disagree', () => {
   const got = MODES.map(m => combineAffinity(v, null, m.id).value);
   assert.equal(new Set(got).size, 3);
 });
+
+/* ---------- provenance on an estimated audience ----------
+
+   An audience defined from a description carries numbers nobody measured. The
+   record has to say so itself: every surface that draws it reads the record,
+   and a label that lives anywhere else is a label that gets lost on the way
+   into storage — at which point an estimate is indistinguishable from a cut. */
+
+test('an estimated audience says so on the record', () => {
+  const a = buildAudience({ name: 'Southeast CFB moms', est: true, aff: { Sports: 160 } }, CATS, []);
+  assert.equal(a.est, true);
+  assert.match(a.read, /estimated from a description/);
+});
+
+test('a read cut is not marked estimated', () => {
+  const a = buildAudience({ name: 'From a panel', aff: { Sports: 160 } }, CATS, []);
+  assert.equal(a.est, false);
+  assert.doesNotMatch(a.read, /estimated/);
+});
+
+test('an estimate still reports how much of the board it covers', () => {
+  const a = buildAudience({ name: 'X', est: true, aff: { Sports: 160, Music: 90 } }, CATS, []);
+  assert.match(a.read, new RegExp(`2 of ${CATS.length} categories set`));
+  assert.equal(a.atPar.length, CATS.length - 2);
+});
+
+test('the reason for an index is kept beside it', () => {
+  const a = buildAudience({
+    name: 'X', est: true,
+    aff: { Sports: 160 },
+    why: { Sports: 'watches college football weekly' }
+  }, CATS, []);
+  assert.equal(a.why.Sports, 'watches college football weekly');
+});
+
+test('why is always an object, never undefined', () => {
+  const a = buildAudience({ name: 'X', aff: {} }, CATS, []);
+  assert.deepEqual(a.why, {});
+});
+
+/* ---------- describe-it, end to end ----------
+
+   The claim this path rests on is that Gemini's output takes the SAME route
+   into an audience as a pasted CSV — so category matching, the multiplier
+   rule, par-filling and entity handling are all the code already tested
+   above, and there is no second path to audit. That claim is worth a test
+   rather than a comment. */
+
+import { createRequire } from 'node:module';
+const req = createRequire(import.meta.url);
+const { defineAudience, CATEGORIES: API_CATS } = req('../api/gemini.js');
+
+test('a define-audience reply becomes a marked, complete audience', () => {
+  // What the model returns, validated by the API exactly as in production.
+  const validated = defineAudience({
+    name: 'Southeast CFB Moms',
+    def: 'Mothers who plan the family year around a college football calendar.',
+    affinity: API_CATS.map((c, i) => ({
+      category: c,
+      index: c === 'Sports' ? 178 : 90 + i * 3,
+      why: c === 'Sports' ? 'watches college football every weekend' : 'baseline'
+    })),
+    entities: [{ name: 'SEC', index: 190 }, { name: 'AI', index: 150 }]
+  }, API_CATS);
+
+  assert.equal(validated.enough, true);
+  // The two-character key is refused before it can ever reach a moment name.
+  assert.deepEqual(validated.entities.map(e => e.label), ['SEC']);
+
+  // The panel's route: pairs -> two-column text -> the tested parser.
+  const parsed = parseAudienceData(validated.pairs.map(p => `${p.label},${p.value}`).join('\n'));
+  const why = {};
+  for (const p of validated.pairs) {
+    const one = parseAudienceData(`${p.label},${p.value}`);
+    if (one.matched[0] && p.why) why[one.matched[0]] = p.why;
+  }
+
+  const rec = buildAudience({
+    name: validated.name, def: validated.def, est: true, why,
+    aff: parsed.aff,
+    ent: Object.fromEntries(validated.entities.map(e => [e.label, e.value]))
+  }, CATS, []);
+
+  assert.equal(rec.est, true);
+  assert.match(rec.read, /estimated from a description/);
+  assert.equal(rec.aff['Sports'], 178);
+  assert.equal(rec.why['Sports'], 'watches college football every weekend');
+  assert.deepEqual(Object.keys(rec.aff).sort(), [...CATS].sort());
+  assert.equal(rec.custom, true);
+  assert.deepEqual(rec.ent, { SEC: 190 });
+});
+
+test('a reply too thin to re-order a board never reaches a record', () => {
+  const validated = defineAudience({
+    name: 'Vague', def: 'hmm',
+    affinity: [{ category: 'Sports', index: 150 }]
+  }, API_CATS);
+  // The API refuses this with a 422 rather than handing back one usable pair;
+  // the panel therefore never builds a record from it.
+  assert.equal(validated.enough, false);
+  assert.equal(validated.covered, 1);
+});

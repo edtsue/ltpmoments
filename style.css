@@ -1319,6 +1319,16 @@ button, input, select { font-family: inherit; }
 .rd.gem { border-color: color-mix(in srgb, var(--vi) 40%, transparent); background: color-mix(in srgb, var(--vi) 7%, transparent); }
 .rd.gem + .rd { margin-top: 8px; }
 
+/* An estimated profile, before it is saved. Amber rather than the Gemini
+   violet used above it, because these two blocks say opposite things: that one
+   reports numbers CONFIRMED against a source, this one reports numbers nobody
+   measured. They must not look like the same reassurance. */
+.rd.est {
+  border-color: var(--pill-amber-line);
+  background: color-mix(in srgb, var(--pill-amber) 8%, transparent);
+}
+.rd.est + .rd, .rd.est + .rd.gem { margin-top: 8px; }
+
 /* The line the number was read from, under the number it produced. This is the
    whole safeguard made visible: a figure that landed on the wrong category is
    obvious here and invisible without it. */
