@@ -359,15 +359,22 @@ function renderHead() {
    distribution across several audiences so every step carries real weight.
 
    The bottom two only ever appear with Watch switched on. That band is meant
-   to recede, so it gets the pale end. */
+   to recede, so it gets the pale end.
+
+   Two knobs, not one. `fill` is how much of the category hue survives against
+   the card — that is the pale half of the ramp. `dark` takes the top steps
+   PAST the hue by mixing toward black, which is the only way the most relevant
+   moments actually pop: a category hue at full strength is a mid-tone, and a
+   board of mid-tones has no top end. The densest step is a near-black box in
+   its own hue, carrying white type. */
 const SHADES = [
-  { min: 76, fill: 100, lit: true,  label: '76+' },
-  { min: 68, fill: 84,  lit: false, label: '68–75' },
-  { min: 63, fill: 68,  lit: false, label: '63–67' },
-  { min: 59, fill: 53,  lit: false, label: '59–62' },
-  { min: 56, fill: 40,  lit: false, label: '56–58' },
-  { min: 48, fill: 27,  lit: false, label: '48–55' },
-  { min: 0,  fill: 16,  lit: false, label: 'under 48' }
+  { min: 76, fill: 100, dark: 34, lit: true,  label: '76+' },
+  { min: 68, fill: 100, dark: 10, lit: true,  label: '68–75' },
+  { min: 63, fill: 74,  dark: 0,  lit: false, label: '63–67' },
+  { min: 59, fill: 50,  dark: 0,  lit: false, label: '59–62' },
+  { min: 56, fill: 31,  dark: 0,  lit: false, label: '56–58' },
+  { min: 48, fill: 18,  dark: 0,  lit: false, label: '48–55' },
+  { min: 0,  fill: 9,   dark: 0,  lit: false, label: 'under 48' }
 ];
 const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
 
@@ -379,7 +386,7 @@ const shadeLegend = () => `
   <span class="li ramp">
     <b>Relevance</b>
     <span class="rmp">${[...SHADES].reverse().map(s =>
-      `<i style="--f:${s.fill}%" title="score ${s.label}"></i>`).join('')}</span>
+      `<i style="--f:${s.fill}%;--dk:${s.dark}%" title="score ${s.label}"></i>`).join('')}</span>
     <span class="rmp-x">paler = less relevant to this audience</span>
   </span>`;
 
@@ -482,7 +489,7 @@ function drawRibbon() {
                the range a reader could have seen. */
             const sh = shadeOf(b.m.score);
             return `<button class="bar ${b.m.band.id}${sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
-              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${sh.fill}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
+              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${sh.fill}%;--dk:${sh.dark}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
               title="${esc(b.m.name)} — ${b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
           }).join('')}</div>`).join('')}
         </div>

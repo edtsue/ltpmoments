@@ -161,11 +161,28 @@ for (const c of CASES) {
       if (shades.size < 3) {
         problems.push(`only ${shades.size} relevance shade(s) drawn — the ramp has collapsed`);
       }
-      /* And the densest fill is the only one allowed to flip its ink; at the
-         step below it, dark text on the colour reads better than white. */
+      /* White type only where the fill can carry it. Below full hue the
+         contrast against white falls under the ink's, so a bar that flips its
+         type early is less legible while looking bolder. */
       const litWrong = [...html.matchAll(/class="bar [^"]*\blit\b[^"]*"[^>]*--f:(\d+)%/g)]
         .filter(m => m[1] !== '100');
-      if (litWrong.length) problems.push(`${litWrong.length} bars flip their ink below full fill`);
+      if (litWrong.length) problems.push(`${litWrong.length} bars use white type below full fill`);
+
+      /* The top of the ramp has to go PAST the hue, or the most relevant
+         moments are the same mid-tone as the merely relevant ones and nothing
+         pops. Checked on the legend rather than on the bars: the legend always
+         draws every step, where a board legitimately holds no moment at all in
+         the top step — a hard overlap of two audiences, or an audience with no
+         cut, tops out in the middle and that is the right answer. */
+      const rampDark = Math.max(0, ...[...html.matchAll(/class="rmp"[\s\S]*?<\/span>/g)]
+        .flatMap(m => [...m[0].matchAll(/--dk:(\d+)%/g)]).map(m => +m[1]));
+      if (rampDark < 20) problems.push(`the ramp's top step only darkens ${rampDark}% — it will not stand out`);
+
+      /* Darkening is for the top of the ramp only. A pale bar that has been
+         pushed toward black is a bar whose two knobs have been crossed. */
+      const oddDark = [...html.matchAll(/class="bar [^"]*"[^>]*--f:(\d+)%;--dk:(\d+)%/g)]
+        .filter(m => +m[2] > 0 && m[1] !== '100');
+      if (oddDark.length) problems.push(`${oddDark.length} bars darken below full hue`);
 
       /* ZOOM. The ribbon must always carry a sizing style — either a month
          width or the dropped minimum that Fit uses. Without one it falls back
@@ -193,7 +210,9 @@ for (const c of CASES) {
       if (problems.length) { fail++; console.log(`FAIL  ${c.name}: ${problems.join('; ')}`); }
       else console.log(`ok    ${c.name.padEnd(24)} ${String(html.length).padStart(6)} chars`);
     } catch (e) {
-      fail++; checked++;
+      /* checked++ already ran if the render itself succeeded, so counting it
+         again here reported more cases than there are. */
+      fail++;
       console.log(`THROW ${c.name}: ${e.message}`);
     }
   }

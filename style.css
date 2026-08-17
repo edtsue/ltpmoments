@@ -516,7 +516,11 @@ button, input, select { font-family: inherit; }
   height: 11px;
   border-radius: 3px;
   border: 1px solid var(--a12);
-  background: color-mix(in srgb, var(--shell-ink2) var(--f), var(--card));
+  /* Both knobs, exactly as a bar mixes them, so a swatch here really is the
+     shade a bar at that score will be. */
+  background: color-mix(in srgb,
+                color-mix(in srgb, var(--shell-ink2) var(--f), var(--card)),
+                #000 var(--dk, 0%));
 }
 .rmp-x { opacity: .8; }
 
@@ -777,25 +781,32 @@ button, input, select { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  /* HUE = category, INK = relevance. --f is the shade step app.js computed
-     from the score, mixed against the card so a pale bar still sits on the
-     board rather than floating over it. */
-  background: color-mix(in srgb, var(--ci) var(--f, 100%), var(--card));
+  /* HUE = category, INK = relevance, in two moves. --f is how much of the hue
+     survives against the card, which gives the pale half of the ramp. --dk
+     then takes the top steps PAST the hue toward black, because a category hue
+     at full strength is only a mid-tone and a board of mid-tones has no top
+     end — the most relevant moments have to be able to pop.
+
+     The RAW hue is used here, not the theme-lifted --ci. The lift exists so a
+     hairline or an 8px dot survives on near-black; a filled bar is neither,
+     and lifting it is what left dark-mode bars as pastels. Borders below still
+     take --ci, which is the thin use it was made for. */
+  background: color-mix(in srgb,
+                color-mix(in srgb, var(--c) var(--f, 100%), var(--card)),
+                #000 var(--dk, 0%));
   color: var(--shell-ink);
 }
-/* Only the top step. Checked rather than assumed: at the 84% step a category
-   hue mixed toward the card sits around 4.0:1 against white and 4.6:1 against
-   the ink, so white is the WORSE choice there despite looking like the bolder
-   one. Only the full-strength fill earns it.
+/* White type, on the two steps dense enough to carry it. Checked rather than
+   assumed: at full hue the category colours run 5.2–5.8:1 against white, and
+   the top step is darkened well past that. The step below — 74% of the hue
+   against the card — drops to about 3.6:1 against white while reaching 5.0:1
+   against the ink, so white would be the WORSE choice there despite looking
+   like the bolder one. That is where the line sits.
 
-   In dark the fill is a LIFTED hue — a pastel — so the legible choice is the
-   dark ground rather than white. Getting this backwards is why a dark-mode
-   anchor bar used to sit at white-on-pastel. */
-.bar.lit { color: var(--on-fill); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .bar.lit { color: #0E1014; }
-}
-:root[data-theme="dark"] .bar.lit { color: #0E1014; }
+   One rule for both themes, because the fill is built from the raw hue rather
+   than the lifted one: a full-strength category hue is the same colour in
+   light and dark, so the type that works on it is too. */
+.bar.lit { color: #FFFFFF; }
 /* The band no longer sets the fill — the shade does, from the score. What the
    band still sets is the outline, because crossing 72 or 56 changes what a
    planner DOES and that deserves an edge rather than another few percent of
