@@ -104,6 +104,15 @@ for (const c of CASES) {
       }
       if (!rail.includes('id="audAdd"')) problems.push('no add-audience button');
 
+      /* FAMILIES. Every category drawn on the board has to sit under exactly
+         one family header. The failure this catches is a category added to
+         data but not to CAT_GROUPS: it still draws, in the "Other" block, and
+         without this check nobody would notice until someone asked why the
+         board had grown a heading called Other. */
+      if (html.includes('data-fam="other"')) problems.push('a category is filed under no family');
+      const fams = (html.match(/data-fam="/g) || []).length;
+      if (!fams) problems.push('no family blocks on the board');
+
       /* TODAY. Drawn only while today falls inside the planning window, so the
          check is conditional on the same thing the drawing is — otherwise this
          starts failing on 1 July 2027 for a correct reason. When it is drawn,

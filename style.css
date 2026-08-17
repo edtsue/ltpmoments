@@ -484,6 +484,60 @@ button, input, select { font-family: inherit; }
 }
 .rib-lanes { position: relative; }
 
+/* A family of lanes. The header sits in the label column's own width so it
+   lines up with the category names beneath it and never crosses the track —
+   anything drawn across the track at full width reads as a moment spanning the
+   year. Sticky left for the same reason the lane labels are: it has to survive
+   the horizontal scroll. */
+.fam { position: relative; }
+.fam + .fam { margin-top: 14px; }
+.fam-hd {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  width: max-content;
+  max-width: 100%;
+  padding: 7px 12px 6px 2px;
+  background: var(--shell);
+}
+.fam-nm {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--shell-ink);
+}
+.fam-n {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  color: var(--shell-ink3);
+  white-space: nowrap;
+}
+/* The one line saying why these categories are together. Hidden on a narrow
+   viewport, where the header would wrap into the lanes. */
+.fam-note { font-size: 11px; color: var(--shell-ink3); opacity: .85; }
+@media (max-width: 1180px) { .fam-note { display: none; } }
+
+/* A hairline the width of the whole family, under the header, so the grouping
+   is visible on the board and not only in the words. Drawn on the family
+   rather than between lanes: the lanes already have their own dividers, and a
+   second one at the same weight would make every row look like a group. */
+.fam > .fam-hd::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 0;
+  bottom: 0;
+  border-bottom: 2px solid var(--a16);
+}
+/* The lane immediately under a family header does not need its own top rule. */
+.fam .rib-lane:first-of-type { border-top: none; }
+
 /* TODAY. One line down the whole stack of lanes, sitting inside the track and
    offset by the label column, so it lands on the same x as a bar starting
    today. Red is reserved for it — no category owns red, and the congestion

@@ -7,7 +7,7 @@
    mockups can be compared honestly. */
 
 import { MOMENTS } from './data/moments.js';
-import { AUDIENCES, CAT_COLOR, GROUPS } from './data/audiences.js';
+import { AUDIENCES, CAT_COLOR, GROUPS, CAT_GROUPS } from './data/audiences.js';
 import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES } from './data/relevance.js';
 import { parseAudienceData, buildAudience } from './data/parse.js';
 
@@ -340,6 +340,45 @@ function drawRibbon() {
       </div>`;
   };
 
+  /* The lanes, gathered under their family. A family with every category
+     switched off in the rail draws nothing at all — heading included — because
+     unlike the audience rail, an absent family here is a filter the reader set
+     themselves and can see in the category strip above the board.
+
+     Any category that belongs to no family still gets drawn, in a family of its
+     own at the end. A category quietly vanishing from the board because nobody
+     added it to CAT_GROUPS is the kind of bug that survives a demo. */
+  function famBlocks(list) {
+    const left = new Set(list);
+    const blocks = CAT_GROUPS.map(f => {
+      const mine = f.cats.filter(c => left.has(c));
+      mine.forEach(c => left.delete(c));
+      if (!mine.length) return '';
+      const n = mine.reduce((s, c) => s + v.filter(m => m.cat === c).length, 0);
+      return `
+        <section class="fam" data-fam="${f.id}">
+          <div class="fam-hd">
+            <span class="fam-nm">${esc(f.label)}</span>
+            <span class="fam-n">${mine.length} categor${mine.length === 1 ? 'y' : 'ies'} · ${n} moment${n === 1 ? '' : 's'}</span>
+            <span class="fam-note">${esc(f.note)}</span>
+          </div>
+          ${mine.map(lane).join('')}
+        </section>`;
+    });
+    if (left.size) {
+      blocks.push(`
+        <section class="fam" data-fam="other">
+          <div class="fam-hd">
+            <span class="fam-nm">Other</span>
+            <span class="fam-n">${left.size} categor${left.size === 1 ? 'y' : 'ies'}</span>
+            <span class="fam-note">Not yet filed under a family — see CAT_GROUPS.</span>
+          </div>
+          ${[...left].map(lane).join('')}
+        </section>`);
+    }
+    return blocks.join('');
+  }
+
   /* Congestion, week by week. Same input the score's congestion term reads,
      drawn on its own — the quiet weeks are the point, and they are invisible
      inside a total. */
@@ -372,7 +411,7 @@ function drawRibbon() {
       </div>
       <div class="rib-lanes">
         ${todayIn ? `<div class="today" style="--f:${todayFrac}" aria-hidden="true"><span>Today</span></div>` : ''}
-        ${cats.map(lane).join('')}
+        ${famBlocks(cats)}
       </div>
       <div class="rib-cong">
         <div class="legend" style="margin-bottom:8px">

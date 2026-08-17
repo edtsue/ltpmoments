@@ -111,6 +111,54 @@ export const AUDIENCES = [
 ];
 /* AUDIENCES:END */
 
+/* The twelve categories, gathered into four families for the board.
+
+   Twelve lanes in a flat stack is twelve things to hold at once, and the reader
+   is really asking one of four questions: what is the culture doing, what is
+   there to watch, what is there to play, what is being sold. The families are
+   the answer to that, and they are drawing only — nothing scores at family
+   level, nothing is filtered at family level, and a category belongs to exactly
+   one of them.
+
+   SPORT IS ITS OWN FAMILY on purpose, even at one category. It is the only
+   category that is simultaneously the biggest lane on the board, appointment
+   viewing, and a rights market — filed under "watching" it would be read as
+   just more television, which is the one thing a planner must not do with it.
+
+   Order is the reading order of the board, not alphabetical. */
+export const CAT_GROUPS = [
+  {
+    id: 'culture',
+    label: 'Culture',
+    note: 'The civic and cultural year — what the country is observing.',
+    cats: ['Culture', 'Heritage & Identity', 'National Days', 'Holidays']
+  },
+  {
+    id: 'sport',
+    label: 'Sport',
+    note: 'Appointment viewing, and the only lane that is also a rights market.',
+    cats: ['Sports']
+  },
+  {
+    id: 'entertainment',
+    label: 'Entertainment',
+    note: 'Scheduled releases — someone else has already chosen the date.',
+    cats: ['TV & Streaming', 'Movies', 'Gaming', 'Fashion & Awards']
+  },
+  {
+    id: 'live',
+    label: 'Music & live',
+    note: 'On-sales, releases and tours — the year an audience plans for itself.',
+    cats: ['Music', 'Tours & Concerts']
+  },
+  {
+    id: 'tech',
+    label: 'Tech',
+    note: 'Launches and keynotes. A small lane that moves the categories around it.',
+    cats: ['Tech']
+  }
+];
+
 /* Category colour. Not decorative — it is the only thing that lets a reader
    scan a year of 508 rows, so each category owns exactly one hue and keeps it
    in every one of the five directions. Drawn from the Google-family palette
