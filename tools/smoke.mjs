@@ -133,6 +133,13 @@ for (const c of CASES) {
         problems.push('a collapse toggle does not say whether it is open');
       }
 
+      /* ZOOM. The ribbon must always carry a sizing style — either a month
+         width or the dropped minimum that Fit uses. Without one it falls back
+         to the stylesheet's default and the control silently does nothing. */
+      if (!/<div class="rib" style="[^"]*(--mo-w:\d+px|min-width:0)/.test(html)) {
+        problems.push('the ribbon carries no zoom sizing');
+      }
+
       /* TODAY. Drawn only while today falls inside the planning window, so the
          check is conditional on the same thing the drawing is — otherwise this
          starts failing on 1 July 2027 for a correct reason. When it is drawn,

@@ -196,6 +196,19 @@ button, input, select { font-family: inherit; }
 }
 .rl-hd.gap { margin-top: 20px; }
 
+/* The zoom stepper. Three buttons that read as one control, so the minus and
+   plus sit tight against the readout between them. */
+.zoom { display: flex; align-items: stretch; gap: 0; }
+.zoom .tool { border-radius: 0; }
+.zoom .tool:first-child { border-radius: 8px 0 0 8px; }
+.zoom .tool:last-child { border-radius: 0 8px 8px 0; }
+.zoom .tool + .tool { margin-left: -1px; }
+.zb { min-width: 26px; font-size: 13px; line-height: 1; }
+/* Wide enough for "100%" and "Fit" without the strip jumping as it changes. */
+.zrd { min-width: 52px; font-variant-numeric: tabular-nums; }
+.zoom .tool[disabled] { opacity: .38; cursor: default; }
+.zoom .tool[disabled]:hover { background: none; }
+
 /* A rail group heading is a collapse toggle. Same gesture as the board's
    families, so the caret and the rotation match — a reader learns it once. */
 .grp-tog {
@@ -218,7 +231,33 @@ button, input, select { font-family: inherit; }
 }
 .grp-tog:hover { background: var(--a04); }
 .grp-tog:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
-.grp-nm { flex: 1 1 auto; text-align: left; }
+.grp-nm { flex: 1 1 auto; text-align: left; color: var(--gc); }
+
+/* Each group owns a colour, so the three are told apart at a glance rather
+   than by reading three similar headings. Carried on the group element as --gc
+   and used in three thin places — a dot, the heading, and a rule down the
+   rows — never as a fill: the rail's job is to make the SELECTED audience
+   obvious, and three coloured blocks would compete with that.
+
+   Lifted in dark exactly as the category colours are, for the same reason: a
+   mid-tone hue on near-black disappears at this size. */
+.aud-grp { --gci: color-mix(in srgb, var(--gc), var(--lift) var(--lift-amt)); }
+.grp-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gci);
+}
+.grp-nm { color: var(--gci); }
+/* The rows sit against their group's colour, which is what makes a scrolled
+   rail readable — you can see which group you are in without the heading. */
+.aud-grp-bd {
+  border-left: 2px solid color-mix(in srgb, var(--gci) 34%, transparent);
+  margin-left: 5px;
+  padding-left: 6px;
+}
+.aud-grp.shut .aud-grp-bd { border-left: 0; }
 /* How many are selected in this group. It stays visible while the group is
    shut, so collapsing can never hide that a group is feeding the board. */
 .grp-n { flex: none; opacity: .75; }

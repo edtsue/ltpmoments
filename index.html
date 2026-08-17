@@ -92,6 +92,15 @@
       <div class="cats" id="catStrip"></div>
       <div class="hd-right" id="hdRight"></div>
       <div class="hd-tools">
+        <!-- Zoom is a property of the calendar, not of the page, so it is a
+             control here rather than the browser's own zoom: it stretches the
+             months and leaves the rail, the type and the labels alone. -->
+        <div class="zoom" role="group" aria-label="Calendar zoom">
+          <button class="tool zb" id="zoomOut" type="button" aria-label="Zoom out">&minus;</button>
+          <button class="tool zrd" id="zoomRd" type="button"
+            title="Back to the default width">100%</button>
+          <button class="tool zb" id="zoomIn" type="button" aria-label="Zoom in">+</button>
+        </div>
         <button class="tool" id="watchTog" type="button"
           title="Also draw the Watch band, not just Anchor and Play">Watch</button>
         <button class="tool" id="themeTog" type="button" aria-label="Switch theme">&#9790;</button>

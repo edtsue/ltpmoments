@@ -43,6 +43,42 @@ const inGroup = id => ROSTER().filter(a => groupOf(a) === id);
    everything but Sport is telling you how they work, and making them say it
    again on every visit is the kind of small rudeness that gets a tool put
    down. Stored as a plain list of ids so a stale one is simply ignored. */
+/* ZOOM. How many pixels a month is worth on the ribbon. The rungs are a fixed
+   ladder rather than free scaling because every step has to stay legible: a
+   bar's label either fits or it does not, and a continuous zoom spends most of
+   its range in the region where labels are half-drawn.
+
+   'fit' is a real rung, not a synonym for the smallest one — it drops the
+   minimum width entirely so the year fills whatever space there is and nothing
+   scrolls sideways. That is the view you want when the question is "how busy
+   is the autumn", and no fixed pixel figure answers it on every screen.
+
+   DEFAULT is the width the board was designed against; the readout is a
+   percentage of it, so 100% means "as drawn". */
+const ZOOM = ['fit', 88, 110, 132, 152, 190, 250, 340, 480, 680];
+const ZOOM_DEFAULT = ZOOM.indexOf(152);
+const ZOOM_KEY = 'ltpm.zoom.v1';
+
+function loadZoom() {
+  try {
+    /* Tested for null BEFORE the cast. Number(null) is 0, and 0 is a valid
+       rung — the Fit one — so a missing key read as a deliberate choice and
+       every first visit opened on Fit instead of the width the board is
+       designed against. */
+    const raw = localStorage.getItem(ZOOM_KEY);
+    if (raw === null || raw === '') return ZOOM_DEFAULT;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 0 && n < ZOOM.length ? n : ZOOM_DEFAULT;
+  } catch (e) { void e; return ZOOM_DEFAULT; }
+}
+function saveZoom() {
+  try { localStorage.setItem(ZOOM_KEY, String(S.zoom)); }
+  catch (e) { void e; }
+}
+const zoomLabel = () => ZOOM[S.zoom] === 'fit'
+  ? 'Fit'
+  : Math.round(ZOOM[S.zoom] / ZOOM[ZOOM_DEFAULT] * 100) + '%';
+
 const SHUT_KEY = 'ltpm.shut.v1';
 function loadShut() {
   try {
@@ -125,7 +161,8 @@ const S = {
      still in the year, still in the congestion, still counted in the header.
      Conflating the two would let a reader collapse a family and quietly change
      the numbers they are reading. */
-  shut: loadShut()
+  shut: loadShut(),
+  zoom: loadZoom()          // index into ZOOM — how wide a month is drawn
 };
 
 /* Falls back rather than returning empty: a custom audience deleted in another
@@ -182,9 +219,11 @@ function renderRail() {
        nothing selected says nothing; a closed group with two selected has to
        say two. */
     const on = list.filter(x => sel.has(x.id)).length;
-    return `<div class="aud-grp${shut ? ' shut' : ''}" data-grp="${g.id}">
+    return `<div class="aud-grp${shut ? ' shut' : ''}" data-grp="${g.id}"
+      style="--gc:${g.color || 'var(--shell-ink3)'}">
       <button class="rl-hd gap grp-tog" type="button" data-grp-tog="${g.id}"
         aria-expanded="${!shut}" aria-controls="grp-${g.id}">
+        <span class="grp-dot" aria-hidden="true"></span>
         <span class="grp-caret" aria-hidden="true">▾</span>
         <span class="grp-nm">${esc(g.label)}</span>
         <span class="grp-n">${on ? `${on} on` : (list.length || '—')}</span>
@@ -248,6 +287,17 @@ function renderHead() {
 
   const dark = document.documentElement.dataset.theme === 'dark';
   document.getElementById('themeTog').innerHTML = dark ? '&#9728;' : '&#9790;';
+
+  /* The zoom readout, and the two buttons disabled at the ends of the ladder —
+     a control that still looks live at its limit reads as broken. */
+  const rd = document.getElementById('zoomRd');
+  rd.textContent = zoomLabel();
+  rd.classList.toggle('on', S.zoom !== ZOOM_DEFAULT);
+  for (const [id, at] of [['zoomOut', 0], ['zoomIn', ZOOM.length - 1]]) {
+    const btn = document.getElementById(id);
+    btn.disabled = S.zoom === at;
+    btn.setAttribute('aria-disabled', String(S.zoom === at));
+  }
 
   const v = visible();
   const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
@@ -446,7 +496,7 @@ function drawRibbon() {
 
   return `
     <div class="legend">${bandLegend()}</div>
-    <div class="rib" style="--mos:${MONTHS.length}">
+    <div class="rib" style="${ribSizing()}">
       <div class="rib-ax">
         <div class="rib-axlb"></div>
         <div class="mos" style="grid-template-columns:repeat(${MONTHS.length},1fr)">
@@ -471,6 +521,17 @@ function drawRibbon() {
         </div>
       </div>
     </div>`;
+}
+
+/* The ribbon's width, from the zoom rung. At 'fit' the minimum is dropped
+   altogether so the year fills the space it has and nothing scrolls sideways;
+   at every other rung a month is worth a fixed number of pixels and the year
+   is as wide as it needs to be. */
+function ribSizing() {
+  const z = ZOOM[S.zoom];
+  return z === 'fit'
+    ? `--mos:${MONTHS.length};min-width:0`
+    : `--mos:${MONTHS.length};--mo-w:${z}px`;
 }
 
 function weekAxis() {
@@ -935,8 +996,28 @@ function render() {
 
 /* ---------- one delegated listener ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog]');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd');
   if (!t) { closePop(); return; }
+
+  if (t.id === 'zoomIn' || t.id === 'zoomOut' || t.id === 'zoomRd') {
+    const next = t.id === 'zoomRd' ? ZOOM_DEFAULT
+      : t.id === 'zoomIn' ? S.zoom + 1 : S.zoom - 1;
+    /* Clamped rather than wrapped — a zoom that jumps from the widest rung
+       back to Fit on one more click is a control nobody trusts. */
+    const clamped = Math.max(0, Math.min(ZOOM.length - 1, next));
+    if (clamped === S.zoom) return;
+    S.zoom = clamped;
+    saveZoom();
+    /* Zoom changes the horizontal scale, so the vertical position should not
+       move. render() parks the board back at the top, which is right after an
+       audience change and wrong here — you would lose your place in the lanes
+       every time you pressed +. */
+    const body = document.getElementById('body');
+    const y = body.scrollTop;
+    render();
+    body.scrollTop = y;
+    return;
+  }
 
   /* Collapsing. One handler for both stacks — the board's families and the
      rail's audience groups — because they are the same gesture and a reader

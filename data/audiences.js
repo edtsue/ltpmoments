@@ -26,16 +26,24 @@ export const GROUPS = [
   {
     id: 'official',
     label: 'Official PA targets',
+    /* Blue is the rail's authority colour elsewhere in the LTP tools — the
+       stage you are standing on — so it belongs to the group whose numbers
+       come from the PA rather than from anyone's estimate. */
+    color: '#1A67D2',
     empty: 'None loaded yet — the PA’s own cut goes here.'
   },
   {
     id: 'popular',
     label: 'Popular targets',
+    color: '#6D5DE0',
     empty: 'None yet.'
   },
   {
     id: 'custom',
     label: 'Custom targets',
+    /* The same green the "Yours" badge already carries, so a custom audience
+       reads as the same thing in the group heading and on its own row. */
+    color: '#0B7A67',
     empty: 'None yet — describe one below and it stays in this browser.'
   }
 ];
