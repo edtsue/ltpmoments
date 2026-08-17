@@ -7,7 +7,7 @@
    mockups can be compared honestly. */
 
 import { MOMENTS } from './data/moments.js';
-import { AUDIENCES, CAT_COLOR, GROUPS, CAT_GROUPS } from './data/audiences.js';
+import { AUDIENCES, CAT_COLOR, GROUPS, CAT_GROUPS, OFFICIAL } from './data/audiences.js';
 import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES } from './data/relevance.js';
 import { parseAudienceData, buildAudience } from './data/parse.js';
 
@@ -29,7 +29,7 @@ function saveCustom() {
   catch (e) { void e; }        // a full or blocked store must not lose the session
 }
 let CUSTOM = loadCustom();
-const ROSTER = () => [...AUDIENCES, ...CUSTOM];
+const ROSTER = () => [...OFFICIAL, ...AUDIENCES, ...CUSTOM];
 
 /* Which heading an audience sits under. A record the user defined is custom
    whatever else it claims, so `custom` is read first — otherwise a saved
@@ -171,7 +171,13 @@ const S = {
    say, so the last one cannot be switched off. */
 function audiences() {
   const list = S.auds.map(id => ROSTER().find(a => a.id === id)).filter(Boolean);
-  return list.length ? list : [ROSTER()[0]];
+  if (list.length) return list;
+  /* Falling back to whatever sorts first would now land on an official target
+     with no cut loaded, and a par board is the worst thing to recover into —
+     it looks like an answer. Fall back to the first audience that can actually
+     score something. */
+  const roster = ROSTER();
+  return [roster.find(a => !a.pending) || roster[0]];
 }
 const audience = () => audiences()[0];
 const multi = () => audiences().length > 1;
@@ -200,8 +206,11 @@ function renderRail() {
         <span class="tick" aria-hidden="true">${sel.has(x.id) ? '\u2713' : ''}</span>
         <span class="at">
           <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}${
-            x.est ? '<span class="est" title="Estimated \u2014 not a research cut">Est.</span>' : ''}</span>
-          <span class="as">${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}</span>
+            x.est ? '<span class="est" title="Estimated \u2014 not a research cut">Est.</span>' : ''}${
+            x.pending ? '<span class="pend" title="No cut loaded \u2014 every category sits at par">No cut</span>' : ''}</span>
+          <span class="as">${x.pending
+            ? `${esc(x.pa || '')}${x.pa ? ' \u00b7 ' : ''}awaiting cut`
+            : `${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}`}</span>
         </span>
       </button>
       ${x.custom ? `<button class="aud-x" data-del="${esc(x.id)}" type="button"
@@ -494,7 +503,18 @@ function drawRibbon() {
   const todayIn = today >= WIN_START && today <= WIN_END;
   const todayFrac = ((dayNo(today) + 0.5) / WIN_DAYS).toFixed(5);
 
+  /* A selected audience with no cut cannot re-order anything — every category
+     is at par, so the ranking you are looking at is scale, actionability and
+     timing only. Said on the board rather than only in the rail, because by
+     the time you are reading bars the rail is out of the corner of your eye. */
+  const pending = audiences().filter(a => a.pending);
+
   return `
+    ${pending.length ? `<div class="nocut">
+      <b>${pending.map(a => esc(a.name)).join(' + ')}</b> ${pending.length === 1 ? 'has' : 'have'} no cut loaded yet,
+      so affinity sits at par for every category. This ordering is scale, actionability and timing only —
+      it is not this audience's view of the year.
+    </div>` : ''}
     <div class="legend">${bandLegend()}</div>
     <div class="rib" style="${ribSizing()}">
       <div class="rib-ax">

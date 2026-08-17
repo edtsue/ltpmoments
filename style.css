@@ -851,6 +851,39 @@ button, input, select { font-family: inherit; }
 }
 [data-theme="dark"] .aud .est { color: #D9A22B; background: rgba(217, 162, 43, .17); }
 
+/* NO CUT. An official target whose numbers have not landed. Neutral rather
+   than alarming — nothing is wrong, the cut is simply not here yet — but
+   unmissable, because an audience with no affinity scores every moment exactly
+   as every other audience with no affinity does. */
+.aud .pend {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 1px solid var(--shell-line);
+  color: var(--shell-ink3);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+/* The same fact, said on the board, for when one is actually selected. */
+.nocut {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--pill-amber-line);
+  border-left: 3px solid var(--pill-amber);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--pill-amber) 7%, transparent);
+  color: var(--shell-ink2);
+  font-size: 12.3px;
+  line-height: 1.45;
+}
+.nocut b { color: var(--shell-ink); }
+
 /* A group with nothing in it still draws its heading, so this is what sits
    under it. Muted, in the rail's own voice, and never mistaken for a row. */
 .aud-none {

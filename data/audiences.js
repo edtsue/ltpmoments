@@ -119,6 +119,37 @@ export const AUDIENCES = [
 ];
 /* AUDIENCES:END */
 
+/* THE PA'S OWN TARGETS.
+
+   Deliberately outside the AUDIENCES markers above: that block is rewritten
+   whole by tools/define-audiences.mjs, and these are not the script's to
+   touch. Nothing here is generated and nothing here is estimated.
+
+   They carry NO AFFINITY YET. That is not an oversight, it is the state — the
+   names are agreed and the cut has not landed. It matters because of how the
+   score is built: a category an audience does not mention falls back to par at
+   100, so an audience with no cut at all scores every moment identically to
+   every other audience with no cut. It would look like a working audience
+   switch and be nothing of the kind, which is the exact failure this tool
+   exists to make impossible.
+
+   So they are marked `pending`, the rail says so on the row, and the board
+   says so when one is selected. Fill in `aff` — twelve indices on a 100 base —
+   and the marking disappears on its own.                                     */
+export const OFFICIAL = [
+  { id: 'search1834',  pa: 'Search', name: 'Search 18–34' },
+  { id: 'gemini1849',  pa: 'Gemini', name: 'Gemini 18–49' },
+  { id: 'geministud',  pa: 'Gemini', name: 'Gemini Students' },
+  { id: 'pixel2549',   pa: 'Pixel',  name: 'Pixel 25–49 Millennial Seekers' }
+].map(a => Object.assign({
+  group: 'official',
+  pending: true,
+  def: '',
+  size: '',
+  aff: {},
+  ent: {}
+}, a));
+
 /* The twelve categories, gathered into five families for the board.
 
    Twelve lanes in a flat stack is twelve things to hold at once, when the

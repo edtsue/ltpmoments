@@ -37,7 +37,7 @@ globalThis.matchMedia = () => ({ matches: false });
 globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 
-const { AUDIENCES, GROUPS, CAT_GROUPS } = await import('../data/audiences.js');
+const { AUDIENCES, GROUPS, CAT_GROUPS, OFFICIAL } = await import('../data/audiences.js');
 const { WINDOW_FROM } = await import('../data/moments.js');
 
 /* The window app.js draws: twelve months from WINDOW_FROM. Derived rather than
@@ -64,6 +64,8 @@ const inRail = (html, id) => html.includes(`data-grp="${id}"`);
 const CASES = [
   ...AUDIENCES.map(a => ({ hash: `#/3/${a.id}`, name: a.id })),
   ...['blend', 'overlap', 'any'].map(m => ({ hash: `#/3/sports+gamers/${m}`, name: `sports+gamers ${m}` })),
+  { hash: `#/3/${OFFICIAL[0].id}`, name: 'official target, no cut' },
+  { hash: `#/3/${OFFICIAL[0].id}+sports`, name: 'no-cut target blended' },
   { hash: '#/3/nonexistent', name: 'bad id falls back' },
   { hash: '', name: 'no hash at all' }
 ];
@@ -94,9 +96,19 @@ for (const c of CASES) {
         if (!rail.includes(g.label)) problems.push(`no "${g.label}" heading`);
         if (!inRail(rail, g.id)) problems.push(`no ${g.id} group block`);
       }
-      /* Official ships empty on purpose. If it ever silently gains a member,
-         something has mislabelled itself as the PA's own cut. */
-      if (!rail.includes(GROUPS[0].empty)) problems.push('official group is not showing its empty state');
+      /* The official targets are named but have no cut yet, and that state has
+         to be visible on every one of them. An audience with no affinity
+         scores every moment exactly as any other audience with no affinity
+         does, so an unmarked one is a board that looks like an answer. */
+      const pend = OFFICIAL.filter(a => a.pending);
+      for (const a of OFFICIAL) {
+        if (!rail.includes(a.name)) problems.push(`official target "${a.name}" is not in the rail`);
+      }
+      const marks = (rail.match(/class="pend"/g) || []).length;
+      if (marks !== pend.length) problems.push(`${marks} "no cut" marks for ${pend.length} targets without one`);
+      /* And nothing without a cut may claim to be estimated — those are
+         different states and the badges must not both appear. */
+      if (OFFICIAL.some(a => a.pending && a.est)) problems.push('an official target is marked both pending and estimated');
       /* Every built-in is estimated, so every one carries the badge. */
       const badges = (rail.match(/class="est"/g) || []).length;
       if (badges !== AUDIENCES.filter(a => a.est).length) {
