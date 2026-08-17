@@ -163,3 +163,91 @@ test('a quiet week and a high score never share a word', () => {
   // The bug this exists to prevent: congestion 31 described as "crowded".
   assert.notEqual(band5(31, true), band5(31));
 });
+
+/* ---------- defineAudience ----------
+
+   The one action allowed to produce numbers instead of transcribing them. It
+   is safe only because everything it produces is labelled ESTIMATED and held
+   to a shape — these are the shape checks. */
+
+const { defineAudience, CATEGORIES: CATS } = require('../api/gemini.js');
+
+const full = (v = 100) => CATS.map((c, i) => ({ category: c, index: v + i, why: 'because' }));
+
+test('keeps a well-formed profile and reports its coverage', () => {
+  const r = defineAudience({ name: 'Gen Alpha', def: 'Kids.', affinity: full() }, CATS);
+  assert.equal(r.name, 'Gen Alpha');
+  assert.equal(r.covered, CATS.length);
+  assert.equal(r.enough, true);
+  assert.equal(r.flatProfile, false);
+});
+
+test('drops a category it invented, and says which', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y',
+    affinity: [...full(), { category: 'Podcasts', index: 150 }]
+  }, CATS);
+  assert.equal(r.pairs.length, CATS.length);
+  assert.ok(r.dropped.some(d => d.label === 'Podcasts'));
+});
+
+test('an index outside the range is clamped, not discarded', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y',
+    affinity: [{ category: 'Sports', index: 9000 }, { category: 'Music', index: -40 }]
+  }, CATS);
+  assert.equal(r.pairs[0].value, 250);
+  assert.equal(r.pairs[0].clamped, true);
+  assert.equal(r.pairs[1].value, 20);
+});
+
+test('too few categories is not enough to re-order a board', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y',
+    affinity: full().slice(0, 3)
+  }, CATS);
+  assert.equal(r.covered, 3);
+  assert.equal(r.enough, false);
+});
+
+test('every category on one number is caught as a non-profile', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y',
+    affinity: CATS.map(c => ({ category: c, index: 100 }))
+  }, CATS);
+  assert.equal(r.flatProfile, true);
+});
+
+test('a two-character entity key is refused', () => {
+  // "CES" inside "...Arts and Sciences" is why this floor exists; two
+  // characters against a thousand moment names always hits something.
+  const r = defineAudience({
+    name: 'X', def: 'y', affinity: full(),
+    entities: [{ name: 'AI', index: 180 }, { name: 'NFL', index: 190 }]
+  }, CATS);
+  assert.deepEqual(r.entities.map(e => e.label), ['NFL']);
+});
+
+test('never more than five entity overrides', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y', affinity: full(),
+    entities: Array.from({ length: 12 }, (_, i) => ({ name: `Thing ${i}`, index: 150 }))
+  }, CATS);
+  assert.equal(r.entities.length, 5);
+});
+
+test('the first mention of a category wins, as in the parser', () => {
+  const r = defineAudience({
+    name: 'X', def: 'y',
+    affinity: [{ category: 'Sports', index: 190 }, { category: 'sports', index: 40 }]
+  }, CATS);
+  assert.equal(r.pairs.filter(p => p.label === 'Sports').length, 1);
+  assert.equal(r.pairs[0].value, 190);
+});
+
+test('survives a reply with nothing in it', () => {
+  const r = defineAudience({}, CATS);
+  assert.equal(r.pairs.length, 0);
+  assert.equal(r.enough, false);
+  assert.equal(r.name, '');
+});

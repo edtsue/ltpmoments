@@ -467,15 +467,72 @@ button, input, select { font-family: inherit; }
 /* ============================================================
    03 — THE RIBBON
    ============================================================ */
-.rib { min-width: 1100px; }
+/* WIDTH. A year across a laptop gives each month about 90px, which is a
+   fortnight per centimetre — enough to see that something is in October, not
+   enough to see what it sits beside, and that adjacency is the whole argument
+   the ribbon makes. So a month gets a real column and the year gets wider than
+   the screen; .body already scrolls, so left and right is how you read it.
+
+   Driven off --mos, the month count app.js writes onto the element, rather
+   than a hard-coded total — the window is twelve months today and the geometry
+   should not quietly break if it is not tomorrow. */
+.rib {
+  --mo-w: 152px;
+  --lb-w: 132px;
+  position: relative;
+  min-width: calc(var(--lb-w) + (var(--mos, 12) * var(--mo-w)));
+}
+.rib-lanes { position: relative; }
+
+/* TODAY. One line down the whole stack of lanes, sitting inside the track and
+   offset by the label column, so it lands on the same x as a bar starting
+   today. Red is reserved for it — no category owns red, and the congestion
+   chart's red is a fill rather than a rule, so the line never reads as data.
+
+   Percentage times a unitless fraction: the track is (100% - the label
+   column), and --f is how far through the year today is. */
+.today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--lb-w) + (100% - var(--lb-w)) * var(--f, 0));
+  width: 0;
+  border-left: 2px solid #D93025;
+  pointer-events: none;
+  z-index: 4;
+}
+.today span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 0 0 6px 6px;
+  background: #D93025;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 .rib-ax {
   position: sticky;
   top: 0;
   z-index: 5;
   display: grid;
-  grid-template-columns: 132px minmax(0, 1fr);
+  grid-template-columns: var(--lb-w, 132px) minmax(0, 1fr);
   background: var(--shell);
   padding-bottom: 8px;
+}
+/* The axis's own label cell. Sticky left like the lane labels, and above them,
+   so the corner stays covered where the two sticky edges meet. */
+.rib-axlb {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  background: var(--shell);
 }
 .rib-ax .mos { display: grid; }
 .rib-ax .mo {
@@ -489,12 +546,17 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink3);
 }
 .rib-ax .mo:first-child { border-left: none; }
-.rib-lane { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: stretch; }
+.rib-lane { display: grid; grid-template-columns: var(--lb-w, 132px) minmax(0, 1fr); align-items: stretch; }
 .rib-lane + .rib-lane { border-top: 1px solid var(--shell-line); }
 /* A lane is as tall as the moments in it, which for Tours & Concerts is
    eighteen rows. The label rides the top of its own lane rather than sitting
    centred in a 400px column of nothing, and sticks under the month axis while
    the lane scrolls past. */
+/* Now that the year is wider than the viewport, the category name has to stay
+   put while it scrolls — a lane whose label has slid off the left edge is an
+   anonymous row of bars. Sticky in both axes: left against the horizontal
+   scroll, and (below) top under the month axis. Opaque, or the bars run
+   underneath it. */
 .rib-lb {
   display: flex;
   align-items: flex-start;
@@ -503,8 +565,12 @@ button, input, select { font-family: inherit; }
   font-size: 11.5px;
   font-weight: 600;
   color: var(--shell-ink2);
+  /* Sticky in both axes: top so it rides under the month header down a tall
+     lane, left so it survives the horizontal scroll the wide year needs.
+     Opaque, or bars scroll through underneath it. */
   position: sticky;
   top: 34px;
+  left: 0;
   align-self: start;
   background: var(--shell);
   z-index: 3;
@@ -558,7 +624,7 @@ button, input, select { font-family: inherit; }
 .bar.tick { padding: 0; min-width: 5px; border-radius: 3px; }
 
 .rib-cong { margin-top: 18px; }
-.cong-wrap { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: end; }
+.cong-wrap { display: grid; grid-template-columns: var(--lb-w, 132px) minmax(0, 1fr); align-items: end; }
 .cong-bars { display: flex; align-items: flex-end; gap: 1px; height: 62px; }
 .cong-bars i { flex: 1 1 0; border-radius: 2px 2px 0 0; background: var(--cb, var(--a16)); min-height: 2px; }
 
@@ -609,6 +675,41 @@ button, input, select { font-family: inherit; }
   text-transform: uppercase;
   vertical-align: 1px;
 }
+
+/* ESTIMATED. Same badge shape as "Yours", deliberately — they answer different
+   questions and can appear together — but amber rather than green, because
+   this one is a caveat and that one is only ownership. It marks an audience
+   whose indices were reasoned out rather than read off a cut, and it has to
+   survive anywhere the audience is shown; a number that cannot be traced must
+   never look like one that can. */
+.aud .est {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(148, 98, 0, .16);
+  color: #7A5100;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+[data-theme="dark"] .aud .est { color: #D9A22B; background: rgba(217, 162, 43, .17); }
+
+/* A group with nothing in it still draws its heading, so this is what sits
+   under it. Muted, in the rail's own voice, and never mistaken for a row. */
+.aud-none {
+  margin: 2px 3px 4px;
+  color: var(--shell-ink3);
+  font-size: 11.5px;
+  line-height: 1.45;
+  opacity: .8;
+}
+/* The first group heading sits directly under the brand, where `.gap`'s 20px
+   is too much air. Every later one keeps it. */
+.aud-grp:first-child .rl-hd.gap { margin-top: 6px; }
 
 /* Only ever drawn beside an audience the user owns, so it can never be the
    control that deletes something they cannot get back. */

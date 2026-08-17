@@ -37,7 +37,22 @@ globalThis.matchMedia = () => ({ matches: false });
 globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 
-const { AUDIENCES } = await import('../data/audiences.js');
+const { AUDIENCES, GROUPS } = await import('../data/audiences.js');
+const { WINDOW_FROM } = await import('../data/moments.js');
+
+/* The window app.js draws: twelve months from WINDOW_FROM. Derived rather than
+   copied, so this file cannot drift from the one the app uses. */
+const WINDOW_TO = (() => {
+  const d = new Date(WINDOW_FROM + 'T00:00:00Z');
+  d.setUTCFullYear(d.getUTCFullYear() + 1);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+})();
+
+/* The group block for an id, as the rail writes it. A substring test on the
+   heading alone would pass on a rail that drew the words and none of the
+   structure. */
+const inRail = (html, id) => html.includes(`data-grp="${id}"`);
 
 /* app.js reads its opening selection off the hash, so each case is booted by
    setting the hash and re-importing with a cache-busting query. Crude, and
@@ -68,7 +83,43 @@ for (const c of CASES) {
       if (/undefined|NaN|\[object Object\]/.test(html)) {
         problems.push('rendered ' + (html.match(/undefined|NaN|\[object Object\]/) || [])[0]);
       }
-      if (!els.get('audList').innerHTML) problems.push('empty rail');
+      const rail = els.get('audList').innerHTML;
+      if (!rail) problems.push('empty rail');
+
+      /* The rail is grouped, and an empty group must still draw its heading —
+         that is the whole point of the official one. Checked on every case
+         because the rail is re-rendered on each state change and a group that
+         only survives the first paint is a bug nobody sees until a demo. */
+      for (const g of GROUPS) {
+        if (!rail.includes(g.label)) problems.push(`no "${g.label}" heading`);
+        if (!inRail(rail, g.id)) problems.push(`no ${g.id} group block`);
+      }
+      /* Official ships empty on purpose. If it ever silently gains a member,
+         something has mislabelled itself as the PA's own cut. */
+      if (!rail.includes(GROUPS[0].empty)) problems.push('official group is not showing its empty state');
+      /* Every built-in is estimated, so every one carries the badge. */
+      const badges = (rail.match(/class="est"/g) || []).length;
+      if (badges !== AUDIENCES.filter(a => a.est).length) {
+        problems.push(`${badges} Est. badges for ${AUDIENCES.filter(a => a.est).length} estimated audiences`);
+      }
+      if (!rail.includes('id="audAdd"')) problems.push('no add-audience button');
+
+      /* TODAY. Drawn only while today falls inside the planning window, so the
+         check is conditional on the same thing the drawing is — otherwise this
+         starts failing on 1 July 2027 for a correct reason. When it is drawn,
+         its offset has to be a real fraction of the window: a line stuck at 0
+         or 1 is the failure mode worth catching, because it still looks like a
+         line and points at the wrong week. */
+      const today = new Date().toISOString().slice(0, 10);
+      if (today >= WINDOW_FROM && today <= WINDOW_TO) {
+        const m = html.match(/class="today" style="--f:([\d.]+)"/);
+        if (!m) problems.push('today is in the window but no today line was drawn');
+        else if (!(Number(m[1]) > 0 && Number(m[1]) < 1)) {
+          problems.push(`today line at --f:${m[1]}, which is not inside the window`);
+        }
+      } else if (html.includes('class="today"')) {
+        problems.push('today is outside the window but a today line was drawn');
+      }
       if (problems.length) { fail++; console.log(`FAIL  ${c.name}: ${problems.join('; ')}`); }
       else console.log(`ok    ${c.name.padEnd(24)} ${String(html.length).padStart(6)} chars`);
     } catch (e) {

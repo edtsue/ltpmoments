@@ -7,7 +7,7 @@
    mockups can be compared honestly. */
 
 import { MOMENTS } from './data/moments.js';
-import { AUDIENCES, CAT_COLOR } from './data/audiences.js';
+import { AUDIENCES, CAT_COLOR, GROUPS } from './data/audiences.js';
 import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES } from './data/relevance.js';
 import { parseAudienceData, buildAudience } from './data/parse.js';
 
@@ -30,6 +30,14 @@ function saveCustom() {
 }
 let CUSTOM = loadCustom();
 const ROSTER = () => [...AUDIENCES, ...CUSTOM];
+
+/* Which heading an audience sits under. A record the user defined is custom
+   whatever else it claims, so `custom` is read first — otherwise a saved
+   record carrying a stale `group` from an older build could file itself
+   under the PA's own targets, which is the one group that has to stay
+   trustworthy. */
+const groupOf = a => a.custom ? 'custom' : (a.group || 'popular');
+const inGroup = id => ROSTER().filter(a => groupOf(a) === id);
 
 /* ---------- window: the planning year opens in July 2026 ---------- */
 const WIN_START = '2026-07-01';
@@ -121,22 +129,37 @@ function renderRail() {
   const a = audience();
   const sel = new Set(S.auds);
   const only = S.auds.length === 1;
-  document.getElementById('audList').innerHTML = ROSTER().map(x => `
+  /* One row. Two badges it can carry, and they answer different questions:
+     "Yours" is whose it is, "Est." is what the numbers rest on. A custom
+     audience defined in words is both. */
+  const row = x => `
     <div class="aud-row">
       <button class="aud ${sel.has(x.id) ? 'on' : ''}" data-aud="${x.id}" type="button"
         role="checkbox" aria-checked="${sel.has(x.id)}"
         ${sel.has(x.id) && only ? 'aria-disabled="true" title="At least one audience has to stay on"' : ''}>
         <span class="tick" aria-hidden="true">${sel.has(x.id) ? '\u2713' : ''}</span>
         <span class="at">
-          <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}</span>
+          <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}${
+            x.est ? '<span class="est" title="Estimated \u2014 not a research cut">Est.</span>' : ''}</span>
           <span class="as">${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}</span>
         </span>
       </button>
       ${x.custom ? `<button class="aud-x" data-del="${esc(x.id)}" type="button"
         title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">\u00d7</button>` : ''}
-    </div>`).join('') +
-    `<button class="aud-add" id="audAdd" type="button">
-       <span aria-hidden="true">+</span> New target audience</button>`;
+    </div>`;
+
+  /* An empty group keeps its heading. The official group is the reason: a
+     planner has to be able to see that the PA's own targets have not been
+     loaded, and a group that disappears when it is empty cannot say that. */
+  document.getElementById('audList').innerHTML = GROUPS.map(g => {
+    const list = inGroup(g.id);
+    return `<div class="aud-grp" data-grp="${g.id}">
+      <div class="rl-hd gap">${esc(g.label)}</div>
+      ${list.length ? list.map(row).join('') : `<p class="aud-none">${esc(g.empty)}</p>`}
+      ${g.id === 'custom' ? `<button class="aud-add" id="audAdd" type="button">
+        <span aria-hidden="true">+</span> New target audience</button>` : ''}
+    </div>`;
+  }).join('');
 
   document.getElementById('audDef').textContent = multi()
     ? audiences().map(x => x.name).join('  +  ')
@@ -325,16 +348,32 @@ function drawRibbon() {
     .reduce((s, m) => s + m.parts.aff, 0));
   const lMax = Math.max(1, ...load);
 
+  /* TODAY. Drawn only when today is inside the planning window — the window
+     opens in July 2026 and runs a year, so a line for a date outside it would
+     be pinned to an edge and read as a real position. Placed as a fraction of
+     the window rather than a percentage of the track, so it stays aligned with
+     the bars at any ribbon width.
+
+     Half a day is added because a bar for a single day spans from its start to
+     the end of that day; the line belongs in the middle of today, not against
+     its leading edge. */
+  const today = new Date().toISOString().slice(0, 10);
+  const todayIn = today >= WIN_START && today <= WIN_END;
+  const todayFrac = ((dayNo(today) + 0.5) / WIN_DAYS).toFixed(5);
+
   return `
     <div class="legend">${bandLegend()}</div>
-    <div class="rib">
+    <div class="rib" style="--mos:${MONTHS.length}">
       <div class="rib-ax">
-        <div></div>
+        <div class="rib-axlb"></div>
         <div class="mos" style="grid-template-columns:repeat(${MONTHS.length},1fr)">
           ${MONTHS.map(mo => `<div class="mo">${mo.label} '${mo.yy}</div>`).join('')}
         </div>
       </div>
-      ${cats.map(lane).join('')}
+      <div class="rib-lanes">
+        ${todayIn ? `<div class="today" style="--f:${todayFrac}" aria-hidden="true"><span>Today</span></div>` : ''}
+        ${cats.map(lane).join('')}
+      </div>
       <div class="rib-cong">
         <div class="legend" style="margin-bottom:8px">
           <span class="li"><b>Weekly load</b> — total audience affinity landing in each week. The troughs are where an unclaimed moment lives.</span>

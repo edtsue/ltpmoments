@@ -40,7 +40,11 @@ const API_KEY = process.env.GEMINI_KEY || process.env.GEMINI_API_KEY;
 const PLAN = {
   'read-cut':    { temperature: 0,    cap: 2200, think: false },
   'read-moment': { temperature: 0.45, cap: 320,  think: false },
-  'chat':        { temperature: 0.4,  cap: 700,  think: false }
+  'chat':        { temperature: 0.4,  cap: 700,  think: false },
+  /* The one action that is allowed to produce numbers rather than transcribe
+     them, and it is only allowed because every audience it defines is stamped
+     ESTIMATED wherever it appears. See defineAudience below. */
+  'define-audience': { temperature: 0.35, cap: 1400, think: false }
 };
 
 const MAX_TURNS = 10;      // the conversation the client may send back
@@ -88,6 +92,42 @@ const CHAT_SCHEMA = {
   type: 'object',
   properties: { reply: { type: 'string' } },
   required: ['reply']
+};
+
+/* Affinity comes back as an ARRAY of category/index pairs rather than an object
+   keyed by category. Two reasons: a schema with twelve fixed keys named
+   "Tours & Concerts" is brittle, and an array arrives in the same shape
+   read-cut's pairs do — so both feed the client's one tested parser. */
+const DEFINE_SCHEMA = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    def: { type: 'string' },
+    affinity: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          category: { type: 'string' },
+          index: { type: 'number' },
+          why: { type: 'string' }
+        },
+        required: ['category', 'index']
+      }
+    },
+    entities: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          index: { type: 'number' }
+        },
+        required: ['name', 'index']
+      }
+    }
+  },
+  required: ['name', 'def', 'affinity']
 };
 
 /* ---------- prompts ---------- */
@@ -228,6 +268,54 @@ ${turns ? 'THE CONVERSATION SO FAR:\n' + turns + '\n' : ''}
 PLANNER: ${question}`;
 }
 
+/* This is the one prompt in the file that asks for numbers rather than for the
+   numbers already in front of it, so it says out loud what those numbers are
+   and are not. An index here is a considered guess from general knowledge of a
+   demographic; it is not a panel, and the tool labels it ESTIMATED everywhere
+   it surfaces. The prompt is not what makes that safe — the label is, and the
+   validation below is. */
+function definePrompt(description, categories) {
+  return `A media planner has described a target audience in their own words. Turn it into a category affinity profile.
+
+THE AUDIENCE, as they described it:
+"""
+${description}
+"""
+
+WHAT TO RETURN:
+
+1. name — a short, usable label for this audience. Six words at most. If they
+   already named it, keep their name.
+
+2. def — one sentence a planner could read aloud in a meeting: who these people
+   are and how they behave, not a restatement of the brief. 240 characters max.
+
+3. affinity — an index for EVERY ONE of these ${categories.length} categories, and no others:
+${categories.map(c => `   · ${c}`).join('\n')}
+
+   100 is par: this audience is exactly as likely as the general population to
+   care. 150 means half again as likely. 60 means notably less likely. Use the
+   range honestly — an audience that over-indexes on everything is not an
+   audience, it is a bigger population. Most categories should sit between 70
+   and 130, with the two or three that actually define this group up at
+   150-200 and the ones they genuinely skip down at 40-70.
+
+   Each one carries a "why" of a dozen words at most, naming the behaviour it
+   rests on. If you cannot say why, the index is decoration — set it to 100.
+
+4. entities — up to five specific things this audience over-indexes on harder
+   than its category does: a league, a franchise, an artist, an event. Each
+   needs a name of at least three characters and an index. Skip this rather
+   than pad it.
+
+WHAT NOT TO DO:
+
+· Do not invent a population size, a sample size, or a source. You have none.
+· Do not use a category name that is not on the list above.
+· Do not give every category the same number, and do not give them all 100.
+· Do not describe the audience as anything other than what they described.`;
+}
+
 /* ---------- the call ---------- */
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -357,6 +445,79 @@ function verifyRead(text, allowed) {
   return found.filter(n => !ok.has(n));
 }
 
+/* An estimated profile is still held to a shape. What is checked here is not
+   whether the numbers are TRUE — nothing on this deployment can establish that,
+   which is exactly why the result is labelled — but whether they are usable:
+   real categories, a plausible index range, and enough of the board covered
+   that switching to this audience means something.
+
+   MINIMUM COVERAGE exists because of how the score is built. Affinity carries
+   half the weight, and a category the profile never mentions falls back to par
+   at 100. A profile naming three of twelve categories therefore leaves nine at
+   par, and an audience at par almost everywhere re-orders almost nothing — it
+   looks like a working audience switch and is not one. */
+const MIN_COVERAGE = 8;
+
+/* Indices outside this are not opinions, they are typos. 250 is already an
+   extraordinary claim; 20 says this audience essentially never shows up. */
+const INDEX_MIN = 20;
+const INDEX_MAX = 250;
+
+/* The entity key becomes a whole-word search against ~1000 moment names, and a
+   two-character key always finds something. "CES" matching the "ces" inside
+   "Academy of Motion Picture Arts and Sciences" made the Oscars the most
+   relevant moment of the year for tech buyers, and that key was three
+   characters — so three is the floor, not a comfortable margin. */
+const ENTITY_MIN_CHARS = 3;
+const MAX_ENTITIES = 5;
+
+function defineAudience(out, categories) {
+  const known = new Map(categories.map(c => [flat(c), c]));
+  const aff = [];
+  const dropped = [];
+  const seen = new Set();
+
+  for (const row of Array.isArray(out && out.affinity) ? out.affinity : []) {
+    const cat = known.get(flat(row && row.category));
+    if (!cat) { dropped.push({ label: String((row && row.category) || ''), why: 'not a category' }); continue; }
+    if (seen.has(cat)) continue;                       // first mention wins, as in the parser
+    const raw = Number(row.index);
+    if (!Number.isFinite(raw)) { dropped.push({ label: cat, why: 'not a number' }); continue; }
+    seen.add(cat);
+    aff.push({
+      label: cat,
+      value: Math.round(Math.min(INDEX_MAX, Math.max(INDEX_MIN, raw))),
+      clamped: raw < INDEX_MIN || raw > INDEX_MAX,
+      why: String((row.why || '')).replace(/\s+/g, ' ').trim().slice(0, 90)
+    });
+  }
+
+  const entities = [];
+  for (const row of Array.isArray(out && out.entities) ? out.entities : []) {
+    const name = String((row && row.name) || '').replace(/\s+/g, ' ').trim();
+    const raw = Number(row && row.index);
+    if (name.length < ENTITY_MIN_CHARS || name.length > 40 || !Number.isFinite(raw)) continue;
+    entities.push({ label: name.slice(0, 40), value: Math.round(Math.min(INDEX_MAX, Math.max(INDEX_MIN, raw))) });
+    if (entities.length === MAX_ENTITIES) break;
+  }
+
+  /* Every category on the same number is the shape of a model that had nothing
+     to say and filled the grid. It passes every other check here and produces a
+     board identical to every other audience's, so it is caught by name. */
+  const flatProfile = aff.length > 1 && new Set(aff.map(a => a.value)).size === 1;
+
+  return {
+    name: String((out && out.name) || '').replace(/\s+/g, ' ').trim().slice(0, 60),
+    def: String((out && out.def) || '').replace(/\s+/g, ' ').trim().slice(0, 240),
+    pairs: aff,
+    entities,
+    dropped,
+    flatProfile,
+    covered: aff.length,
+    enough: aff.length >= MIN_COVERAGE
+  };
+}
+
 /* ---------- handler ---------- */
 
 module.exports = async (req, res) => {
@@ -444,6 +605,46 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true, reply, unverified });
     }
 
+    if (action === 'define-audience') {
+      const description = String(body.description || '').trim().slice(0, 1200);
+      if (description.length < 8) {
+        return res.status(400).json({ error: 'Describe the audience first — a few words is enough.' });
+      }
+
+      const out = await callGemini(action, definePrompt(description, CATEGORIES), DEFINE_SCHEMA);
+      const built = defineAudience(out, CATEGORIES);
+
+      if (!built.name || !built.pairs.length) {
+        return res.status(422).json({ error: 'Nothing usable came back. Try describing the audience differently.' });
+      }
+      if (!built.enough) {
+        return res.status(422).json({
+          error: `Only ${built.covered} of ${CATEGORIES.length} categories came back. The rest would sit at par, ` +
+                 `which would make this audience barely re-order the board at all.`,
+          covered: built.covered
+        });
+      }
+      if (built.flatProfile) {
+        return res.status(422).json({
+          error: 'Every category came back on the same index, which is not a profile. Try again with more detail.'
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        /* ESTIMATED, and the client is told so in the payload rather than left
+           to remember. Every surface that renders this audience reads it. */
+        estimated: true,
+        name: built.name,
+        def: built.def,
+        pairs: built.pairs,
+        entities: built.entities,
+        dropped: built.dropped,
+        covered: built.covered,
+        of: CATEGORIES.length
+      });
+    }
+
     return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
     console.error('[gemini] %s failed: %s', action, e && e.message);
@@ -456,3 +657,5 @@ module.exports.verifyPairs = verifyPairs;
 module.exports.verifyRead = verifyRead;
 module.exports.numberInSource = numberInSource;
 module.exports.band5 = band5;
+module.exports.defineAudience = defineAudience;
+module.exports.CATEGORIES = CATEGORIES;
