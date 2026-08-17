@@ -196,6 +196,42 @@ button, input, select { font-family: inherit; }
 }
 .rl-hd.gap { margin-top: 20px; }
 
+/* A rail group heading is a collapse toggle. Same gesture as the board's
+   families, so the caret and the rotation match — a reader learns it once. */
+.grp-tog {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  cursor: pointer;
+  /* .rl-hd sets the mono/uppercase treatment; only the button reset and the
+     layout belong here, or the heading stops matching the ones it sits with. */
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+.grp-tog:hover { background: var(--a04); }
+.grp-tog:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+.grp-nm { flex: 1 1 auto; text-align: left; }
+/* How many are selected in this group. It stays visible while the group is
+   shut, so collapsing can never hide that a group is feeding the board. */
+.grp-n { flex: none; opacity: .75; }
+.grp-caret {
+  flex: none;
+  font-size: 8px;
+  line-height: 1;
+  transition: transform .16s;
+  display: inline-block;
+}
+.aud-grp.shut .grp-caret { transform: rotate(-90deg); }
+.aud-grp-bd[hidden] { display: none; }
+
 /* The audience switch. One at a time, and the whole board answers to it — so
    it is a radio in behaviour and reads as one, with the selected row carrying
    the same blue fill the LTP rail uses for the stage you are standing on. */
@@ -482,7 +518,10 @@ button, input, select { font-family: inherit; }
   position: relative;
   min-width: calc(var(--lb-w) + (var(--mos, 12) * var(--mo-w)));
 }
-.rib-lanes { position: relative; }
+/* The band the TODAY chip lives in. Reserved rather than shared: the chip is
+   centred on the line and sits at the very top, so without a strip of its own
+   it lands on top of the first family's header and covers the words there. */
+.rib-lanes { position: relative; padding-top: 22px; }
 
 /* A family of lanes. The header sits in the label column's own width so it
    lines up with the category names beneath it and never crosses the track —
@@ -502,7 +541,28 @@ button, input, select { font-family: inherit; }
   max-width: 100%;
   padding: 7px 12px 6px 2px;
   background: var(--shell);
+  /* It is a button now — collapsing the family — so the button's own chrome
+     has to be undone before the layout above means anything. */
+  border: 0;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
+.fam-hd:hover { background: var(--a04); }
+.fam-hd:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
+.fam-caret {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--shell-ink3);
+  transition: transform .16s;
+  display: inline-block;
+}
+.fam.shut .fam-caret { transform: rotate(-90deg); }
+/* A shut family keeps its rule, so the stack still reads as a stack. */
+.fam.shut > .fam-hd { padding-bottom: 7px; }
+.fam-bd[hidden] { display: none; }
 .fam-nm {
   font-family: var(--mono);
   font-size: 10px;

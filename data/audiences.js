@@ -111,14 +111,17 @@ export const AUDIENCES = [
 ];
 /* AUDIENCES:END */
 
-/* The twelve categories, gathered into four families for the board.
+/* The twelve categories, gathered into five families for the board.
 
-   Twelve lanes in a flat stack is twelve things to hold at once, and the reader
-   is really asking one of four questions: what is the culture doing, what is
-   there to watch, what is there to play, what is being sold. The families are
-   the answer to that, and they are drawing only — nothing scores at family
-   level, nothing is filtered at family level, and a category belongs to exactly
-   one of them.
+   Twelve lanes in a flat stack is twelve things to hold at once, when the
+   reader is really asking one of five questions. The families are the answer
+   to that, and they are drawing only — nothing scores at family level, nothing
+   is filtered at family level, and a category belongs to exactly one of them.
+
+   Order is sport first, culture last: the lanes people open the board for sit
+   where the eye lands, and the civic year — which is mostly context rather
+   than something to buy — sits under them. Families collapse, so a reader who
+   works one family at a time can shut the rest.
 
    SPORT IS ITS OWN FAMILY on purpose, even at one category. It is the only
    category that is simultaneously the biggest lane on the board, appointment
@@ -127,12 +130,6 @@ export const AUDIENCES = [
 
    Order is the reading order of the board, not alphabetical. */
 export const CAT_GROUPS = [
-  {
-    id: 'culture',
-    label: 'Culture',
-    note: 'The civic and cultural year — what the country is observing.',
-    cats: ['Culture', 'Heritage & Identity', 'National Days', 'Holidays']
-  },
   {
     id: 'sport',
     label: 'Sport',
@@ -156,6 +153,12 @@ export const CAT_GROUPS = [
     label: 'Tech',
     note: 'Launches and keynotes. A small lane that moves the categories around it.',
     cats: ['Tech']
+  },
+  {
+    id: 'culture',
+    label: 'Culture',
+    note: 'The civic and cultural year — what the country is observing.',
+    cats: ['Culture', 'Heritage & Identity', 'National Days', 'Holidays']
   }
 ];
 

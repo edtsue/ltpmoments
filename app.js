@@ -39,6 +39,22 @@ const ROSTER = () => [...AUDIENCES, ...CUSTOM];
 const groupOf = a => a.custom ? 'custom' : (a.group || 'popular');
 const inGroup = id => ROSTER().filter(a => groupOf(a) === id);
 
+/* Which families are collapsed, kept across reloads. A reader who shuts
+   everything but Sport is telling you how they work, and making them say it
+   again on every visit is the kind of small rudeness that gets a tool put
+   down. Stored as a plain list of ids so a stale one is simply ignored. */
+const SHUT_KEY = 'ltpm.shut.v1';
+function loadShut() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SHUT_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.filter(x => typeof x === 'string') : []);
+  } catch (e) { void e; return new Set(); }
+}
+function saveShut() {
+  try { localStorage.setItem(SHUT_KEY, JSON.stringify([...S.shut])); }
+  catch (e) { void e; }
+}
+
 /* ---------- window: the planning year opens in July 2026 ---------- */
 const WIN_START = '2026-07-01';
 const WIN_MONTHS = 12;
@@ -102,7 +118,14 @@ const S = {
   mode: H.mode || 'blend',
   dir: H.dir || 3,
   off: new Set(),          // categories switched off
-  showWatch: false         // draw the Watch band as well as Anchor and Play
+  showWatch: false,        // draw the Watch band as well as Anchor and Play
+  /* Families shut on the board. Separate from `off`: switching a category off
+     removes its moments from the board AND from every count, because it is a
+     filter. Collapsing a family only stops drawing its lanes — the moments are
+     still in the year, still in the congestion, still counted in the header.
+     Conflating the two would let a reader collapse a family and quietly change
+     the numbers they are reading. */
+  shut: loadShut()
 };
 
 /* Falls back rather than returning empty: a custom audience deleted in another
@@ -153,11 +176,24 @@ function renderRail() {
      loaded, and a group that disappears when it is empty cannot say that. */
   document.getElementById('audList').innerHTML = GROUPS.map(g => {
     const list = inGroup(g.id);
-    return `<div class="aud-grp" data-grp="${g.id}">
-      <div class="rl-hd gap">${esc(g.label)}</div>
-      ${list.length ? list.map(row).join('') : `<p class="aud-none">${esc(g.empty)}</p>`}
-      ${g.id === 'custom' ? `<button class="aud-add" id="audAdd" type="button">
-        <span aria-hidden="true">+</span> New target audience</button>` : ''}
+    const shut = S.shut.has(`aud:${g.id}`);
+    /* How many are selected in a shut group, so collapsing never hides the
+       fact that a group is contributing to the board. A closed group with
+       nothing selected says nothing; a closed group with two selected has to
+       say two. */
+    const on = list.filter(x => sel.has(x.id)).length;
+    return `<div class="aud-grp${shut ? ' shut' : ''}" data-grp="${g.id}">
+      <button class="rl-hd gap grp-tog" type="button" data-grp-tog="${g.id}"
+        aria-expanded="${!shut}" aria-controls="grp-${g.id}">
+        <span class="grp-caret" aria-hidden="true">▾</span>
+        <span class="grp-nm">${esc(g.label)}</span>
+        <span class="grp-n">${on ? `${on} on` : (list.length || '—')}</span>
+      </button>
+      <div class="aud-grp-bd" id="grp-${g.id}"${shut ? ' hidden' : ''}>
+        ${shut ? '' : (list.length ? list.map(row).join('') : `<p class="aud-none">${esc(g.empty)}</p>`)}
+        ${!shut && g.id === 'custom' ? `<button class="aud-add" id="audAdd" type="button">
+          <span aria-hidden="true">+</span> New target audience</button>` : ''}
+      </div>
     </div>`;
   }).join('');
 
@@ -355,14 +391,22 @@ function drawRibbon() {
       mine.forEach(c => left.delete(c));
       if (!mine.length) return '';
       const n = mine.reduce((s, c) => s + v.filter(m => m.cat === c).length, 0);
+      const shut = S.shut.has(f.id);
+      /* The count stays visible while the family is shut — that is what makes
+         collapsing safe to do. A closed family that hid its own size would
+         make the board look emptier than the year is. */
       return `
-        <section class="fam" data-fam="${f.id}">
-          <div class="fam-hd">
+        <section class="fam${shut ? ' shut' : ''}" data-fam="${f.id}">
+          <button class="fam-hd" type="button" data-fam-tog="${f.id}"
+            aria-expanded="${!shut}" aria-controls="fam-${f.id}">
+            <span class="fam-caret" aria-hidden="true">▾</span>
             <span class="fam-nm">${esc(f.label)}</span>
             <span class="fam-n">${mine.length} categor${mine.length === 1 ? 'y' : 'ies'} · ${n} moment${n === 1 ? '' : 's'}</span>
             <span class="fam-note">${esc(f.note)}</span>
+          </button>
+          <div class="fam-bd" id="fam-${f.id}"${shut ? ' hidden' : ''}>
+            ${shut ? '' : mine.map(lane).join('')}
           </div>
-          ${mine.map(lane).join('')}
         </section>`;
     });
     if (left.size) {
@@ -891,8 +935,19 @@ function render() {
 
 /* ---------- one delegated listener ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode]');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog]');
   if (!t) { closePop(); return; }
+
+  /* Collapsing. One handler for both stacks — the board's families and the
+     rail's audience groups — because they are the same gesture and a reader
+     who learns it on one expects it on the other. Rail ids are prefixed so the
+     two cannot collide in the one saved list. */
+  if (t.dataset.famTog || t.dataset.grpTog) {
+    const key = t.dataset.famTog || `aud:${t.dataset.grpTog}`;
+    S.shut.has(key) ? S.shut.delete(key) : S.shut.add(key);
+    saveShut();
+    return render();
+  }
 
   if (t.id === 'audAdd')   return openAudPanel();
   if (t.dataset.close)     return closeAudPanel();

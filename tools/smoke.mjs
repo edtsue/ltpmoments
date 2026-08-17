@@ -37,7 +37,7 @@ globalThis.matchMedia = () => ({ matches: false });
 globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 
-const { AUDIENCES, GROUPS } = await import('../data/audiences.js');
+const { AUDIENCES, GROUPS, CAT_GROUPS } = await import('../data/audiences.js');
 const { WINDOW_FROM } = await import('../data/moments.js');
 
 /* The window app.js draws: twelve months from WINDOW_FROM. Derived rather than
@@ -110,8 +110,28 @@ for (const c of CASES) {
          without this check nobody would notice until someone asked why the
          board had grown a heading called Other. */
       if (html.includes('data-fam="other"')) problems.push('a category is filed under no family');
-      const fams = (html.match(/data-fam="/g) || []).length;
-      if (!fams) problems.push('no family blocks on the board');
+      const fams = [...html.matchAll(/data-fam="([a-z]+)"/g)].map(m => m[1]);
+      if (!fams.length) problems.push('no family blocks on the board');
+
+      /* Families are drawn in CAT_GROUPS order — sport first, culture last —
+         because that order is a decision about where the eye lands, not an
+         accident of how the categories happen to sort. */
+      const wanted = CAT_GROUPS.map(g => g.id).filter(id => fams.includes(id));
+      if (fams.join() !== wanted.join()) {
+        problems.push(`families drawn ${fams.join(' > ')}, expected ${wanted.join(' > ')}`);
+      }
+
+      /* Both stacks collapse, and each toggle has to carry the state a screen
+         reader reads. A caret that looks like a toggle and announces nothing
+         is the failure worth catching. */
+      for (const [what, sel2, n] of [['family', /data-fam-tog="/g, fams.length],
+                                     ['rail group', /data-grp-tog="/g, GROUPS.length]]) {
+        const got = (html + rail).match(sel2);
+        if (!got || got.length !== n) problems.push(`${got ? got.length : 0} ${what} toggles, expected ${n}`);
+      }
+      if (!/aria-expanded="(true|false)"/.test(html + rail)) {
+        problems.push('a collapse toggle does not say whether it is open');
+      }
 
       /* TODAY. Drawn only while today falls inside the planning window, so the
          check is conditional on the same thing the drawing is — otherwise this

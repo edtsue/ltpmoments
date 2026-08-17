@@ -44,7 +44,11 @@ const PLAN = {
   /* The one action that is allowed to produce numbers rather than transcribe
      them, and it is only allowed because every audience it defines is stamped
      ESTIMATED wherever it appears. See defineAudience below. */
-  'define-audience': { temperature: 0.35, cap: 1400, think: false }
+  'define-audience': { temperature: 0.35, cap: 1400, think: false },
+  /* Recall, not arithmetic. It lists which milestones exist and states the
+     CALENDAR RULE for each; tools/calendar-rules.mjs turns the rule into a
+     date and drops anything that will not reduce to one. */
+  'derive-moments':  { temperature: 0.15, cap: 2600, think: false }
 };
 
 const MAX_TURNS = 10;      // the conversation the client may send back
@@ -266,6 +270,104 @@ RULES:
 
 ${turns ? 'THE CONVERSATION SO FAR:\n' + turns + '\n' : ''}
 PLANNER: ${question}`;
+}
+
+/* Note what is NOT in this schema: a date. The model returns the rule and the
+   code does the arithmetic, so the one number that positions everything on a
+   planning board is never the model's to assert. `claimedDate` is optional and
+   is used only to cross-check the model against itself — where it disagrees
+   with the computed date the computed one wins and the disagreement is
+   reported, because a model that cannot apply its own rule is a model whose
+   rules deserve a second look. */
+const DERIVE_SCHEMA = {
+  type: 'object',
+  properties: {
+    moments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          league: { type: 'string' },
+          note: { type: 'string' },
+          claimedDate: { type: 'string' },
+          rule: {
+            type: 'object',
+            properties: {
+              kind: { type: 'string' },
+              month: { type: 'string' },
+              day: { type: 'number' },
+              weekday: { type: 'string' },
+              n: { type: 'number' },
+              days: { type: 'number' },
+              anchor: { type: 'string' },
+              weeks: { type: 'number' }
+            },
+            required: ['kind']
+          }
+        },
+        required: ['name', 'rule']
+      }
+    },
+    skipped: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { name: { type: 'string' }, why: { type: 'string' } },
+        required: ['name', 'why']
+      }
+    }
+  },
+  required: ['moments']
+};
+
+/* Kept in step with KINDS in tools/calendar-rules.mjs by hand — api/ is CommonJS
+   and data/ and tools/ are modules, so this file cannot import the evaluator.
+   A kind named here but unknown there is dropped by the tool, which is the
+   safe direction; the reverse would let an unevaluated rule through. */
+const RULE_KINDS = ['fixed', 'nth-weekday', 'relative-to-thanksgiving', 'relative-to-date'];
+
+function derivePrompt(brief, anchors, existing) {
+  return `You are filling gaps in a US cultural planning calendar for the 2026-27 season.
+
+${brief}
+
+YOU DO NOT RETURN DATES. You return the CALENDAR RULE for each milestone, and
+code applies it. This matters because the 2027 schedules for most US leagues
+are not published yet — the NFL releases its 2027 schedule in May 2027 — and a
+plausible-looking guess on a planning board is worse than an absence.
+
+So: include a milestone ONLY if its date follows a rule that is true every
+year, or follows from one of the confirmed anchors below. If a milestone's date
+depends on a schedule that has not been released, put it in "skipped" with the
+reason. A short, correct list beats a long, invented one.
+
+THE RULES YOU MAY USE, and nothing else:
+
+· {"kind":"fixed","month":"january","day":1}
+    A date that is the same every year. New Year's Day. Christmas.
+
+· {"kind":"nth-weekday","month":"december","weekday":"saturday","n":2}
+    The nth given weekday of a month. n may be negative to count back from the
+    end: n:-1 is the last Monday in May. This covers most of the US calendar.
+
+· {"kind":"relative-to-thanksgiving","days":2}
+    A whole number of days from US Thanksgiving. Rivalry Saturday is days:2.
+
+· {"kind":"relative-to-date","anchor":"<one of the anchors below>","weeks":-3}
+    A whole number of weeks from a date the calendar already holds as
+    CONFIRMED. Optionally add "weekday" to snap the result back to that day.
+    This is how a playoff round before a confirmed final is derived.
+
+CONFIRMED ANCHORS you may reference, and no others:
+${anchors.map(a => `   · "${a.name}" — ${a.date}`).join('\n') || '   (none)'}
+
+ALREADY IN THE CALENDAR — do not return these again:
+${existing.slice(0, 220).map(n => `   · ${n}`).join('\n')}
+
+For each milestone give: name (as a planner would say it), league, a one-line
+note, the rule, and claimedDate — your own reading of what the rule resolves to
+for this season, which is used only to check the rule against itself.`;
 }
 
 /* This is the one prompt in the file that asks for numbers rather than for the
@@ -642,6 +744,47 @@ module.exports = async (req, res) => {
         dropped: built.dropped,
         covered: built.covered,
         of: CATEGORIES.length
+      });
+    }
+
+    if (action === 'derive-moments') {
+      const brief = String(body.brief || '').trim().slice(0, 2000);
+      const anchors = (Array.isArray(body.anchors) ? body.anchors : [])
+        .filter(a => a && a.name && /^\d{4}-\d{2}-\d{2}$/.test(String(a.date)))
+        .slice(0, 40)
+        .map(a => ({ name: String(a.name).slice(0, 60), date: String(a.date) }));
+      const existing = (Array.isArray(body.existing) ? body.existing : [])
+        .map(n => String(n).slice(0, 90)).slice(0, 400);
+      if (!brief) return res.status(400).json({ error: 'No brief given.' });
+
+      const out = await callGemini(action, derivePrompt(brief, anchors, existing), DERIVE_SCHEMA);
+
+      /* Shape only. The dates are not computed here — tools/calendar-rules.mjs
+         does that, and drops anything whose rule it cannot evaluate. Rejecting
+         an unknown kind here as well means a bad rule never even reaches the
+         evaluator, and the caller is told which ones went. */
+      const kept = [], refused = [];
+      for (const m of Array.isArray(out.moments) ? out.moments : []) {
+        const name = String((m && m.name) || '').replace(/\s+/g, ' ').trim();
+        const kind = String((m && m.rule && m.rule.kind) || '');
+        if (!name) continue;
+        if (!RULE_KINDS.includes(kind)) { refused.push({ name, why: `rule kind ${kind || '(none)'}` }); continue; }
+        kept.push({
+          name: name.slice(0, 90),
+          league: String((m.league || '')).slice(0, 40),
+          note: String((m.note || '')).replace(/\s+/g, ' ').trim().slice(0, 200),
+          claimedDate: /^\d{4}-\d{2}-\d{2}$/.test(String(m.claimedDate)) ? String(m.claimedDate) : '',
+          rule: m.rule
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        moments: kept,
+        refused,
+        /* What it declined to guess at, which is as useful as what it returned:
+           it says which parts of the year are still waiting on a schedule. */
+        skipped: (Array.isArray(out.skipped) ? out.skipped : []).slice(0, 40)
       });
     }
 
