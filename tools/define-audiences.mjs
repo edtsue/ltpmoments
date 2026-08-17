@@ -10,17 +10,19 @@
    WHY THE DEPLOYED FUNCTION rather than the Gemini API directly: GEMINI_KEY
    lives in Vercel as an encrypted variable, so it cannot be read back out to
    run locally. The key stays where it is and this script goes through the site.
-   The site is gated, so it unlocks first with GATE_PW.
+   The site is gated, so it asks for the password at the terminal — see
+   tools/gate-login.mjs for why it is typed rather than passed in.
 
    Run:
-     GATE_PW=… node tools/define-audiences.mjs
-     GATE_PW=… node tools/define-audiences.mjs --base https://ltpmoments.mfgpilots.com
+     node tools/define-audiences.mjs
+     node tools/define-audiences.mjs --base https://ltpmoments.mfgpilots.com
      node tools/define-audiences.mjs --dry            (prints, writes nothing)
 
    Only the block between the AUDIENCES markers is rewritten. GROUPS and
    CAT_COLOR above and below it are hand-written and stay untouched.           */
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { gateLogin, callGemini } from './gate-login.mjs';
 
 const arg = name => {
   const i = process.argv.indexOf(name);
@@ -28,7 +30,6 @@ const arg = name => {
 };
 const BASE = (arg('--base') || 'https://ltpmoments.mfgpilots.com').replace(/\/$/, '');
 const DRY = process.argv.includes('--dry');
-const GATE_PW = process.env.GATE_PW;
 
 /* The five, and the brief each one is defined from. The brief is the input a
    planner would type into the panel — kept here so the built-in five and a
@@ -67,39 +68,12 @@ const WANTED = [
 ];
 
 /* ---------- getting in ---------- */
+/* Both live in tools/gate-login.mjs now: the sports tool needs exactly the
+   same two steps, and a second copy of an auth path is a second thing to get
+   wrong. */
 
-async function unlock() {
-  const r = await fetch(`${BASE}/api/gate`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ password: GATE_PW || '', remember: false })
-  });
-  const j = await r.json().catch(() => ({}));
-
-  /* No GATE_PW set on the deployment at all — middleware fails open, so there
-     is nothing to unlock and no cookie to carry. */
-  if (r.ok && j.open) return '';
-  if (!r.ok) {
-    throw new Error(r.status === 401
-      ? 'GATE_PW did not match the deployment. Set the same value the site is using.'
-      : `gate returned ${r.status}`);
-  }
-  const raw = r.headers.get('set-cookie') || '';
-  const cookie = raw.split(';')[0];
-  if (!cookie) throw new Error('the gate accepted the password but set no cookie');
-  return cookie;
-}
-
-async function define(brief, cookie) {
-  const r = await fetch(`${BASE}/api/gemini`, {
-    method: 'POST',
-    headers: Object.assign({ 'content-type': 'application/json' }, cookie ? { cookie } : {}),
-    body: JSON.stringify({ action: 'define-audience', description: brief })
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || `gemini returned ${r.status}`);
-  return j;
-}
+const define = (brief, cookie) =>
+  callGemini(BASE, cookie, { action: 'define-audience', description: brief });
 
 /* ---------- writing it back ---------- */
 
@@ -163,14 +137,14 @@ if (!file.includes(BEGIN) || !file.includes(END)) {
   process.exit(1);
 }
 
-if (!GATE_PW) {
-  console.error('GATE_PW is not set. The site is gated, so the script cannot reach /api/gemini without it.');
-  console.error('Run:  GATE_PW=… node tools/define-audiences.mjs');
+console.log(`base: ${BASE}`);
+let cookie;
+try {
+  cookie = await gateLogin(BASE);
+} catch (e) {
+  console.error(`\n${e.message}`);
   process.exit(1);
 }
-
-console.log(`base: ${BASE}`);
-const cookie = await unlock();
 console.log(cookie ? 'unlocked' : 'deployment is open — no gate to pass');
 
 const records = [];

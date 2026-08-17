@@ -281,6 +281,30 @@ if (MAP_SRC) {
   mapReport = { mapped, inRange, merged, added, close, unmatchedAlias, excluded, watch, unparsed };
 }
 
+/* ---------- third source: dates derived from calendar rules ---------- */
+/* Written by tools/derive-sports.mjs, and optional — the file may not exist,
+   and a build must not depend on having run a tool that needs the network.
+
+   These are merged last and deduped the same way, but they are NOT provisional:
+   each one is computed from a rule that holds every year, so "the second
+   Saturday of December" is as firm a date as anything the sheet confirms. */
+let derivedReport = null;
+try {
+  const raw = JSON.parse(readFileSync(new URL('../data/derived-sports.json', import.meta.url), 'utf8'));
+  const list = (raw.moments || []).filter(m => m.end >= FROM);
+  const added = [], held = [];
+  for (const m of list) {
+    const hit = kept.find(k => daysApart(k.start, m.start) <= 14 && sameMoment(k, m));
+    if (hit) { held.push([m.name, hit.name]); continue; }
+    kept.push(m);
+    added.push(m);
+  }
+  derivedReport = { added, held, total: list.length };
+} catch (e) {
+  /* Absent is the normal case and not worth a warning; anything else is. */
+  if (e.code !== 'ENOENT') console.warn(`[derived-sports] ignored: ${e.message}`);
+}
+
 kept.sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
 kept.forEach((m, i) => { m.id = 'm' + (i + 1); });
 
@@ -297,6 +321,13 @@ export const MOMENTS = ${JSON.stringify(kept, null, 0).replace(/\},\{/g, '},\n{'
 `);
 
 console.log(`${kept.length} moments kept of ${out.length} parsed (${dropped.length} exact duplicates collapsed)`);
+
+if (derivedReport) {
+  console.log(`\n--- derived from calendar rules ---`);
+  console.log(`${derivedReport.total} read, ${derivedReport.added.length} added, ${derivedReport.held.length} already held`);
+  for (const m of derivedReport.added) console.log(`   ${m.start}  ${m.name}  (${m.why || 'rule'})`);
+  for (const [a, b] of derivedReport.held) console.log(`   held: ${a} -> ${b}`);
+}
 
 if (mapReport) {
   const { mapped, inRange, merged, added, close, unmatchedAlias, excluded, watch, unparsed } = mapReport;
