@@ -152,6 +152,21 @@ for (const c of CASES) {
         problems.push('a collapse toggle does not say whether it is open');
       }
 
+      /* SHADE. Relevance is carried by how much ink a bar has, so the board
+         has to actually use the ramp. One or two shades in play means the
+         encoding has collapsed and every moment looks equally relevant —
+         which is what it looked like before the ramp existed, and is
+         indistinguishable from it at a glance. */
+      const shades = new Set([...html.matchAll(/class="bar [^"]*"[^>]*--f:(\d+)%/g)].map(m => m[1]));
+      if (shades.size < 3) {
+        problems.push(`only ${shades.size} relevance shade(s) drawn — the ramp has collapsed`);
+      }
+      /* And the densest fill is the only one allowed to flip its ink; at the
+         step below it, dark text on the colour reads better than white. */
+      const litWrong = [...html.matchAll(/class="bar [^"]*\blit\b[^"]*"[^>]*--f:(\d+)%/g)]
+        .filter(m => m[1] !== '100');
+      if (litWrong.length) problems.push(`${litWrong.length} bars flip their ink below full fill`);
+
       /* ZOOM. The ribbon must always carry a sizing style — either a month
          width or the dropped minimum that Fit uses. Without one it falls back
          to the stylesheet's default and the control silently does nothing. */

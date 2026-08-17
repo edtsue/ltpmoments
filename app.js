@@ -337,6 +337,52 @@ function renderHead() {
    40, so it can never appear on the ribbon — a legend entry for it would be
    describing something that is not there. The Skip count stays in the header,
    where it is a count rather than a drawing. */
+/* HOW RELEVANT, AS A SHADE.
+
+   The bar already carries its category in its hue, and hue is what lets a
+   reader scan a year of a thousand rows. Relevance goes on the other channel:
+   same hue, more ink. A dense bar is a moment this audience cares about, a
+   pale one is a moment it barely does, and the two can be told apart at arm's
+   length without reading a number.
+
+   Six steps rather than a continuous ramp. Continuous shading looks precise
+   and is not — the difference between 63 and 65 is inside the model's own
+   noise, and drawing it invites a reader to act on it. Six steps are as many
+   as the eye can order reliably against a coloured background, and each one is
+   a real difference in the score.
+
+   The steps are NOT evenly spaced in score, because the scores are not evenly
+   spread. Drawn moments pile up just above the Play line — for Sports
+   Superfans, two thirds of the board sits between 56 and 63 — so evenly cut
+   steps put most of the year on one shade and waste the top of the ramp on the
+   two moments that reach 84. These thresholds were cut against the actual
+   distribution across several audiences so every step carries real weight.
+
+   The bottom two only ever appear with Watch switched on. That band is meant
+   to recede, so it gets the pale end. */
+const SHADES = [
+  { min: 76, fill: 100, lit: true,  label: '76+' },
+  { min: 68, fill: 84,  lit: false, label: '68–75' },
+  { min: 63, fill: 68,  lit: false, label: '63–67' },
+  { min: 59, fill: 53,  lit: false, label: '59–62' },
+  { min: 56, fill: 40,  lit: false, label: '56–58' },
+  { min: 48, fill: 27,  lit: false, label: '48–55' },
+  { min: 0,  fill: 16,  lit: false, label: 'under 48' }
+];
+const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
+
+/* The ramp itself, drawn in the legend — the encoding is only usable if it is
+   stated somewhere, and a reader should not have to infer that darker means
+   more. Drawn in a neutral ink rather than one category's hue, so it reads as
+   a scale rather than as a category. */
+const shadeLegend = () => `
+  <span class="li ramp">
+    <b>Relevance</b>
+    <span class="rmp">${[...SHADES].reverse().map(s =>
+      `<i style="--f:${s.fill}%" title="score ${s.label}"></i>`).join('')}</span>
+    <span class="rmp-x">paler = less relevant to this audience</span>
+  </span>`;
+
 const bandLegend = () => BANDS.filter(b => b.id !== 'skip').map(b => {
   const dim = b.id === 'watch' && !S.showWatch;
   return `<span class="li${dim ? ' dim' : ''}">
@@ -430,8 +476,13 @@ function drawRibbon() {
           <div class="rib-grid" style="grid-template-columns:repeat(${MONTHS.length},1fr)">${MONTHS.map(() => '<span></span>').join('')}</div>
           ${rows.map(row => `<div class="rib-sub">${row.bars.map(b => {
             const tick = b.w <= 6;
-            return `<button class="bar ${b.m.band.id}${tick ? ' tick' : ''}"
-              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};left:${pct(b.s)}%;width:${pct(b.w)}%"
+            /* Hue says which category, shade says how relevant. The band class
+               stays for the outline weight, but it no longer decides the fill —
+               three bands drew as two visible shades, which threw away most of
+               the range a reader could have seen. */
+            const sh = shadeOf(b.m.score);
+            return `<button class="bar ${b.m.band.id}${sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
+              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${sh.fill}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
               title="${esc(b.m.name)} — ${b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
           }).join('')}</div>`).join('')}
         </div>
@@ -518,7 +569,7 @@ function drawRibbon() {
       so affinity sits at par for every category. This ordering is scale, actionability and timing only —
       it is not this audience's view of the year.
     </div>` : ''}
-    <div class="legend">${bandLegend()}</div>
+    <div class="legend">${bandLegend()}${shadeLegend()}</div>
     <div class="rib" style="${ribSizing()}">
       <div class="rib-ax">
         <div class="rib-axlb"></div>

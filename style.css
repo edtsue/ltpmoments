@@ -505,6 +505,21 @@ button, input, select { font-family: inherit; }
 .legend .li i { font-style: normal; opacity: .8; }
 .legend .li.dim { opacity: .55; }
 
+/* The relevance ramp. Drawn in a neutral ink rather than one category's hue,
+   so it reads as a scale and not as a thirteenth category. Same six steps the
+   bars use, and the same mix against the card, so a swatch here is genuinely
+   the shade a bar at that score will be. */
+.legend .li.ramp { gap: 8px; }
+.rmp { display: inline-flex; align-items: center; gap: 2px; }
+.rmp i {
+  width: 15px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid var(--a12);
+  background: color-mix(in srgb, var(--shell-ink2) var(--f), var(--card));
+}
+.rmp-x { opacity: .8; }
+
 /* The bar treatments, at legend size. Same three rules as the board so the two
    can never drift: solid, tinted, outline. */
 .key {
@@ -762,11 +777,33 @@ button, input, select { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
-  color: var(--on-fill);
-  background: var(--c);
+  /* HUE = category, INK = relevance. --f is the shade step app.js computed
+     from the score, mixed against the card so a pale bar still sits on the
+     board rather than floating over it. */
+  background: color-mix(in srgb, var(--ci) var(--f, 100%), var(--card));
+  color: var(--shell-ink);
 }
-.bar.play  { background: color-mix(in srgb, var(--ci) 22%, var(--card)); color: var(--shell-ink); border-color: color-mix(in srgb, var(--ci) 55%, transparent); }
-.bar.watch { background: transparent; color: var(--shell-ink3); border-color: color-mix(in srgb, var(--ci) 48%, transparent); }
+/* Only the top step. Checked rather than assumed: at the 84% step a category
+   hue mixed toward the card sits around 4.0:1 against white and 4.6:1 against
+   the ink, so white is the WORSE choice there despite looking like the bolder
+   one. Only the full-strength fill earns it.
+
+   In dark the fill is a LIFTED hue — a pastel — so the legible choice is the
+   dark ground rather than white. Getting this backwards is why a dark-mode
+   anchor bar used to sit at white-on-pastel. */
+.bar.lit { color: var(--on-fill); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bar.lit { color: #0E1014; }
+}
+:root[data-theme="dark"] .bar.lit { color: #0E1014; }
+/* The band no longer sets the fill — the shade does, from the score. What the
+   band still sets is the outline, because crossing 72 or 56 changes what a
+   planner DOES and that deserves an edge rather than another few percent of
+   ink. Anchor gets a full-strength border, Play a softer one, Watch only an
+   outline with almost nothing inside it. */
+.bar.anchor { border-color: color-mix(in srgb, var(--ci) 72%, transparent); }
+.bar.play   { border-color: color-mix(in srgb, var(--ci) 55%, transparent); }
+.bar.watch  { border-color: color-mix(in srgb, var(--ci) 48%, transparent); }
 /* There is no `.bar.skip`. Nothing under 40 is ever drawn on the ribbon, and
    Skip is by definition under 40, so the rule only ever looked like it did
    something. The Skip count lives in the header instead. */
