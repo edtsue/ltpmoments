@@ -213,6 +213,9 @@ function renderRail() {
             : `${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}`}</span>
         </span>
       </button>
+      <button class="aud-i" data-info="${esc(x.id)}" type="button"
+        title="What this audience is built from"
+        aria-label="Definition and indices for ${esc(x.name)}">i</button>
       ${x.custom ? `<button class="aud-x" data-del="${esc(x.id)}" type="button"
         title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">\u00d7</button>` : ''}
     </div>`;
@@ -944,9 +947,88 @@ function deleteAudience(id) {
    ============================================================ */
 let popEl = null;
 function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
+/* WHAT AN AUDIENCE IS BUILT FROM.
+
+   The rail can only show a name and two strongest categories, and everything
+   that makes a board arguable is in the rest: the twelve indices, where they
+   came from, and what each one rests on. A planner who cannot see that a
+   ranking is driven by Sports at 195 cannot disagree with it, and a number
+   nobody can disagree with is not evidence.
+
+   So this shows every category, not the interesting ones — including the ones
+   sitting at par, because a category the cut never mentioned and a category
+   genuinely at par are different facts and only this panel can tell them
+   apart. */
+function openAudInfo(a, anchor) {
+  closePop();
+
+  /* Every category the board knows about, plus anything the audience carries
+     that the board does not — a cut naming a category the calendar has no
+     moments for is worth seeing rather than silently dropping. */
+  const all = [...new Set([...CATS, ...Object.keys(a.aff || {})])];
+  const rows = all
+    .map(c => ({ c, v: a.aff && Number.isFinite(a.aff[c]) ? a.aff[c] : null }))
+    .sort((x, y) => (y.v ?? -1) - (x.v ?? -1) || x.c.localeCompare(y.c));
+
+  const provenance = a.pending
+    ? `<span class="pv warn">No cut loaded.</span> Every category falls back to par, so this audience cannot re-order the board yet.`
+    : a.custom
+      ? `<span class="pv">Yours.</span> ${esc(a.read || 'Added in this browser.')}`
+      : a.est
+        ? `<span class="pv warn">Estimated.</span> Reasoned from a brief, not read off a panel — argue with any of it.`
+        : `<span class="pv">Placeholder.</span> Invented numbers with the right shape, standing in until a real cut lands.`;
+
+  const bar = v => {
+    if (v == null) return '<span class="ab none"></span>';
+    /* Par is the reference, so the bar is drawn against it rather than against
+       the largest value on screen — 100 always sits in the same place and two
+       audiences can be compared by eye. */
+    const w = Math.max(2, Math.min(100, v / 250 * 100));
+    return `<span class="ab" style="--w:${w.toFixed(1)}%;--k:${v >= 100 ? 'var(--pill-green)' : 'var(--pill-amber)'}"></span>`;
+  };
+
+  popEl = document.createElement('div');
+  popEl.className = 'pop aud-pop';
+  popEl.innerHTML = `
+    <div class="t">${esc(a.name)}${a.custom ? '<span class="mine">Yours</span>' : ''}${
+      a.est ? '<span class="est">Est.</span>' : ''}${a.pending ? '<span class="pend">No cut</span>' : ''}</div>
+    <div class="meta">${a.pa ? esc(a.pa) + ' · ' : ''}${esc(a.size || 'no size given')}</div>
+    ${a.def ? `<div class="note">${esc(a.def)}</div>` : ''}
+    ${a.brief ? `<div class="note quiet"><b>Defined from:</b> ${esc(a.brief)}</div>` : ''}
+    <div class="prov">${provenance}</div>
+    <div class="aff-hd">Category affinity <span>100 = par</span></div>
+    <div class="aff">
+      ${rows.map(r => `
+        <div class="aff-r${r.v == null ? ' unset' : ''}">
+          <span class="ac"><span class="dot" style="--c:${CAT_COLOR[r.c] || '#5C6279'}"></span>${esc(r.c)}</span>
+          ${bar(r.v)}
+          <span class="av">${r.v == null ? '—' : r.v}</span>
+          ${a.why && a.why[r.c] ? `<span class="aw">${esc(a.why[r.c])}</span>` : ''}
+        </div>`).join('')}
+    </div>
+    ${Object.keys(a.ent || {}).length ? `
+      <div class="aff-hd">Entity overrides <span>where a category is too blunt</span></div>
+      <div class="ents">${Object.entries(a.ent).sort((x, y) => y[1] - x[1])
+        .map(([k, v]) => `<span class="ent"><b>${esc(k)}</b> ${v}</span>`).join('')}</div>` : ''}`;
+
+  document.body.appendChild(popEl);
+  placePop(anchor);
+}
+
+/* Shared by both popovers: keep it on screen, preferring below the thing that
+   opened it and flipping above when there is no room. */
+function placePop(anchor) {
+  const r = anchor.getBoundingClientRect();
+  const w = popEl.offsetWidth, h = popEl.offsetHeight;
+  const x = Math.min(window.innerWidth - w - 12, Math.max(12, r.left));
+  let y = r.bottom + 8;
+  if (y + h > window.innerHeight - 12) y = Math.max(12, r.top - h - 8);
+  popEl.style.left = x + 'px';
+  popEl.style.top = y + 'px';
+}
+
 function openPop(m, anchor) {
   closePop();
-  const r = anchor.getBoundingClientRect();
   popEl = document.createElement('div');
   popEl.className = 'pop';
   popEl.innerHTML = `
@@ -960,12 +1042,7 @@ function openPop(m, anchor) {
       <button type="button" class="gem sm" data-read="${m.id}">Write the read</button>
     </div>`;
   document.body.appendChild(popEl);
-  const w = popEl.offsetWidth, h = popEl.offsetHeight;
-  let x = Math.min(window.innerWidth - w - 12, Math.max(12, r.left));
-  let y = r.bottom + 8;
-  if (y + h > window.innerHeight - 12) y = Math.max(12, r.top - h - 8);
-  popEl.style.left = x + 'px';
-  popEl.style.top = y + 'px';
+  placePop(anchor);
 }
 
 /* The paragraph a planner pastes into a deck. Every number in it was computed
@@ -1016,8 +1093,20 @@ function render() {
 
 /* ---------- one delegated listener ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd');
   if (!t) { closePop(); return; }
+
+  /* Tested before the popover-closing paths below and before the audience
+     toggle: the i sits inside the row, so without its own branch a click on it
+     would both open the panel and switch the audience on or off. */
+  if (t.dataset.info) {
+    const a = ROSTER().find(x => x.id === t.dataset.info);
+    /* A second click on the same i closes it, rather than redrawing the same
+       panel in the same place and looking like nothing happened. */
+    if (popEl && popEl.dataset.forAud === t.dataset.info) return closePop();
+    if (a) { openAudInfo(a, t); popEl.dataset.forAud = a.id; }
+    return;
+  }
 
   if (t.id === 'zoomIn' || t.id === 'zoomOut' || t.id === 'zoomRd') {
     const next = t.id === 'zoomRd' ? ZOOM_DEFAULT

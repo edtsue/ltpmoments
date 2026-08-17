@@ -116,6 +116,13 @@ for (const c of CASES) {
       }
       if (!rail.includes('id="audAdd"')) problems.push('no add-audience button');
 
+      /* Every audience gets an i — the rail shows a name and two categories,
+         and everything that makes a board arguable is in the other ten. An
+         audience without one is a set of numbers nobody can inspect. */
+      const eyes = (rail.match(/data-info="/g) || []).length;
+      const roster = OFFICIAL.length + AUDIENCES.length;
+      if (eyes !== roster) problems.push(`${eyes} info buttons for ${roster} audiences`);
+
       /* FAMILIES. Every category drawn on the board has to sit under exactly
          one family header. The failure this catches is a category added to
          data but not to CAT_GROUPS: it still draws, in the "Other" block, and
