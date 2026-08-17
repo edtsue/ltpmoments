@@ -114,7 +114,7 @@ test('fills unmentioned categories with par and says which', () => {
   assert.equal(a.aff['Sports'], 145);
   assert.equal(a.aff['Movies'], 100);
   assert.equal(a.atPar.length, CATS.length - 1);
-  assert.match(a.read, /1 of 10 categories set/);
+  assert.match(a.read, new RegExp(`1 of ${CATS.length} categories set`));
 });
 
 test('every category present, always', () => {

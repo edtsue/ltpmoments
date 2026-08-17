@@ -47,9 +47,13 @@ const MAX_TURNS = 10;      // the conversation the client may send back
 
 const MAX_SOURCE = 24000;   // a bad paste should cost a 400, not a bill
 
+/* Must stay in step with CATEGORIES in data/parse.js — the client feeds this
+   function's output through that parser, and a category named here but unknown
+   there is silently dropped as an entity. */
 const CATEGORIES = [
   'Sports', 'Music', 'Tours & Concerts', 'TV & Streaming', 'Movies',
-  'Gaming', 'Holidays', 'Fashion & Awards', 'Tech', 'Culture'
+  'Gaming', 'Holidays', 'Fashion & Awards', 'Tech', 'Culture',
+  'Heritage & Identity', 'National Days'
 ];
 
 /* ---------- schemas ---------- */

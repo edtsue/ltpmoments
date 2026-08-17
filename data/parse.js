@@ -16,7 +16,8 @@
 
 export const CATEGORIES = [
   'Sports', 'Music', 'Tours & Concerts', 'TV & Streaming', 'Movies',
-  'Gaming', 'Holidays', 'Fashion & Awards', 'Tech', 'Culture'
+  'Gaming', 'Holidays', 'Fashion & Awards', 'Tech', 'Culture',
+  'Heritage & Identity', 'National Days'
 ];
 
 /* The names people actually type. Matched on normalised tokens, longest first,
@@ -31,7 +32,15 @@ const ALIASES = {
   'Holidays':         ['holidays', 'holiday', 'seasonal', 'seasonality'],
   'Fashion & Awards': ['fashion awards', 'fashion', 'awards', 'award shows', 'red carpet', 'awards shows'],
   'Tech':             ['tech', 'technology', 'consumer tech', 'devices', 'gadgets'],
-  'Culture':          ['culture', 'cultural', 'events', 'conventions', 'events conventions', 'news']
+  'Culture':          ['culture', 'cultural', 'events', 'conventions', 'events conventions', 'news'],
+  /* A cut names these a dozen ways. "Multicultural" and "LGBTQ" arrive as
+     separate lines in most panels and both belong here; the aliases are listed
+     rather than pattern-matched so a new one is a visible edit. */
+  'Heritage & Identity': ['heritage identity', 'heritage', 'identity', 'multicultural',
+                          'diversity', 'lgbtq', 'lgbtqia', 'lgbt', 'pride',
+                          'heritage months', 'awareness', 'awareness months'],
+  'National Days':    ['national days', 'national day', 'observances', 'awareness days',
+                       'commemorative days', 'civic days']
 };
 
 const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();

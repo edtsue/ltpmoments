@@ -87,5 +87,10 @@ export const CAT_COLOR = {
   'Holidays':         '#0F7A3D',
   'Fashion & Awards': '#B3451E',
   'Tech':             '#3C4A9E',
-  'Culture':          '#6D5DE0'
+  'Culture':          '#6D5DE0',
+  /* The civic year, from the 2027 Culture Map. Two hues picked out of the gaps
+     the first ten leave — an olive around 72° and a deep cyan around 194° —
+     so twelve categories still separate at a glance on a dense board. */
+  'Heritage & Identity': '#5B6E00',
+  'National Days':       '#0E6C8C'
 };

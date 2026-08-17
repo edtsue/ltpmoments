@@ -37,8 +37,27 @@ Sports Superfans — so a link carries what you were looking at.
 ## Rebuilding the data
 
 ```sh
-node tools/build-moments.mjs "path/to/MFG _ Cultural Calendar - Cultural Moments.csv"
+node tools/build-moments.mjs "path/to/MFG _ Cultural Calendar - Cultural Moments.csv" \
+                             "path/to/2027_CultureMap.html"
 ```
+
+Two sources, one calendar. The sheet is primary — it carries the supply side,
+with rights holder, platform and PA tagging on every row. The Culture Map is
+second, and covers what the sheet barely touches: public holidays, heritage and
+awareness months, national days, the civic year. Where both hold the same
+moment the sheet's record survives and the map only fills an empty note.
+
+The map is explicitly **provisional**: outside fixed-calendar holidays and
+confirmed 2027 dates, it carries 2026 dates forward as placeholders. Those
+import as `conf: 'TBD'`, which the relevance model already scores at 15 against
+100 for a confirmed date, so a placeholder can never read as plannable.
+
+Where that placeholder rule breaks down is anything that is not annual — it
+invents an event. The Winter Olympics, Winter Paralympics, World Baseball
+Classic, the NHL 4 Nations Face-Off and the FIFA World Cup are all listed for
+2027 and none of them happen in 2027; they are excluded by name in
+`tools/read-culturemap.mjs`, and near misses are printed for a human rather
+than guessed at.
 
 The sheet is a working document, so the build absorbs its quirks rather than
 asking anyone to clean it: two rows of instructions above the real header,
