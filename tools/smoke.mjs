@@ -24,13 +24,19 @@ for (const id of ['audList', 'audDef', 'audMode', 'catStrip', 'railFoot',
   els.set(id, mk(id));
 }
 
+/* app.js delegates every click off document, so a stub that swallows the
+   listener leaves each dialog untestable here — their markup only ever exists
+   inside a handler. Recording them lets a synthetic click walk the real path:
+   selector, branch, render. */
+const clicks = [];
+
 globalThis.document = {
   documentElement: { dataset: {} },
   body: { appendChild() {} },
   getElementById: id => els.get(id) || (els.set(id, mk(id)), els.get(id)),
   querySelectorAll: () => [],
   createElement: () => mk('new'),
-  addEventListener() {}
+  addEventListener(type, fn) { if (type === 'click') clicks.push(fn); }
 };
 globalThis.window = { innerWidth: 1600, innerHeight: 900, addEventListener() {} };
 globalThis.matchMedia = () => ({ matches: false });
@@ -217,5 +223,61 @@ for (const c of CASES) {
     }
   }
 }
+/* ---------- the methodology overlay ---------- */
+/* Driven through the real delegation rather than by calling the builder, so it
+   fails if the selector stops matching the chip — which is how this breaks in
+   practice, and what a direct call would never catch. */
+{
+  const fire = t => clicks[clicks.length - 1]({ target: { closest: () => t } });
+  const problems = [];
+
+  fire({ id: 'methBtn', dataset: {} });
+  const meth = document.getElementById('meth');
+  const html = meth.innerHTML;
+
+  if (meth.hidden !== false) problems.push('host still hidden after opening');
+  if (!html.includes('role="dialog"')) problems.push('no dialog role');
+  if (/undefined|NaN|\[object Object\]/.test(html)) {
+    problems.push('rendered ' + (html.match(/undefined|NaN|\[object Object\]/) || [])[0]);
+  }
+
+  /* The panel's whole claim is that it reads the live model. If a weight or a
+     band cut moves in relevance.js and the panel keeps the old number, it is
+     describing a formula the board is not running — so assert the drawn text
+     against the imported objects, never against a copy of them. */
+  const { WEIGHTS, BANDS, CONGESTION_MAX } = await import('../data/relevance.js');
+  const want = Object.values(WEIGHTS).map(w => w.toFixed(2).replace(/^0/, ''));
+
+  /* Each weight is drawn TWICE — once in the equation, once in its table row —
+     so a plain `html.includes` passes while one of the two is hardcoded, the
+     other silently covering for it. The two places are pulled apart and
+     checked separately for exactly that reason. */
+  const eq = (html.match(/class="meth-eq">([\s\S]*?)<\/div>/) || [, ''])[1];
+  want.forEach((s, i) => {
+    if (!eq.includes(s)) problems.push(`weight ${Object.keys(WEIGHTS)[i]} (${s}) is not in the equation`);
+  });
+  const rw = [...html.matchAll(/class="meth-rw">([^<]*)</g)].map(m => m[1]);
+  want.forEach((s, i) => {
+    if (rw[i] !== s) problems.push(`row ${i + 1} weighs ${rw[i]}, model says ${s}`);
+  });
+  for (const b of BANDS) {
+    if (!html.includes(b.label)) problems.push(`band "${b.label}" missing`);
+    if (!html.includes(`${b.min}+`)) problems.push(`band cut ${b.min} missing`);
+  }
+  if (rw[want.length] !== `−${Math.round(CONGESTION_MAX * 100)}%`) problems.push(`congestion row reads ${rw[want.length]}`);
+
+  /* Both honesty notes have to survive an edit to the panel. */
+  if (!/invented/i.test(html)) problems.push('no placeholder warning');
+  if (!/Fandom/.test(html)) problems.push('no note on what replaces this model');
+
+  fire({ id: '', dataset: { methClose: '1' } });
+  if (meth.hidden !== true) problems.push('did not close');
+  if (meth.innerHTML !== '') problems.push('left markup behind when closed');
+
+  checked++;
+  if (problems.length) { fail++; console.log(`FAIL  methodology overlay: ${problems.join('; ')}`); }
+  else console.log(`ok    ${'methodology overlay'.padEnd(24)} ${String(html.length).padStart(6)} chars`);
+}
+
 console.log(`\n${checked - fail}/${checked} renders clean`);
 process.exit(fail ? 1 : 0);

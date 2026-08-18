@@ -370,8 +370,32 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink3);
 }
 
-.rl-foot {
+/* The chip takes `margin-top: auto` so the pair sits at the foot of the rail;
+   the counts below it then follow immediately rather than fighting for the
+   same slot. */
+.rl-meth {
   margin-top: auto;
+  padding: 8px 11px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--shell-ink2);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+}
+.rl-meth:hover {
+  background: var(--shell-ink);
+  border-color: var(--shell-ink);
+  color: var(--shell-2);
+}
+
+.rl-foot {
+  margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--shell-line);
   font-family: var(--mono);
@@ -1616,3 +1640,145 @@ button, input, select { font-family: inherit; }
   border-radius: 999px;
   white-space: nowrap;
 }
+
+
+/* ---------- the methodology overlay ---------- */
+/* Same shape as the audience panel, its own prefix. Author display beats the
+   UA's [hidden] rule, so the attribute alone would leave it open forever. */
+.meth-host { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; }
+.meth-host[hidden] { display: none; }
+.meth-scrim { position: absolute; inset: 0; background: var(--scrim); }
+.meth-card {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--shell-line);
+  border-radius: 18px;
+  box-shadow: 0 22px 60px var(--a22);
+  overflow: hidden;
+}
+.meth-hd {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--shell-line);
+}
+.meth-kick {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+.meth-hd h2 { margin: 5px 0 0; font-size: 19px; font-weight: 680; letter-spacing: -.025em; }
+.meth-x {
+  flex: none;
+  width: 30px; height: 30px;
+  border: 1px solid var(--shell-line);
+  border-radius: 9px;
+  background: none;
+  color: var(--shell-ink3);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.meth-x:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+
+.meth-bd {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.meth-lede { margin: 0; font-size: 13px; line-height: 1.6; color: var(--shell-ink2); }
+.meth-lede b { color: var(--shell-ink); font-weight: 650; }
+
+.meth-eq {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.85;
+  color: var(--shell-ink);
+  background: var(--sunken);
+  border: 1px solid var(--shell-line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  white-space: pre;
+}
+.meth-eq b { color: var(--pill-blue); font-weight: 700; }
+
+.meth-h {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+
+/* One row per component: what it asks, what it weighs, where the number is
+   from. The weight column is mono so the four line up as a column of numbers
+   rather than as prose. */
+.meth-rows { display: flex; flex-direction: column; }
+.meth-r {
+  display: grid;
+  grid-template-columns: 118px 1fr 52px;
+  gap: 14px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-top: 1px solid var(--shell-line);
+}
+.meth-r:last-child { border-bottom: 1px solid var(--shell-line); }
+.meth-rn { font-size: 12.5px; font-weight: 650; color: var(--shell-ink); }
+.meth-rq { font-size: 12px; line-height: 1.5; color: var(--shell-ink2); }
+.meth-rq i { color: var(--shell-ink3); font-style: normal; display: block; margin-top: 2px; font-size: 11.5px; }
+.meth-rw {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--pill-blue);
+  text-align: right;
+}
+
+.meth-bands { display: flex; flex-wrap: wrap; gap: 8px; }
+.meth-band {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: var(--shell-ink2);
+}
+.meth-band b { color: var(--c); font-weight: 700; }
+.meth-band span { font-family: var(--mono); font-size: 10px; color: var(--shell-ink3); }
+
+/* The two notes that keep the panel honest: what is still a placeholder, and
+   what the model becomes when the real cuts land. Amber and green carry the
+   same meanings here as everywhere else in the tool. */
+.meth-note {
+  border-left: 3px solid var(--pill-amber);
+  background: var(--sunken);
+  border-radius: 0 8px 8px 0;
+  padding: 13px 15px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--shell-ink2);
+}
+.meth-note.next { border-left-color: var(--pill-green); }
+.meth-note b { color: var(--shell-ink); font-weight: 650; }
+.meth-note .meth-h { margin-bottom: 5px; }
+.meth-note.next .meth-h { color: var(--pill-green); }
+.meth-note p { margin: 0 0 6px; }
+.meth-note p:last-child { margin-bottom: 0; }

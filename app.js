@@ -1291,8 +1291,115 @@ function render() {
 }
 
 /* ---------- one delegated listener ---------- */
+
+/* ============================================================
+   METHODOLOGY
+   The board argues with numbers, so the derivation has to be one click from
+   them. Everything drawn here is READ FROM THE MODEL — the weights, the
+   congestion ceiling, the band cuts and the reach source are the same objects
+   scoreMoments() uses. Retyping any of them is how a methodology note starts
+   describing a formula the board is not running.
+   ============================================================ */
+
+/* ".50" rather than "0.5" — the weights read as a column of shares, and the
+   leading zero is noise in a table where every value is below one. */
+const shr = w => w.toFixed(2).replace(/^0/, '');
+
+const METH_PARTS = [
+  { name: 'Affinity', w: WEIGHTS.aff,
+    q: 'Does this audience care?',
+    from: 'The audience’s index for the moment’s category, sharpened by an entity override where one matches. The only term that varies by audience.' },
+  { name: 'Scale', w: WEIGHTS.scale,
+    q: 'How many of them show up?',
+    from: `Measured reach for sport — ${REACH_SOURCE.name}, ${REACH_SOURCE.edition}. A keyword ladder over the moment’s name everywhere else.` },
+  { name: 'Actionability', w: WEIGHTS.act,
+    q: 'Is there a door in?',
+    from: 'A named distributor is a door; a declared sponsorship is an open one. A moment with neither is something you talk around.' },
+  { name: 'Timing', w: WEIGHTS.tim,
+    q: 'Is the date firm enough to plan against?',
+    from: 'The sheet’s own Date Confirmation column. A window is plannable; TBD scores 15, so a placeholder date can never read as buyable.' }
+];
+
+function openMethodology() {
+  const el = document.getElementById('meth');
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="meth-scrim" data-meth-close="1"></div>
+    <div class="meth-card" role="dialog" aria-modal="true" aria-labelledby="methTitle">
+      <div class="meth-hd">
+        <div>
+          <div class="meth-kick">Methodology</div>
+          <h2 id="methTitle">How a moment’s relevance is worked out</h2>
+        </div>
+        <button class="meth-x" data-meth-close="1" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="meth-bd">
+        <p class="meth-lede">Relevance is never a bare number. It is
+          <b>four named components and one multiplier</b>, each answering a question a
+          planner would otherwise have to ask out loud — so you can say <i>which part</i>
+          of a score is wrong rather than just distrusting the total.</p>
+
+        <div class="meth-eq">score = ( <b>affinity</b>×${shr(WEIGHTS.aff)} + <b>scale</b>×${shr(WEIGHTS.scale)} + <b>actionability</b>×${shr(WEIGHTS.act)} + <b>timing</b>×${shr(WEIGHTS.tim)} )
+        × ( 1 − <b>congestion</b>/100 × ${shr(CONGESTION_MAX)} )</div>
+
+        <div class="meth-rows">
+          ${METH_PARTS.map(x => `
+            <div class="meth-r">
+              <div class="meth-rn">${esc(x.name)}</div>
+              <div class="meth-rq">${esc(x.q)}<i>${esc(x.from)}</i></div>
+              <div class="meth-rw">${shr(x.w)}</div>
+            </div>`).join('')}
+          <div class="meth-r">
+            <div class="meth-rn">Congestion</div>
+            <div class="meth-rq">How loud is everything else that week?<i>Same-category rivals count four times an unrelated moment. It multiplies rather than subtracts, because it is a tax on a moment and not a fault in it — so a moment in the loudest week of the year is worth less, but never drops out of the running.</i></div>
+            <div class="meth-rw">−${Math.round(CONGESTION_MAX * 100)}%</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="meth-h" style="margin-bottom:9px">Bands, not numbers — nobody acts on 71 versus 68</div>
+          <div class="meth-bands">
+            ${BANDS.map(b => `
+              <div class="meth-band" style="--c:${b.color}">
+                <b>${esc(b.label)}</b><span>${b.min}+</span> ${esc(b.note)}
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="meth-note">
+          <div class="meth-h">What is still a placeholder</div>
+          <p>The six built-in audiences carry <b>invented</b> category indices — the right
+            shape, none of it true. Scale outside sport is a keyword ladder over the
+            moment’s name, not a reach figure.</p>
+          <p>Anything you define yourself is either read from data you paste in, or
+            <b>estimated by Gemini</b> and labelled as such everywhere it appears.</p>
+        </div>
+
+        <div class="meth-note next">
+          <div class="meth-h">What changes when the real audience cuts land</div>
+          <p>The model moves to three dimensions, every one of them a measured survey
+            response: <b>Fandom ${shr(0.50)}</b> · <b>Reachability ${shr(0.30)}</b> ·
+            <b>Receptivity ${shr(0.20)}</b>.</p>
+          <p>Date confirmation, inventory and week congestion come out of the score
+            altogether and become a second <b>feasibility</b> axis — so a moment the
+            audience loves with no way in reads as <b>“find a door”</b> rather than
+            quietly sinking down the board.</p>
+        </div>
+      </div>
+    </div>`;
+  el.querySelector('.meth-x').focus();
+}
+
+function closeMethodology() {
+  const el = document.getElementById('meth');
+  el.hidden = true;
+  el.innerHTML = '';
+  document.getElementById('methBtn').focus();
+}
+
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close]');
   if (!t) { closePop(); return; }
 
   /* Tested before the popover-closing paths below and before the audience
@@ -1337,6 +1444,9 @@ document.addEventListener('click', e => {
     saveShut();
     return render();
   }
+
+  if (t.id === 'methBtn')  return openMethodology();
+  if (t.dataset.methClose) return closeMethodology();
 
   if (t.id === 'audAdd')   return openAudPanel();
   if (t.dataset.close)     return closeAudPanel();
@@ -1404,6 +1514,7 @@ document.addEventListener('keydown', e => {
      closing a tooltip while a half-filled dialog sits behind it would read as
      the key having done nothing. */
   if (draft) return closeAudPanel();
+  if (!document.getElementById('meth').hidden) return closeMethodology();
   closePop();
 });
 window.addEventListener('resize', closePop, { passive: true });

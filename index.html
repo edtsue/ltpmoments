@@ -80,6 +80,13 @@
 
     <div class="rl-mode" id="audMode" hidden></div>
 
+    <!-- Pinned to the bottom of the rail, above the counts. The board argues
+         with numbers, so the derivation has to be one click away from them —
+         and it is drawn from the live WEIGHTS and BANDS rather than retyped,
+         so it cannot drift from what the board actually computed. -->
+    <button class="rl-meth" id="methBtn" type="button"
+      aria-haspopup="dialog" aria-controls="meth">Methodology</button>
+
     <div class="rl-foot" id="railFoot"></div>
   </aside>
 
@@ -132,6 +139,11 @@
 <!-- The add-an-audience panel. Empty until it is opened, so nothing in it can
      be tabbed into or read out while it is closed. -->
 <div class="panel-host" id="panel" hidden></div>
+
+<!-- The methodology overlay. Its own `meth-` prefix: `pn-` belongs to the
+     add-an-audience dialog, and two dialogs sharing a class name is a cascade
+     collision waiting to happen. Empty until opened. -->
+<div class="meth-host" id="meth" hidden></div>
 
 <script type="module" src="/app.js"></script>
 </body>
