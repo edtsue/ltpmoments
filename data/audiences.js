@@ -173,6 +173,10 @@ export const CAT_GROUPS = [
     id: 'sport',
     label: 'Sport',
     note: 'Appointment viewing, and the only lane that is also a rights market.',
+    /* The one family whose scale term is measured rather than inferred. Said
+       on the board because it changes how much weight the ordering here can
+       carry compared with the other four. */
+    source: 'Scale informed by WPP Media Sports Reach data',
     cats: ['Sports']
   },
   {

@@ -8,7 +8,7 @@
 
 import { MOMENTS } from './data/moments.js';
 import { AUDIENCES, CAT_COLOR, GROUPS, CAT_GROUPS, OFFICIAL } from './data/audiences.js';
-import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES } from './data/relevance.js';
+import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES, REACH_SOURCE, reachOf } from './data/relevance.js';
 import { parseAudienceData, buildAudience } from './data/parse.js';
 
 /* ---------- audiences the user has added ---------- */
@@ -523,6 +523,7 @@ function drawRibbon() {
             <span class="fam-nm">${esc(f.label)}</span>
             <span class="fam-n">${mine.length} categor${mine.length === 1 ? 'y' : 'ies'} · ${n} moment${n === 1 ? '' : 's'}</span>
             <span class="fam-note">${esc(f.note)}</span>
+            ${f.source ? `<span class="fam-src" title="${esc(REACH_SOURCE.measure)} ${esc(REACH_SOURCE.basis)}">${esc(f.source)}</span>` : ''}
           </button>
           <div class="fam-bd" id="fam-${f.id}"${shut ? ' hidden' : ''}>
             ${shut ? '' : mine.map(lane).join('')}
@@ -1216,12 +1217,31 @@ function openPop(m, anchor) {
       ${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''} · ${esc(m.conf)}</div>
     <div class="row"><span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span></div>
     ${partsBlock(m)}
+    ${reachNote(m)}
     ${m.notes ? `<div class="note">${esc(m.notes)}</div>` : ''}
     <div class="pop-read" id="popRead">
       <button type="button" class="gem sm" data-read="${m.id}">Write the read</button>
     </div>`;
   document.body.appendChild(popEl);
   placePop(anchor);
+}
+
+/* Where a sports Scale figure came from. Only drawn when the score actually
+   used measured reach — most of the board still runs on the keyword ladder,
+   and a source line under a guess would be worse than none.
+
+   It states the LEAGUE-MONTH plainly, because that is the honest scope of the
+   figure: it is every national telecast of that league in that month, not this
+   fixture on its own. For a tentpole in its own month — the Derby in May, the
+   Indy 500 in May — the two are close. For one regular-season game it is an
+   upper bound, and saying so is the difference between a source and a claim. */
+function reachNote(m) {
+  const r = reachOf(m);
+  if (!r) return '';
+  return `<div class="src">
+    <b>${r.pct}%</b> P18-49 reach — ${esc(r.league)}, all national telecasts in ${esc(r.month)}.
+    <span>${esc(REACH_SOURCE.name)}, ${esc(REACH_SOURCE.edition)}</span>
+  </div>`;
 }
 
 /* The paragraph a planner pastes into a deck. Every number in it was computed

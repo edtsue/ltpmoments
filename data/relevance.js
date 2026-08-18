@@ -65,7 +65,82 @@ const CAT_SCALE = {
 };
 const MAJORS = /disney|netflix|warner|nbcu|amazon|paramount|sony|fox|apple|umg|google|samsung|nintendo/i;
 
+/* SPORTS SCALE COMES FROM MEASUREMENT, NOT FROM THE NAME.
+
+   Everywhere else this term is a keyword ladder over the moment's title, which
+   is a guess dressed as a number. For sport it does not have to be: WPP Media's
+   Sports Reach analysis gives average 1-month P18-49 reach per league per
+   month, off Nielsen's Big Data+Panel, and that is the actual answer to "how
+   many of them show up".
+
+   Two things it gets right that the ladder never could. It is SEASONAL — the
+   NBA reaches 13.7% of P18-49 in October and 35.4% in May, and the ladder gave
+   both the same 62. And it is ORDERED across leagues by measurement rather
+   than by how famous the name sounds: the NFL in November (54.6%) really is
+   four times the reach of the Premier League in November (4.8%).
+
+   The curve. Reach runs from 0.2% to 54.6%, and mapping that straight onto
+   0-100 would put every sport except the NFL in the bottom third — reach is
+   distributed with a long thin tail and a score is not. The 0.6 exponent
+   lifts the middle without reordering anything, so a 33% October MLB lands at
+   74 and a 5% Premier League Saturday at 23.
+
+   A moment whose league is not in the deck, or whose month is out of that
+   league's season, falls through to the ladder below rather than to zero: an
+   absent month means the deck did not measure it, not that nobody watched. */
+const REACH = SPORTS_REACH;
+const REACH_MAX = 55;          // the NFL in November, rounded up
+
+/* Whole-word matching, always. The first cut of the entity keys in this file
+   matched "CES" inside "Sciences"; three-letter league codes are exactly that
+   trap again, so every acronym here is anchored. */
+const LEAGUE = [
+  ['NFL',                         /\bNFL\b|\bsuper bowl\b|\bpro bowl\b/i],
+  ['College Football',            /\bCFB\b|college football|rose bowl|orange bowl|sugar bowl|fiesta bowl|peach bowl|cotton bowl|heisman|army.?navy/i],
+  ['NBA',                         /\bNBA\b/i],
+  ["Men's College Basketball",    /march madness men|men'?s college basketball|final four men|selection sunday/i],
+  ["Women's College Basketball",  /march madness women|women'?s college basketball|final four women|ncaa women'?s final four/i],
+  ['WNBA',                        /\bWNBA\b/i],
+  ['MLB',                         /\bMLB\b|world series(?! of poker)|home run derby/i],
+  ['NHL',                         /\bNHL\b|stanley cup|winter classic/i],
+  ['MLS',                         /\bMLS\b/i],
+  ['NWSL',                        /\bNWSL\b/i],
+  ['Premier League',              /premier league/i],
+  ['Liga MX',                     /liga mx/i],
+  ['NASCAR Xfinity Series',       /xfinity series/i],
+  ['NASCAR Cup Series',           /\bNASCAR\b|daytona 500|coke zero|brickyard/i],
+  ['IndyCar',                     /\bindycar\b|indy 500/i],
+  ['LPGA Golf',                   /\bLPGA\b/i],
+  ['PGA Golf',                    /\bPGA\b|the masters|masters golf|open championship|ryder cup/i],
+  ['Tennis',                      /wimbledon|\btennis\b|australian open|french open|roland garros/i],
+  ['Horse Racing',                /kentucky derby|preakness|belmont stakes|breeders'? cup|horse racing/i],
+  ['UFL',                         /\bUFL\b/i],
+  ['College Softball',            /college softball|women'?s college world series/i],
+  ["Women's College Volleyball",  /college volleyball|women'?s volleyball/i],
+  ['WWE',                         /\bWWE\b|wrestlemania|royal rumble|summerslam/i],
+  ['Unrivaled',                   /\bunrivaled\b/i]
+];
+
+const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** The measured reach for a moment, or null when the deck cannot speak to it. */
+export function reachOf(m) {
+  if (m.cat !== 'Sports') return null;
+  for (const [league, re] of LEAGUE) {
+    if (!re.test(m.name)) continue;
+    const months = REACH[league];
+    if (!months) return null;
+    const mon = MON3[Number(String(m.start).slice(5, 7)) - 1];
+    const pct = months[mon];
+    return Number.isFinite(pct) ? { league, month: mon, pct } : null;
+  }
+  return null;
+}
+
 export function scaleOf(m) {
+  const r = reachOf(m);
+  if (r) return Math.max(0, Math.min(100, Math.round(100 * Math.pow(r.pct / REACH_MAX, 0.6))));
+
   let s = CAT_SCALE[m.cat] ?? 50;
   for (const [re, v] of TENTPOLE) if (re.test(m.name)) { s = Math.max(s, v); break; }
   if (MAJORS.test(m.plat || '') || MAJORS.test(m.src || '')) s += 6;
@@ -156,6 +231,9 @@ export function weekKey(iso) {
 
 /* ---------- the score ---------- */
 
+import { SPORTS_REACH, REACH_SOURCE } from './sports-reach.js';
+
+export { REACH_SOURCE };
 export const WEIGHTS = { aff: 0.50, scale: 0.20, act: 0.15, tim: 0.15 };
 export const CONGESTION_MAX = 0.25;
 
