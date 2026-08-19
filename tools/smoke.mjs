@@ -40,6 +40,20 @@ globalThis.document = {
 };
 globalThis.window = { innerWidth: 1600, innerHeight: 900, addEventListener() {} };
 globalThis.matchMedia = () => ({ matches: false });
+/* The fold measures a width and then hands the class back over two frames. */
+globalThis.requestAnimationFrame = cb => setTimeout(cb, 0);
+
+/* strip.js is a classic script, not a module — it is copied between the
+   planning modules and has to stay identical in all of them, so it declares a
+   global rather than exporting. The browser gets it from a <script src>; here
+   it is evaluated the same way, because app.js calls `Strip.init` at its top
+   level and would throw on the import without it. */
+{
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../strip.js', import.meta.url), 'utf8');
+  // eslint-disable-next-line no-new-func
+  globalThis.Strip = new Function(`${src}; return Strip;`)();
+}
 globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 

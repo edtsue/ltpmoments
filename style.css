@@ -18,6 +18,17 @@
   --shell-ink3: #5C6279;
   --shell-line: rgba(20, 22, 31, .12);
 
+  /* What strip.css asks for. That file is copied between the planning modules
+     byte for byte and each of them names its colours differently, so it
+     declares what it needs and this says which of ours those are. Mapped once,
+     here, rather than per theme: these are references, so they resolve against
+     whatever `--shell-*` is on the root at the time — the dark blocks below
+     redefine those and the strip follows. */
+  --strip-line: var(--shell-line);
+  --strip-ink: var(--shell-ink);
+  --strip-ink3: var(--shell-ink3);
+  --strip-focus: var(--vi);
+
   --card: #FFFFFF;
   --sunken: #F7F8FB;
   --well: #EAEEF6;
@@ -507,7 +518,87 @@ button, input, select { font-family: inherit; }
 }
 .hd-pill b { font-weight: 700; color: var(--shell-ink); letter-spacing: 0; font-size: 11px; }
 
-.hd-tools { display: flex; gap: 6px; flex: none; }
+.hd-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* ---------- the module bar ----------
+   The bar wears the pill; the row inside it wears nothing.
+
+   ⚠️ DRAWN ON `.modnav` IT WOULD BE A CAPSULE AROUND NOTHING. The row is the
+   part that collapses to zero, so a border and a background on it leave an
+   empty outline sitting in the header of a folded bar. */
+.modbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  height: 26px;
+  padding: 0 5px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--shell-2);
+}
+.modnav { display: flex; align-items: center; gap: 6px; flex: none; }
+.modhome { display: flex; flex: none; border-radius: 8px; }
+.modhome svg { width: 20px; height: 20px; display: block; border-radius: 8px; }
+.modhome:hover { filter: brightness(1.12); }
+.modsep { width: 1px; height: 15px; background: var(--shell-line); flex: none; }
+
+/* The icon is the tile — it brings its own field, shadow and colour from the
+   process map, so nothing here paints a background. */
+.modtile { flex: none; width: 20px; height: 20px; display: block; border-radius: 8px; text-decoration: none; }
+.modtile svg { width: 100%; height: 100%; display: block; border-radius: 8px; }
+.modtile:hover { filter: brightness(1.08); }
+/* Which step you are standing in: ringed rather than recoloured, so the icon
+   stays the icon. ⚠️ NO `cursor: default` here, unlike the tools that own their
+   own page — Moments is stage 6.2 OF step 02, so the ring says where you are
+   and the link still has somewhere to go. */
+.modtile.on { box-shadow: 0 0 0 2px var(--vi); }
+.modtile:focus-visible, .modhome:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; }
+
+/* WHICH PLAN THIS IS. Outside the fold, so it stays on screen however folded
+   everything beside it gets. Empty until there is a plan to name — and
+   ⚠️ `[hidden]` needs saying out loud, because an author `display` beats the
+   browser's own rule and `hidden` would otherwise do nothing at all. */
+.pachip {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+  background: none;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  padding: 0 10px;
+  height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pachip[hidden] { display: none; }
+.pachip:hover { color: var(--shell-ink); border-color: var(--shell-ink3); }
+
+/* Kessel, as an icon rather than a row. */
+.hdlaunch {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 12px;
+  line-height: 1;
+  text-decoration: none;
+}
+.hdlaunch:hover { border-color: var(--shell-ink3); transform: translateY(-1px); }
+.hdlaunch:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; }
+
+/* The theme control travels in the strip now, so it is sized to the row it
+   sits in rather than to the tool row it left. */
+.hd-strip .tool { height: 22px; min-width: 22px; padding: 0 6px; }
 .tool {
   height: 26px;
   min-width: 26px;

@@ -1519,9 +1519,38 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('resize', closePop, { passive: true });
 
+/* ---------- the module bar's fold ----------
+   strip.js owns everything the fold does; this says which keys it is kept
+   under and what the button reads. Open until somebody shuts it.
+
+   ⚠️ TAUGHT STRAIGHT AWAY, AND THAT IS SAFE ONLY BECAUSE THIS GATE IS AT THE
+   EDGE. The other modules overlay a lock screen on a page that was served
+   anyway, so a demonstration run at boot happens behind it and is spent unseen.
+   Here `middleware.js` 307s to gate.html and this page is never served until
+   the cookie is valid — so by the time anything runs, the reader is looking
+   at it. Nothing else covers the board on a first visit: there is no tour.
+
+   `hold` is passed all the same, watching the two overlays that can be open
+   over the header, so a fold cannot reflow underneath one. */
+const stripKept = Strip.init({
+  box: document.getElementById('hdStrip'),
+  tog: document.getElementById('hdStripTog'),
+  prefix: 'ltpm',
+  labels: {
+    hide: 'Hide the module and view controls',
+    show: 'Show the module and view controls'
+  },
+  hold: () => {
+    const meth = document.getElementById('meth');
+    const panel = document.getElementById('panel');
+    return !!((meth && !meth.hidden) || (panel && !panel.hidden));
+  }
+});
+
 /* ---------- boot ---------- */
 recompute();
 render();
+Strip.teach(stripKept);
 
 /* ============================================================
    THE GEMINI RAIL
