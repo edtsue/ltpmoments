@@ -26,6 +26,10 @@
      marks on it — the one that matters drawn solid, its neighbours at half. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <clipPath id="icclip"><rect width="64" height="64" rx="14.5"/></clipPath>
+  <!-- Step 01's silhouette, for the mark at the foot of the rail. Drawn from
+       the same file the process map draws from, so the tile a planner clicks
+       here is the tile they saw on the map. -->
+  <g id="icsil-brief"><path d="M20 17a3 3 0 0 1 3-3h14l9 9v24a3 3 0 0 1-3 3H23a3 3 0 0 1-3-3z"/></g>
   <g id="icsil-moments">
     <rect x="9" y="29" width="46" height="6" rx="3"/>
     <circle cx="19" cy="32" r="7"/>
@@ -33,6 +37,34 @@
     <circle cx="48" cy="32" r="6"/>
   </g>
 </defs>
+<symbol id="ic-brief" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14.5" fill="#DC4B3F"/>
+  <g clip-path="url(#icclip)" opacity=".2" color="#000" fill="#000">
+  <use href="#icsil-brief" x="48" y="48"/>
+  <use href="#icsil-brief" x="45.6" y="45.6"/>
+  <use href="#icsil-brief" x="43.2" y="43.2"/>
+  <use href="#icsil-brief" x="40.8" y="40.8"/>
+  <use href="#icsil-brief" x="38.4" y="38.4"/>
+  <use href="#icsil-brief" x="36" y="36"/>
+  <use href="#icsil-brief" x="33.6" y="33.6"/>
+  <use href="#icsil-brief" x="31.2" y="31.2"/>
+  <use href="#icsil-brief" x="28.8" y="28.8"/>
+  <use href="#icsil-brief" x="26.4" y="26.4"/>
+  <use href="#icsil-brief" x="24" y="24"/>
+  <use href="#icsil-brief" x="21.6" y="21.6"/>
+  <use href="#icsil-brief" x="19.2" y="19.2"/>
+  <use href="#icsil-brief" x="16.8" y="16.8"/>
+  <use href="#icsil-brief" x="14.4" y="14.4"/>
+  <use href="#icsil-brief" x="12" y="12"/>
+  <use href="#icsil-brief" x="9.6" y="9.6"/>
+  <use href="#icsil-brief" x="7.2" y="7.2"/>
+  <use href="#icsil-brief" x="4.8" y="4.8"/>
+  <use href="#icsil-brief" x="2.4" y="2.4"/>
+  </g>
+  <path d="M20 17a3 3 0 0 1 3-3h14l9 9v24a3 3 0 0 1-3 3H23a3 3 0 0 1-3-3z" fill="#fff"/>
+  <path d="M37 14l9 9h-7a2 2 0 0 1-2-2z" fill="#C6DAFC"/>
+  <path d="M27 33.5l4.5 4.5 9-10" fill="none" stroke="#1A67D2" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
 <symbol id="ic-moments" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14.5" fill="#7C4DCC"/>
   <g clip-path="url(#icclip)" opacity=".2" color="#000" fill="#000">
@@ -86,6 +118,16 @@
          so it cannot drift from what the board actually computed. -->
     <button class="rl-meth" id="methBtn" type="button"
       aria-haspopup="dialog" aria-controls="meth">Methodology</button>
+
+    <!-- Back up the process. Moments are a stage of step 02, and step 01 is
+         where the objective, the dates and the RACI it answers to were agreed
+         — so this is the one link off the rail, and it opens in a new tab
+         because the board you are reading is the thing worth keeping. -->
+    <a class="rl-step" href="https://ltpbrief.mfgpilots.com/" target="_blank" rel="noopener">
+      <span class="rl-step-lg"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#ic-brief"/></svg></span>
+      <span class="rl-step-nm">Brief Intake</span>
+      <span class="rl-step-n">01</span>
+    </a>
 
     <div class="rl-foot" id="railFoot"></div>
   </aside>
