@@ -2219,6 +2219,122 @@ button, input, select { font-family: inherit; }
 .mdl-fix-b:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
 .mdl-fix-b:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }
 
+/* ============================================================
+   THE PLAIN VERSION, AT THE TOP OF THE COMPARISON
+   ============================================================
+   Above the detailed cards, not below them. A reader who needs the plain
+   words is the one least likely to scroll past the algebra to find them, so
+   the simple pair opens the panel and the detail is what you go on to.
+
+   Set larger than the cards underneath — 13px against 11.8px — because the
+   size difference IS the instruction about which to read first. Two blocks at
+   the same weight would just be the same thing twice.                       */
+.mh-quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 14px;
+}
+
+.mh-q {
+  padding: 15px 16px 16px;
+  border: 1px solid color-mix(in srgb, var(--mc) 30%, var(--shell-line));
+  border-top: 3px solid var(--mc);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mc) 4%, var(--card));
+}
+[data-theme="dark"] .mh-q {
+  border-color: color-mix(in srgb, var(--mcd) 30%, var(--shell-line));
+  border-top-color: var(--mcd);
+  background: color-mix(in srgb, var(--mcd) 7%, var(--card));
+}
+
+.mh-q-hd { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; margin-bottom: 11px; }
+.mh-q-hd .mi { font-size: 15px; }
+.mh-q-hd b {
+  color: var(--mc);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .mh-q-hd b { color: var(--mcd); }
+/* The question the model asks, in the model's own voice — quoted rather than
+   labelled, because "what does it ask" is the whole difference between them. */
+.mh-q-hd i {
+  flex: 1 1 100%;
+  font-size: 14.5px;
+  font-style: normal;
+  line-height: 1.4;
+  color: var(--shell-ink);
+}
+
+/* What counts, and how much, in words rather than decimals. ".50" is precise
+   and "half the score" is understood, and this panel is for the second. */
+.mh-q-t { width: 100%; border-collapse: collapse; margin-bottom: 11px; }
+.mh-q-t td {
+  padding: 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--mc) 18%, transparent);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--shell-ink2);
+  vertical-align: top;
+}
+.mh-q-t td:last-child {
+  width: 34%;
+  padding-left: 10px;
+  color: var(--mc);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+[data-theme="dark"] .mh-q-t td:last-child { color: var(--mcd); }
+.mh-q-t tr:last-child td { border-bottom: 0; }
+
+.mh-q-p { margin: 0 0 8px; font-size: 12.8px; line-height: 1.55; color: var(--shell-ink2); }
+.mh-q-p b { color: var(--shell-ink); }
+/* The downside is stated in the same size as the upside. A weak spot set
+   smaller than the pitch is a weak spot the reader is being walked past. */
+.mh-q-p.weak b { color: #C5221F; }
+[data-theme="dark"] .mh-q-p.weak b { color: #F28B82; }
+
+.mh-q-use {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--mc) 22%, transparent);
+  font-size: 12.8px;
+  line-height: 1.5;
+  color: var(--shell-ink2);
+}
+.mh-q-use b { color: var(--mc); }
+[data-theme="dark"] .mh-q-use b { color: var(--mcd); }
+
+/* The whole difference in one line, between the plain pair and the detail. */
+.mh-one {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--sunken);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--shell-ink);
+}
+.mh-one b { color: var(--mc); white-space: nowrap; }
+[data-theme="dark"] .mh-one b { color: var(--mcd); }
+
+/* A rule the reader can stop at. Everything below it is optional. */
+.mh-more {
+  margin: 22px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--shell-line);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+
 /* A sliding strip of chrome, and the button that folds it away.
    Shared across the planning modules — this file is copied between them the
    way `_gate.js` is, and it styles the fold rather than anything travelling in
@@ -7247,6 +7363,26 @@ function openMethodology() {
 
 const MODEL_HELP = {
   affinity: {
+    /* THE PLAIN VERSION COMES FIRST AND IS NOT A SUMMARY OF THE REST.
+
+       Ed's brief was "explain the difference simply", and a panel that opens
+       with the detailed cards and puts the simple version at the bottom has
+       answered a different question — the reader who most needs the plain
+       words is the one least likely to scroll past the algebra to find them.
+       So this block sits above everything, and the detail is what you go on
+       to if you want it. */
+    ask: 'Do they like this kind of thing — and is the moment worth buying?',
+    counts: [
+      ['Does this audience like this sort of thing?', 'half the score'],
+      ['How big is the moment?', 'a fifth'],
+      ['Is there a way to buy into it?', 'a bit'],
+      ['Is the date firm enough to plan against?', 'a bit'],
+      ['How much else is happening that week?', 'taken off the total']
+    ],
+    only: 'Only the first one changes when you switch audience. The other four are facts about the moment and are the same for everybody.',
+    means: 'The big obvious moments float to the top. The Super Bowl is huge, dated and buyable, so it scores well for almost anyone — good for finding the year’s tentpoles.',
+    weak: '“How big is it” is guessed from the moment’s <b>name</b> outside sport. The words “World Cup” score higher than the words “Album Release”. That is a guess wearing a number.',
+    pick: 'First pass, or any board that mixes real and made-up audiences.',
     line: 'How much does this audience like this kind of thing — and is the moment big, buyable and uncrowded enough to be worth it?',
     plain: [
       ['It starts with taste.', 'Every audience has a score for each of the twelve lanes — sport, music, gaming and so on — where 100 means "no different from anybody else". A sports audience might sit at 170 on sport and 85 on fashion. That taste score is half the answer.'],
@@ -7266,6 +7402,16 @@ const MODEL_HELP = {
     when: 'Use it for the first pass, for any board that mixes real and estimated audiences, and whenever you need the year\u2019s tentpoles ranked.'
   },
   response: {
+    ask: 'What did these people actually tell a researcher?',
+    counts: [
+      ['Do they follow this?', 'half the score'],
+      ['Can we reach them where it lives?', 'three tenths'],
+      ['Will they welcome a brand turning up?', 'two tenths']
+    ],
+    only: 'Nothing is inferred from a name or a size. If nobody was asked, it does not score. Everything about the <b>moment</b> — the date, whether you can buy in, how crowded the week is — comes out of the score and goes on a second scale called <b>feasibility</b>.',
+    means: 'Good moments stop disappearing. A moment they would love with no obvious way in comes out in its own box marked <b>“find a door”</b> — go and build a route into this one — instead of quietly sinking.',
+    weak: 'It only works for the four official targets, because they are the only ones with real research behind them. And it cannot see seasons: a survey finds the same football fans in June as in November.',
+    pick: 'Once you are down to the PA’s own targets, or you need to defend a choice with evidence.',
     line: 'Do these people actually follow this, can we reach them where it lives, and will they welcome a brand turning up?',
     plain: [
       ['Everything scored here is an answer somebody gave.', 'Nothing is inferred from the moment\u2019s name or its size. If nobody was asked, it does not score — it is left out and the remaining parts carry the weight.'],
@@ -7338,12 +7484,40 @@ function openModelHelp() {
         <p class="meth-lede">Both models score every moment out of 100 and sort the year by the
           answer. They disagree about <b>what should count</b>, and that disagreement is worth
           understanding before you take either board to a client.</p>
+
+        <!-- The plain version, first. See the note above MODEL_HELP. -->
+        <div class="mh-quick">
+          ${MODELS.map(m => {
+            const q = MODEL_HELP[m.id];
+            return `
+            <div class="mh-q" style="--mc:${m.color};--mcd:${m.colorDark}">
+              <div class="mh-q-hd">
+                <span class="mi" aria-hidden="true">${m.icon}</span>
+                <b>${esc(m.short)}</b>
+                <i>${esc(q.ask)}</i>
+              </div>
+              <table class="mh-q-t">
+                ${q.counts.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}
+              </table>
+              <p class="mh-q-p">${q.only}</p>
+              <p class="mh-q-p"><b>What that means:</b> ${q.means}</p>
+              <p class="mh-q-p weak"><b>Its weak spot:</b> ${q.weak}</p>
+              <p class="mh-q-use"><b>Use it for</b> ${esc(q.pick)}</p>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <p class="mh-one">In one sentence —
+          <b style="--mc:${MODELS[0].color};--mcd:${MODELS[0].colorDark}">${MODELS[0].icon} ${esc(MODELS[0].short)}</b>
+          asks how much they like it and whether it is worth buying;
+          <b style="--mc:${MODELS[1].color};--mcd:${MODELS[1].colorDark}">${MODELS[1].icon} ${esc(MODELS[1].short)}</b>
+          asks what they told a researcher, and refuses to guess about anything else.</p>
+
+        <div class="mh-more">The same thing in more detail</div>
         <div class="mh-grid">${MODELS.map(card).join('')}</div>
+
         <div class="meth-note">
-          <div class="meth-h">The short version</div>
-          <p><b>${esc(MODELS[0].label)}</b> asks how much they like it and whether it is worth buying.
-            <b>${esc(MODELS[1].label)}</b> asks what they told a researcher, and refuses to guess about
-            anything else.</p>
+          <div class="meth-h">Why there is a choice at all</div>
           <p>The first works everywhere and is easier to argue with. The second is better
             evidence and only covers the four targets with a
             ${esc(YOUGOV_SOURCE.name)} cut behind them. Neither is the right answer on its own,

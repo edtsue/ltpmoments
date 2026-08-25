@@ -1546,6 +1546,26 @@ function openMethodology() {
 
 const MODEL_HELP = {
   affinity: {
+    /* THE PLAIN VERSION COMES FIRST AND IS NOT A SUMMARY OF THE REST.
+
+       Ed's brief was "explain the difference simply", and a panel that opens
+       with the detailed cards and puts the simple version at the bottom has
+       answered a different question — the reader who most needs the plain
+       words is the one least likely to scroll past the algebra to find them.
+       So this block sits above everything, and the detail is what you go on
+       to if you want it. */
+    ask: 'Do they like this kind of thing — and is the moment worth buying?',
+    counts: [
+      ['Does this audience like this sort of thing?', 'half the score'],
+      ['How big is the moment?', 'a fifth'],
+      ['Is there a way to buy into it?', 'a bit'],
+      ['Is the date firm enough to plan against?', 'a bit'],
+      ['How much else is happening that week?', 'taken off the total']
+    ],
+    only: 'Only the first one changes when you switch audience. The other four are facts about the moment and are the same for everybody.',
+    means: 'The big obvious moments float to the top. The Super Bowl is huge, dated and buyable, so it scores well for almost anyone — good for finding the year’s tentpoles.',
+    weak: '“How big is it” is guessed from the moment’s <b>name</b> outside sport. The words “World Cup” score higher than the words “Album Release”. That is a guess wearing a number.',
+    pick: 'First pass, or any board that mixes real and made-up audiences.',
     line: 'How much does this audience like this kind of thing — and is the moment big, buyable and uncrowded enough to be worth it?',
     plain: [
       ['It starts with taste.', 'Every audience has a score for each of the twelve lanes — sport, music, gaming and so on — where 100 means "no different from anybody else". A sports audience might sit at 170 on sport and 85 on fashion. That taste score is half the answer.'],
@@ -1565,6 +1585,16 @@ const MODEL_HELP = {
     when: 'Use it for the first pass, for any board that mixes real and estimated audiences, and whenever you need the year\u2019s tentpoles ranked.'
   },
   response: {
+    ask: 'What did these people actually tell a researcher?',
+    counts: [
+      ['Do they follow this?', 'half the score'],
+      ['Can we reach them where it lives?', 'three tenths'],
+      ['Will they welcome a brand turning up?', 'two tenths']
+    ],
+    only: 'Nothing is inferred from a name or a size. If nobody was asked, it does not score. Everything about the <b>moment</b> — the date, whether you can buy in, how crowded the week is — comes out of the score and goes on a second scale called <b>feasibility</b>.',
+    means: 'Good moments stop disappearing. A moment they would love with no obvious way in comes out in its own box marked <b>“find a door”</b> — go and build a route into this one — instead of quietly sinking.',
+    weak: 'It only works for the four official targets, because they are the only ones with real research behind them. And it cannot see seasons: a survey finds the same football fans in June as in November.',
+    pick: 'Once you are down to the PA’s own targets, or you need to defend a choice with evidence.',
     line: 'Do these people actually follow this, can we reach them where it lives, and will they welcome a brand turning up?',
     plain: [
       ['Everything scored here is an answer somebody gave.', 'Nothing is inferred from the moment\u2019s name or its size. If nobody was asked, it does not score — it is left out and the remaining parts carry the weight.'],
@@ -1637,12 +1667,40 @@ function openModelHelp() {
         <p class="meth-lede">Both models score every moment out of 100 and sort the year by the
           answer. They disagree about <b>what should count</b>, and that disagreement is worth
           understanding before you take either board to a client.</p>
+
+        <!-- The plain version, first. See the note above MODEL_HELP. -->
+        <div class="mh-quick">
+          ${MODELS.map(m => {
+            const q = MODEL_HELP[m.id];
+            return `
+            <div class="mh-q" style="--mc:${m.color};--mcd:${m.colorDark}">
+              <div class="mh-q-hd">
+                <span class="mi" aria-hidden="true">${m.icon}</span>
+                <b>${esc(m.short)}</b>
+                <i>${esc(q.ask)}</i>
+              </div>
+              <table class="mh-q-t">
+                ${q.counts.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}
+              </table>
+              <p class="mh-q-p">${q.only}</p>
+              <p class="mh-q-p"><b>What that means:</b> ${q.means}</p>
+              <p class="mh-q-p weak"><b>Its weak spot:</b> ${q.weak}</p>
+              <p class="mh-q-use"><b>Use it for</b> ${esc(q.pick)}</p>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <p class="mh-one">In one sentence —
+          <b style="--mc:${MODELS[0].color};--mcd:${MODELS[0].colorDark}">${MODELS[0].icon} ${esc(MODELS[0].short)}</b>
+          asks how much they like it and whether it is worth buying;
+          <b style="--mc:${MODELS[1].color};--mcd:${MODELS[1].colorDark}">${MODELS[1].icon} ${esc(MODELS[1].short)}</b>
+          asks what they told a researcher, and refuses to guess about anything else.</p>
+
+        <div class="mh-more">The same thing in more detail</div>
         <div class="mh-grid">${MODELS.map(card).join('')}</div>
+
         <div class="meth-note">
-          <div class="meth-h">The short version</div>
-          <p><b>${esc(MODELS[0].label)}</b> asks how much they like it and whether it is worth buying.
-            <b>${esc(MODELS[1].label)}</b> asks what they told a researcher, and refuses to guess about
-            anything else.</p>
+          <div class="meth-h">Why there is a choice at all</div>
           <p>The first works everywhere and is easier to argue with. The second is better
             evidence and only covers the four targets with a
             ${esc(YOUGOV_SOURCE.name)} cut behind them. Neither is the right answer on its own,

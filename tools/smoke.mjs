@@ -419,6 +419,32 @@ for (const c of CASES) {
 
   const cards = (html.match(/class="mh-card/g) || []).length;
   if (cards !== MODELS.length) problems.push(`${cards} cards for ${MODELS.length} models`);
+
+  /* THE PLAIN VERSION, AND IT HAS TO BE ABOVE THE DETAIL.
+     Ed asked for the difference explained simply and asked for it AT THE TOP.
+     Position is the substance of that request — a plain summary underneath
+     the algebra is a plain summary the reader who needed it never reaches —
+     so the order is asserted, not just the presence. */
+  const quick = (html.match(/class="mh-q"/g) || []).length;
+  if (quick !== MODELS.length) problems.push(`${quick} plain-English blocks for ${MODELS.length} models`);
+  const firstQuick = html.indexOf('class="mh-q"');
+  const firstCard = html.indexOf('class="mh-card');
+  if (firstQuick < 0 || firstCard < 0 || firstQuick > firstCard) {
+    problems.push('the plain explanation is not above the detailed cards');
+  }
+  /* Each plain block owes the reader the question the model asks, what counts
+     and by how much, and the downside — in words rather than decimals. */
+  for (const m of MODELS) {
+    const h = (html.split('class="mh-q"')[MODELS.indexOf(m) + 1] || '');
+    if (!h.includes(m.icon)) problems.push(`${m.label}: plain block carries no glyph`);
+    if (!/class="mh-q-t"/.test(h)) problems.push(`${m.label}: plain block does not say what counts`);
+    if (!/Its weak spot/.test(h)) problems.push(`${m.label}: plain block has no downside`);
+    if (!/Use it for/.test(h)) problems.push(`${m.label}: plain block does not say when to reach for it`);
+  }
+  if (/\b\.\d\d\b/.test(html.slice(firstQuick, firstCard))) {
+    problems.push('the plain explanation quotes a decimal weight — it is meant to be in words');
+  }
+  if (!/class="mh-one"/.test(html)) problems.push('no one-sentence version');
   for (const m of MODELS) {
     if (!html.includes(m.label)) problems.push(`${m.label} is not named`);
     if (!html.includes('class="mh-line"')) problems.push(`${m.label} has no plain-English summary line`);
