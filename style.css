@@ -1918,22 +1918,75 @@ button, input, select { font-family: inherit; }
 
 /* Wider than the combine segment and set in the mono face, because this one
    is a mode rather than a preference and should read as a label on the board
-   you are looking at. */
+   you are looking at.
+
+   ONE HUE AND ONE GLYPH EACH, DECLARED IN data/models.js AND PASSED IN AS
+   `--mc`. Two dark pills differing only in their word is a control you have to
+   read; a violet one and a green one is a control you can see. The colour is
+   carried in the OFF state as well as the on state, so the pair stays a pair
+   — a button that only gets its identity when pressed cannot be recognised
+   before you press it, which is the moment it matters. */
+.seg.mdl { gap: 5px; }
 .seg.mdl button {
-  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  border-color: color-mix(in srgb, var(--mc) 35%, transparent);
+  color: var(--mc);
   font-family: var(--mono);
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
+.seg.mdl button:hover {
+  border-color: var(--mc);
+  color: var(--mc);
+  background: color-mix(in srgb, var(--mc) 8%, var(--card));
+}
+.seg.mdl button.on {
+  background: var(--mc);
+  border-color: var(--mc);
+  color: #FFF;
+}
+.seg.mdl button:focus-visible { outline-color: var(--mc); }
 
+/* The glyph is decoration for a sighted reader and noise for a screen reader,
+   so it is aria-hidden in the markup and sized here rather than inheriting the
+   9.5px the label is set in — at that size an emoji is a smudge. */
+.mi { font-size: 12px; line-height: 1; letter-spacing: 0; }
+
+/* Dark theme wants the lighter end of each hue: #0B7A67 on a near-black
+   ground is barely a colour at all. */
+[data-theme="dark"] .seg.mdl button {
+  border-color: color-mix(in srgb, var(--mcd) 35%, transparent);
+  color: var(--mcd);
+}
+[data-theme="dark"] .seg.mdl button:hover {
+  border-color: var(--mcd);
+  color: var(--mcd);
+  background: color-mix(in srgb, var(--mcd) 12%, var(--card));
+}
+[data-theme="dark"] .seg.mdl button.on {
+  background: var(--mcd);
+  border-color: var(--mcd);
+  color: #14161C;
+}
+
+/* One rule, not two. The sentence under the toggle carries the active model's
+   hue as a rule down its left edge, so the explanation and the pressed button
+   are visibly about the same thing. */
 .mdl-gist {
   margin: 7px 3px 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--mc, transparent);
   font-size: 10.8px;
   line-height: 1.45;
   color: var(--shell-ink3);
 }
+[data-theme="dark"] .mdl-gist { border-left-color: var(--mcd, transparent); }
 
 /* THE WARNING IS THE POINT OF THE WHOLE CONTROL.
 
@@ -2066,7 +2119,16 @@ button, input, select { font-family: inherit; }
 }
 /* The one you are reading gets an edge, not a colour — it is a statement of
    where you are, not a recommendation. */
-.mh-card.on { border-color: var(--shell-ink); box-shadow: inset 0 0 0 1px var(--shell-ink); }
+/* The card for the model you are reading is edged in that model's own hue —
+   the same one its button carries — rather than in ink. Two cards side by
+   side need to be told apart before either is chosen, so the hue is on the
+   heading in both states and only the edge changes. */
+.mh-card.on { border-color: var(--mc); box-shadow: inset 0 0 0 1px var(--mc); }
+.mh-hd b { color: var(--mc); }
+[data-theme="dark"] .mh-card.on { border-color: var(--mcd); box-shadow: inset 0 0 0 1px var(--mcd); }
+[data-theme="dark"] .mh-hd b { color: var(--mcd); }
+.mh-eq b { color: var(--mc); }
+[data-theme="dark"] .mh-eq b { color: var(--mcd); }
 
 .mh-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .mh-hd b { font-size: 14px; color: var(--shell-ink); }

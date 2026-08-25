@@ -275,9 +275,10 @@ function renderModelToggle() {
     <div class="rl-hd gap">Relevance model</div>
     <div class="seg mdl">${MODELS.map(m => `
       <button type="button" data-model="${m.id}" class="${m.id === S.model ? 'on' : ''}"
+        style="--mc:${m.color};--mcd:${m.colorDark}"
         aria-pressed="${m.id === S.model}"
-        title="${esc(m.gist)}">${esc(m.short)}</button>`).join('')}</div>
-    <p class="mdl-gist">${esc(cur.gist)}</p>
+        title="${esc(m.gist)}"><span class="mi" aria-hidden="true">${m.icon}</span>${esc(m.short)}</button>`).join('')}</div>
+    <p class="mdl-gist" style="--mc:${cur.color};--mcd:${cur.colorDark}">${esc(cur.gist)}</p>
     ${cov.ok === cov.total ? '' : `
       <p class="mdl-warn">${cov.ok
         ? `Scores <b>${cov.ok} of ${cov.total}</b> selected audiences. ${cov.missing.map(x => esc(x.name)).join(', ')} ${cov.missing.length === 1 ? 'has' : 'have'} <b>no research cut</b>, so ${cov.missing.length === 1 ? 'it is' : 'they are'} left out of the board rather than scored at par.`
@@ -1594,9 +1595,9 @@ function openModelHelp() {
     const h = MODEL_HELP[m.id];
     const on = m.id === S.model;
     return `
-      <div class="mh-card${on ? ' on' : ''}">
+      <div class="mh-card${on ? ' on' : ''}" style="--mc:${m.color};--mcd:${m.colorDark}">
         <div class="mh-hd">
-          <b>${esc(m.label)}</b>
+          <b><span class="mi" aria-hidden="true">${m.icon}</span>${esc(m.label)}</b>
           ${on ? '<span class="mh-now">You are reading this one</span>' : `<button class="mh-pick" type="button" data-model="${m.id}" data-help-close="1">Switch to it</button>`}
         </div>
         <p class="mh-line">${esc(h.line)}</p>

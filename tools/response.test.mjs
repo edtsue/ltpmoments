@@ -241,6 +241,22 @@ test('coverage counts what the model can actually speak for', () => {
   assert.equal(c.missing[0].id, AUDIENCES[0].id);
 });
 
+test('every model has its own hue and glyph, and no two share one', () => {
+  /* The toggle is legible because the two options do not look alike. A model
+     added or edited without an identity would fall back to an untinted button
+     and quietly undo that. */
+  const hues = new Set(), icons = new Set();
+  for (const model of MODELS) {
+    assert.match(model.color, /^#[0-9A-Fa-f]{6}$/, `${model.id} has no hue`);
+    assert.match(model.colorDark, /^#[0-9A-Fa-f]{6}$/, `${model.id} has no dark-theme hue`);
+    assert.ok(model.icon && [...model.icon].length <= 2, `${model.id} has no glyph`);
+    assert.notEqual(model.color, model.colorDark, `${model.id}: both themes use the same hue`);
+    hues.add(model.color); icons.add(model.icon);
+  }
+  assert.equal(hues.size, MODELS.length, 'two models share a colour');
+  assert.equal(icons.size, MODELS.length, 'two models share a glyph');
+});
+
 test('every model declares a full set of parts, bands and shades', () => {
   for (const model of MODELS) {
     assert.ok(model.parts.length >= 3, `${model.id} has too few parts`);

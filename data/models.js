@@ -56,6 +56,18 @@ export const MODELS = [
     label: 'Affinity model',
     short: 'Affinity',
     tag: 'Works for every audience',
+    /* IDENTITY. The two models are a mode, not a preference, so the toggle has
+       to be legible at a glance from across a desk — which a pair of dark
+       pills differing only in their word is not. Each gets one hue and one
+       glyph, and both travel to the comparison panel so a reader connects the
+       card to the button they pressed.
+
+       Violet for the model that asks what an audience LIKES. It is the one
+       hue in the Atlas palette not already spoken for on this rail: blue is
+       the official group, green means measured, amber means estimated. */
+    icon: '\uD83D\uDC9C',
+    color: '#6D5DE0',
+    colorDark: '#9C90F0',
     /* One line, on the rail, under the toggle. It has to say what the model
        asks — not what it is called. */
     gist: 'Scores how much an audience cares, then discounts for how buyable and how crowded the moment is.',
@@ -106,6 +118,12 @@ export const MODELS = [
     label: 'Response model',
     short: 'Response',
     tag: 'Needs a research cut',
+    /* Green, because green already means "measured" on this rail — it is the
+       Cut badge's colour — and this is the model that reads nothing else. The
+       clipboard is the survey it reads. */
+    icon: '\uD83D\uDCCB',
+    color: '#0B7A67',
+    colorDark: '#4FC2AC',
     gist: 'Scores only things the audience was actually asked — do they follow it, can we reach them there, will they welcome a brand.',
     bands: RESPONSE_BANDS,
     driver: 'fan',
