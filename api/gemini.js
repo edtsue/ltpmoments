@@ -148,7 +148,7 @@ RULES, in order of importance:
 4. Omitting a category is correct and expected. A source that covers three categories should return three pairs. Never pad the list.
 
 WHAT COUNTS AS A LABEL:
-- One of these ten categories, if the source is talking about it: ${CATEGORIES.join(', ')}. Use the category name exactly as written here.
+- One of these ${CATEGORIES.length} categories, if the source is talking about it: ${CATEGORIES.join(', ')}. Use the category name exactly as written here.
 - Or the name of a specific thing with an affinity number beside it — an artist, a league, a franchise, a platform, a brand ("Taylor Swift", "NFL", "Nintendo"). Keep the name as the source writes it, five words maximum.
 
 Ignore anything that is not an affinity or index figure: sample sizes, dates, page numbers, respondent counts, percentages of the total population, budget figures.
@@ -238,18 +238,20 @@ sits at stage 6.2 of a long-term planning process, and it produces a calendar:
 which cultural moments a set of target audiences actually cares about across a
 planning year, and which ones to skip.
 
-HOW THE TOOL SCORES A MOMENT, out of 100. Five named components, never a bare
-number, so a planner can say which part is wrong:
-  Affinity .50      does this audience care. The ONLY term that varies by audience.
-  Scale .20         how many of them show up.
-  Actionability .15 is there a way to buy in — a distributor, a sponsorship.
-  Timing .15        is the date firm enough to plan against.
-  Congestion        how loud that week is. A MULTIPLIER, up to minus 25%.
-                    HIGHER IS WORSE: a low congestion figure means a QUIET week.
-Bands: Anchor 72+ (build a beat on it), Play 56+ (buy in with what exists),
-Watch 40+ (know about it, no line item), Skip (say out loud we are not doing it).
-Several audiences combine on affinity only: blend (size-weighted), overlap (the
-lowest — where one buy serves all), any (the highest — reach at least one).
+A moment is scored out of 100 from named components, never a bare number, so
+a planner can say which part is wrong. THE BOARD BELOW STATES ITS OWN
+COMPONENTS, WEIGHTS AND BAND CUTS — read them from it and use no others.
+
+There are two models and the reader picks one, so the components are not
+fixed. This prompt used to name them and named the wrong ones the moment the
+second model shipped. If a figure is not in the block below, you do not have
+it.
+
+Two things that block cannot say for itself:
+  Congestion is a MULTIPLIER, not a term, and HIGHER IS WORSE — a low
+  congestion figure means a QUIET week, which is usually the opportunity.
+  Feasibility is a SECOND AXIS. It qualifies relevance rather than competing
+  with it, so a moment can be highly relevant and barely feasible.
 
 WHAT IS ON THE BOARD RIGHT NOW:
 ${digest}
@@ -262,6 +264,9 @@ RULES:
   the combine mode.
 - Never state a figure that is not above. No audience sizes, no reach, no
   ratings, no budgets, no what-happened-last-year.
+- When asked who an audience IS, quote its panel definition from the digest
+  rather than paraphrasing it. It is the survey filter the cut was taken on,
+  and a paraphrase of a filter is a different filter.
 - Never invent a moment, a date, a partner or a competitor. If you are not sure
   a thing is real, do not name it.
 - Two short paragraphs at most. A planner is reading this beside the board, not

@@ -7,12 +7,17 @@
    Run: node tools/smoke.mjs                                                  */
 
 const els = new Map();
+/* click listeners bound directly to an element, by that element's id */
+const sends = {};
 const mk = (id) => {
   const el = {
     id, innerHTML: '', textContent: '', scrollTop: 0, style: {}, dataset: {},
     classList: { toggle() {}, add() {}, remove() {}, contains: () => false },
     setAttribute() {}, getAttribute: () => null, remove() {}, appendChild() {},
-    addEventListener() {}, focus() {},
+    /* Most of the app delegates off document, but a few controls bind
+       straight to their element — the chat send button among them. Recording
+       them by element id is what lets a test press one. */
+    addEventListener(type, fn) { if (type === 'click') sends[id] = fn; }, focus() {},
     querySelector: () => mk('q'), querySelectorAll: () => [],
     offsetWidth: 320, offsetHeight: 200,
     getBoundingClientRect: () => ({ left: 0, top: 0, right: 0, bottom: 0 })
@@ -66,6 +71,7 @@ globalThis.location = { hash: '' };
 globalThis.history = { replaceState() {} };
 
 const { AUDIENCES, GROUPS, CAT_GROUPS, OFFICIAL } = await import('../data/audiences.js');
+const ROSTER_ALL = [...OFFICIAL, ...AUDIENCES];
 const { WINDOW_FROM } = await import('../data/moments.js');
 
 /* The window app.js draws: twelve months from WINDOW_FROM. Derived rather than
@@ -649,6 +655,140 @@ for (const c of CASES) {
   } else {
     console.log(`ok    ${'hover definition · estimated'.padEnd(24)} no box on the ${AUDIENCES.length} without a panel`);
   }
+}
+
+/* ---------- the digest the Gemini rail sends ---------- */
+/* WHAT WENT WRONG, SO IT CANNOT AGAIN.
+
+   The chat prompt in api/gemini.js used to carry the scoring rules as prose,
+   and it carried the AFFINITY model's rules because they were the only ones
+   that existed when it was written. When the response model shipped, a reader
+   on it was answered with a formula the board was not running and band cuts
+   three points out — and nothing failed, because a wrong explanation renders
+   exactly as well as a right one.
+
+   So the model now writes itself into the digest out of the registry, and this
+   asserts the property rather than the wording: whatever model is selected,
+   ITS parts and ITS band cuts are in what gets sent, and the other model's
+   band cuts are NOT. Plus the panel definitions, which are what makes "who is
+   this audience" answerable at all.
+
+   Driven through the real path — the chat button, askChat, boardDigest,
+   callGemini, fetch — because a test that calls the builder directly would
+   pass on a rail that had stopped calling it. */
+{
+  const { MODELS } = await import('../data/models.js');
+
+  for (const model of MODELS) {
+    checked++;
+    const problems = [];
+    const nm = `gemini digest · ${model.id}`;
+    const other = MODELS.find(m => m.id !== model.id);
+
+    let sent = null;
+    globalThis.fetch = async (url, opts) => {
+      sent = JSON.parse(opts.body);
+      return { ok: true, status: 200, json: async () => ({ ok: true, reply: 'ok', unverified: [] }) };
+    };
+
+    els.get('body').innerHTML = '';
+    globalThis.location.hash = `#/${OFFICIAL[0].id}/${model.id}`;
+    await import(`../app.js?digest=${model.id}`);
+
+    const box = els.get('chatIn');
+    box.value = 'what is on the board';
+    /* The send button binds a direct listener rather than going through the
+       delegated click path, so it is called the way the button calls it. */
+    await sends.chatGo();
+
+    if (!sent) { fail++; console.log(`FAIL  ${nm}: the rail sent nothing`); continue; }
+    const d = String(sent.digest || '');
+
+    if (sent.action !== 'chat') problems.push(`action was "${sent.action}"`);
+    if (!d) problems.push('empty digest');
+
+    /* THE MODEL, BY ITS OWN REGISTRY ENTRY. */
+    if (!d.includes(model.label)) problems.push(`digest does not name ${model.label}`);
+    for (const part of model.parts) {
+      if (!d.includes(part.name)) problems.push(`component missing: ${part.name}`);
+      if (!d.includes(part.q)) problems.push(`question missing for ${part.name}`);
+    }
+    /* The band cuts have to be THIS model's. The two models band three points
+       apart, which is exactly the size of error nobody spots by eye. */
+    for (const b of model.bands.filter(x => x.min)) {
+      if (!d.includes(`${b.label} ${b.min}+`)) problems.push(`band cut missing: ${b.label} ${b.min}+`);
+    }
+    for (const b of other.bands.filter(x => x.min)) {
+      if (model.bands.some(y => y.label === b.label && y.min === b.min)) continue;
+      if (d.includes(`${b.label} ${b.min}+`)) {
+        problems.push(`digest carries ${other.label}'s cut "${b.label} ${b.min}+"`);
+      }
+    }
+
+    /* THE PANEL DEFINITION. Every clause, because the digest is also the list
+       of figures the reply may quote — a filter that is not in here comes back
+       flagged as unverified even when it is true. */
+    const a = OFFICIAL[0];
+    for (const c of a.criteria || []) {
+      if (!d.includes(c)) problems.push(`panel clause missing: "${c.slice(0, 30)}…"`);
+    }
+
+    if (problems.length) { fail++; console.log(`FAIL  ${nm}: ${problems.join('; ')}`); }
+    else console.log(`ok    ${nm.padEnd(24)} ${model.parts.length} parts, own band cuts, panel definition`);
+  }
+}
+
+/* ---------- what a cold board opens on ---------- */
+/* Three routes reach "no selection" — no hash, an unparseable hash, and a hash
+   pointing at an audience that has been deleted — and they used to answer
+   differently: two fell to the first estimated placeholder and one fell to the
+   first scoreable audience. A tool whose front door and its back door disagree
+   about where you land is a tool nobody can describe.
+
+   All three go through defaultAud() now, and this asserts the destination
+   rather than the mechanism: whatever the route in, the board opens on the
+   Search target, and it opens on something MEASURED — a first impression built
+   on an invented placeholder is the one board this tool should never hand
+   somebody who did not ask for it. */
+{
+  const { DEFAULT_MODEL } = await import('../data/models.js');
+  const want = OFFICIAL.find(a => a.pa === 'Search');
+  const ROUTES = [
+    { hash: '', name: 'no hash at all' },
+    { hash: '#/not-a-real-hash!!', name: 'unparseable hash' },
+    { hash: '#/deleted-audience', name: 'hash points at nothing' }
+  ];
+
+  checked++;
+  const problems = [];
+  if (!want) problems.push('no official target carries pa "Search" — the roster has moved');
+
+  for (const r of ROUTES) {
+    els.get('body').innerHTML = '';
+    globalThis.location.hash = r.hash;
+    await import(`../app.js?open=${encodeURIComponent(r.hash)}`);
+    const rail = els.get('audList').innerHTML;
+    /* The selected row, read off the markup rather than off state: the rail is
+       what the reader sees, and a state that agrees with itself while drawing
+       something else is the bug worth catching. */
+    const on = [...rail.matchAll(/class="aud on" data-aud="([^"]+)"/g)].map(m => m[1]);
+    if (on.length !== 1) problems.push(`${r.name}: ${on.length} audiences selected, expected 1`);
+    else if (want && on[0] !== want.id) problems.push(`${r.name}: opened on "${on[0]}", expected "${want.id}"`);
+    const picked = ROSTER_ALL.find(a => a.id === on[0]);
+    if (picked && !picked.measured) problems.push(`${r.name}: opened on "${on[0]}", which is not a measured cut`);
+  }
+
+  /* The default has to be scoreable by the model the board also defaults to,
+     or a cold load is an empty board with an explanation on it. */
+  const { MODELS: MM } = await import('../data/models.js');
+  const dm = MM.find(m => m.id === DEFAULT_MODEL);
+  if (want && dm && !dm.supports(want)) {
+    problems.push(`${dm.label} cannot score the default audience`);
+  }
+
+  const nm = 'opens on';
+  if (problems.length) { fail++; console.log(`FAIL  ${nm}: ${problems.join('; ')}`); }
+  else console.log(`ok    ${nm.padEnd(24)} ${want.name}, measured, from all ${ROUTES.length} routes in`);
 }
 
 console.log(`\n${checked - fail}/${checked} renders clean`);

@@ -6168,8 +6168,28 @@ function fromHash() {
 }
 const H = fromHash();
 
+/* THE AUDIENCE A COLD BOARD OPENS ON.
+
+   The Search target rather than the first of the estimated six. An empty hash
+   is somebody arriving with no opinion yet, and the board they are handed
+   without asking should rest on the PA's own measured cut rather than on an
+   invented placeholder — the first thing anyone sees should be the thing this
+   tool can actually defend.
+
+   Held as an id and resolved through the roster rather than as an index, so a
+   rebuild of the cut that renames or drops the target falls through to
+   something scoreable instead of to `undefined`. The test is what makes the
+   fall-through loud. */
+const DEFAULT_AUD = 'search26';
+const defaultAud = () => {
+  const roster = ROSTER();
+  return roster.find(a => a.id === DEFAULT_AUD)
+    || roster.find(a => !a.pending)
+    || roster[0];
+};
+
 const S = {
-  auds: H.auds || [AUDIENCES[0].id],   // one or several; never none
+  auds: H.auds || [defaultAud().id],   // one or several; never none
   mode: H.mode || 'blend',
   /* Which model the board is being read through. Lives in the hash beside the
      audience because it changes what the audience MEANS — a link that carries
@@ -6195,12 +6215,10 @@ const S = {
 function audiences() {
   const list = S.auds.map(id => ROSTER().find(a => a.id === id)).filter(Boolean);
   if (list.length) return list;
-  /* Falling back to whatever sorts first would now land on an official target
-     with no cut loaded, and a par board is the worst thing to recover into —
-     it looks like an answer. Fall back to the first audience that can actually
-     score something. */
-  const roster = ROSTER();
-  return [roster.find(a => !a.pending) || roster[0]];
+  /* Recovers to the same audience a cold load opens on, so a dead hash and no
+     hash land in the same place — two routes into the tool that disagree about
+     where "no selection" goes is a difference nobody can explain. */
+  return [defaultAud()];
 }
 const audience = () => audiences()[0];
 const multi = () => audiences().length > 1;
@@ -7229,7 +7247,7 @@ function deleteAudience(id) {
   CUSTOM = CUSTOM.filter(x => x.id !== id);
   saveCustom();
   S.auds = S.auds.filter(x => x !== id);
-  if (!S.auds.length) S.auds = [AUDIENCES[0].id];
+  if (!S.auds.length) S.auds = [defaultAud().id];
   recompute();
   render();
 }
@@ -8070,16 +8088,51 @@ function boardDigest() {
   const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score == null ? 'not scored' : m.score + ' ' + m.band.label}`;
   const shown = S.showWatch ? 'Anchor, Play and Watch' : 'Anchor and Play only';
 
+  /* THE MODEL, WRITTEN OUT OF THE MODEL.
+
+     The prompt used to carry the scoring rules as prose, and it carried the
+     AFFINITY model's rules — the only ones that existed when it was written.
+     A reader on the response model was being answered with a formula the
+     board was not running and band cuts that were three points out. The
+     registry exists so nothing describes a formula it is not executing, and
+     the chat rail was the one surface still outside it. */
+  const M = MODEL();
+  const modelBlock = [
+    `HOW THIS BOARD IS SCORED — ${M.label}, out of 100. ${M.gist}`,
+    ...M.parts.map(p => `  ${p.name}${p.weight != null ? ' .' + String(Math.round(p.weight * 100)).padStart(2, '0') : (p.note ? ' (' + p.note + ')' : '')} — ${p.q} ${p.why}`),
+    `  Bands: ${M.bands.map(b => b.min ? `${b.label} ${b.min}+` : `${b.label} below ${M.bands[M.bands.length - 2].min}`).join(', ')}.`,
+    auds.length > 1
+      ? `  Several audiences combine on ${M.parts[0].name.toLowerCase()} only, by ${S.mode}: blend is size-weighted, overlap takes the lowest (where one buy serves all), any takes the highest (reach at least one).`
+      : `  One audience selected, so nothing is being combined.`
+  ];
+
+  /* The panel definition, verbatim, for the audiences that have one. Asked
+     "who is the Search audience", the rail's prose says it is the broadest of
+     the four; only this says it is Adults 18–34. The digest is also the list
+     of figures the reply is allowed to quote, so a filter that is not in here
+     comes back flagged as unverified even when it is true. */
+  const critLine = a => (a.criteria && a.criteria.length)
+    ? `  ${a.name} — panel definition, all of: ${a.criteria.join('; AND ')}`
+    : `  ${a.name} — no panel definition; ${a.est ? 'an estimate, not a research cut' : 'defined in words'}`;
+
   return [
     `AUDIENCES: ${auds.map(a => `${a.name} (${a.size || 'size not given'})`).join(' + ')}` +
       (auds.length > 1 ? ` — combined by ${S.mode}` : ''),
     ...auds.map(a => `  ${a.name}: ${a.def}`),
     ``,
+    `HOW THESE AUDIENCES WERE BUILT:`,
+    ...auds.map(critLine),
+    ``,
+    ...modelBlock,
+    ``,
     `WINDOW: ${MONTHS[0].label} ${MONTHS[0].y} to ${MONTHS[11].label} ${MONTHS[11].y}. ${v.length} moments.`,
     `BANDS: Anchor ${b.anchor}, Play ${b.play}, Watch ${b.watch}, Skip ${b.skip}.`,
     `DRAWN ON THE RIBBON: ${shown}.`,
     off.length ? `CATEGORIES SWITCHED OFF (not on the board, not in this digest): ${off.join(', ')}.`
-               : `All ten categories are on.`,
+               /* Counted, not spelled. It said "ten" while the line under it
+                  listed twelve — a small wrong number, in the one place whose
+                  entire job is to be the only thing the reader can quote. */
+               : `All ${CATS.length} categories are on.`,
     ``,
     `BY CATEGORY: ${CATS.filter(c => !S.off.has(c))
       .map(c => `${c} ${v.filter(m => m.cat === c).length}`).join(', ')}.`,
