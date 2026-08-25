@@ -457,6 +457,28 @@ for (const c of CASES) {
      worked example — a scored quantity a reader cannot picture is one they
      will not argue with, which is the opposite of the point. */
   if (!/class="mh-q-n"/.test(html)) problems.push('no sub-line on the terms that need one');
+  /* ⚠️ THE SUB-LINE MUST NOT BE A CELL. It was one, spanning both columns of a
+     table, which made it the row's last child and gave it the weight column's
+     `nowrap` — so a wrapping sentence held to one line dragged the table off
+     the card and hid every weight. Asserted structurally: nothing in this
+     panel spans anything, and a note is a sibling of a row rather than
+     something inside it. */
+  if (/colspan=/i.test(html)) {
+    problems.push('something in the panel spans columns — that is how the weight column got hidden');
+  }
+  if (/<div class="mh-q-row"[^>]*>(?:(?!<\/div>)[\s\S])*class="mh-q-n"/.test(html)) {
+    problems.push('a sub-line is nested inside a row instead of following it');
+  }
+  /* Every weighted term has to actually show its weight. The failure this
+     replaces looked exactly like a styling nit and was a panel that had
+     stopped saying what it was for. */
+  for (const m of MODELS) {
+    const block = (html.split('class="mh-q"')[MODELS.indexOf(m) + 1] || '').split('class="mh-q-use"')[0];
+    const rows = (block.match(/class="mh-q-row"/g) || []).length;
+    const weights = (block.match(/class="mh-q-w"/g) || []).length;
+    if (!rows) problems.push(`${m.label}: plain block lists nothing that counts`);
+    if (rows !== weights) problems.push(`${m.label}: ${rows} things counted but ${weights} weights shown`);
+  }
   if (!/class="mh-eg"/.test(html)) problems.push('no worked example anywhere in the panel');
   const eg = (html.match(/class="mh-eg-r"/g) || []).length;
   if (eg < 2) problems.push('the worked example does not contrast two audiences');

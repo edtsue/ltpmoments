@@ -1634,6 +1634,22 @@ const MODEL_HELP = {
   }
 };
 
+/* WHY THE "WHAT COUNTS" LIST IS NOT A TABLE.
+
+   It was one. The explanatory sub-line under a term had to span both columns,
+   which made its single cell the row's `:last-child` — and that selector
+   carried the weight column's rules, including `white-space: nowrap`. A
+   wrapping sentence pinned to one line dragged the table past the edge of the
+   card and pushed the weight column out of sight, so the panel whose entire
+   job is to explain the weights displayed none of them.
+
+   Rows and notes are siblings now and nothing spans anything, which makes that
+   failure unreachable rather than fixed. smoke.mjs asserts both: no `colspan`
+   anywhere in the panel, and a count of weights that matches the count of rows.
+
+   ⚠️ The markup below lives inside a template literal. A backtick in a comment
+   there ends the string and the whole app stops parsing — which is how the
+   note above first shipped, before it was moved out here where it belongs.  */
 function openModelHelp() {
   const el = document.getElementById('modelHelp');
   el.hidden = false;
@@ -1695,11 +1711,14 @@ function openModelHelp() {
                 <b>${esc(m.short)}</b>
                 <i>${esc(q.ask)}</i>
               </div>
-              <table class="mh-q-t">
+              <div class="mh-q-t">
                 ${q.counts.map(([k, v, note]) => `
-                  <tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>
-                  ${note ? `<tr class="mh-q-n"><td colspan="2">${note}</td></tr>` : ''}`).join('')}
-              </table>
+                  <div class="mh-q-row">
+                    <span class="mh-q-k">${esc(k)}</span>
+                    <span class="mh-q-w">${esc(v)}</span>
+                  </div>
+                  ${note ? `<p class="mh-q-n">${note}</p>` : ''}`).join('')}
+              </div>
               <p class="mh-q-p">${q.only}</p>
               <p class="mh-q-p"><b>What that means:</b> ${q.means}</p>
               <p class="mh-q-p weak"><b>Its weak spot:</b> ${q.weak}</p>

@@ -2270,26 +2270,56 @@ button, input, select { font-family: inherit; }
 }
 
 /* What counts, and how much, in words rather than decimals. ".50" is precise
-   and "half the score" is understood, and this panel is for the second. */
-.mh-q-t { width: 100%; border-collapse: collapse; margin-bottom: 11px; }
-.mh-q-t td {
-  padding: 6px 0;
+   and "half the score" is understood, and this panel is for the second.
+
+   ⚠️ ROWS AND NOTES ARE SIBLINGS, AND NOTHING SPANS ANYTHING. This was a
+   table, and the note had to `colspan="2"` — which made its one cell the
+   row's `:last-child` and gave it the weight column's rules, `nowrap`
+   included. A wrapping sentence pinned to a single line dragged the table
+   past the edge of the card and pushed the weight column out of sight
+   entirely, so the panel whose job is to explain the weights showed none of
+   them. A grid per row cannot reproduce that: the two cells are named, and a
+   note is not a cell at all. */
+.mh-q-t { margin-bottom: 11px; }
+
+.mh-q-row {
+  display: grid;
+  /* minmax(0,1fr) rather than 1fr — a bare 1fr floors at the content's
+     min-width, which is how a long unbroken label overflows a grid instead of
+     wrapping inside it. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 7px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--mc) 18%, transparent);
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--shell-ink2);
-  vertical-align: top;
 }
-.mh-q-t td:last-child {
-  width: 34%;
-  padding-left: 10px;
+.mh-q-k { font-size: 13px; line-height: 1.4; color: var(--shell-ink2); }
+.mh-q-w {
+  max-width: 40%;
   color: var(--mc);
+  font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.35;
   text-align: right;
-  white-space: nowrap;
 }
-[data-theme="dark"] .mh-q-t td:last-child { color: var(--mcd); }
-.mh-q-t tr:last-child td { border-bottom: 0; }
+[data-theme="dark"] .mh-q-w { color: var(--mcd); }
+
+/* The sub-line for a term whose NAME is not enough. Full width, left aligned,
+   wrapping — the three things its predecessor was prevented from doing. */
+.mh-q-n {
+  margin: 0;
+  padding: 7px 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mc) 18%, transparent);
+  font-size: 11.8px;
+  line-height: 1.5;
+  color: var(--shell-ink3);
+}
+.mh-q-n b { color: var(--shell-ink2); font-weight: 600; }
+/* Whichever of the two ends the list drops its rule. */
+.mh-q-row:last-child, .mh-q-n:last-child { border-bottom: 0; }
+/* A note belongs to the row above it, so the rule between them is dead
+   weight — it cuts a term in half. */
+.mh-q-row:has(+ .mh-q-n) { border-bottom: 0; }
 
 .mh-q-p { margin: 0 0 8px; font-size: 12.8px; line-height: 1.55; color: var(--shell-ink2); }
 .mh-q-p b { color: var(--shell-ink); }
@@ -2334,19 +2364,6 @@ button, input, select { font-family: inherit; }
   text-transform: uppercase;
   color: var(--shell-ink3);
 }
-
-/* A sub-line under a row of the plain table, for a term whose NAME is not
-   enough. "Are they into it" needed one: the row says what the term asks and
-   the note says that it is two measurements rather than one, which is the
-   part a reader cannot guess and the part that makes the score arguable. */
-.mh-q-n td {
-  padding: 0 0 9px !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--mc) 18%, transparent);
-  font-size: 11.8px;
-  line-height: 1.5;
-  color: var(--shell-ink3);
-}
-.mh-q-n td b { color: var(--shell-ink2); font-weight: 600; }
 
 /* THE WORKED EXAMPLE. One moment, two audiences, real numbers off the cut.
    Nothing explains a scored term like watching it disagree with itself — a
@@ -7512,6 +7529,22 @@ const MODEL_HELP = {
   }
 };
 
+/* WHY THE "WHAT COUNTS" LIST IS NOT A TABLE.
+
+   It was one. The explanatory sub-line under a term had to span both columns,
+   which made its single cell the row's `:last-child` — and that selector
+   carried the weight column's rules, including `white-space: nowrap`. A
+   wrapping sentence pinned to one line dragged the table past the edge of the
+   card and pushed the weight column out of sight, so the panel whose entire
+   job is to explain the weights displayed none of them.
+
+   Rows and notes are siblings now and nothing spans anything, which makes that
+   failure unreachable rather than fixed. smoke.mjs asserts both: no `colspan`
+   anywhere in the panel, and a count of weights that matches the count of rows.
+
+   ⚠️ The markup below lives inside a template literal. A backtick in a comment
+   there ends the string and the whole app stops parsing — which is how the
+   note above first shipped, before it was moved out here where it belongs.  */
 function openModelHelp() {
   const el = document.getElementById('modelHelp');
   el.hidden = false;
@@ -7573,11 +7606,14 @@ function openModelHelp() {
                 <b>${esc(m.short)}</b>
                 <i>${esc(q.ask)}</i>
               </div>
-              <table class="mh-q-t">
+              <div class="mh-q-t">
                 ${q.counts.map(([k, v, note]) => `
-                  <tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>
-                  ${note ? `<tr class="mh-q-n"><td colspan="2">${note}</td></tr>` : ''}`).join('')}
-              </table>
+                  <div class="mh-q-row">
+                    <span class="mh-q-k">${esc(k)}</span>
+                    <span class="mh-q-w">${esc(v)}</span>
+                  </div>
+                  ${note ? `<p class="mh-q-n">${note}</p>` : ''}`).join('')}
+              </div>
               <p class="mh-q-p">${q.only}</p>
               <p class="mh-q-p"><b>What that means:</b> ${q.means}</p>
               <p class="mh-q-p weak"><b>Its weak spot:</b> ${q.weak}</p>
