@@ -18,6 +18,9 @@ data/
   moments.js    generated — do not edit by hand
   audiences.js  the rail's roster. OFFICIAL is built from yougov.js;
                 the six "popular" ones are still invented placeholders.
+                Also CRITERIA — each official target's panel filter, verbatim,
+                shown on hover. It lives here rather than in yougov.js
+                because that file is regenerated whole.
   yougov.js     generated — the research cut, four PA targets
   relevance.js  the affinity model. Five components.
   response.js   the response model. Three components + a feasibility axis.
