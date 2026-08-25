@@ -13,15 +13,27 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
 
-/* Dependency order, hand-declared. Four files with a linear graph do not need
-   a resolver, and a resolver would be the more likely thing to be wrong. */
+/* Dependency order, hand-declared. A small linear graph does not need a
+   resolver, and a resolver would be the more likely thing to be wrong — but
+   a hand-declared list rots, so `checkOrder` below verifies it against the
+   imports the files actually carry. See the note there. */
 const ORDER = [
   'data/moments.js',
+  /* The research cut and the three lookup tables have no imports of their own
+     and everything else reads them, so they come first. */
+  'data/yougov.js',
+  'data/entity-map.js',
+  'data/topic-map.js',
+  'data/channel-map.js',
   'data/audiences.js',
   /* Before relevance.js, which imports from it. It was missing entirely, which
      is half of why this build had been failing. */
   'data/sports-reach.js',
   'data/relevance.js',
+  /* response.js reads relevance.js for the moment-side terms it moved onto the
+     feasibility axis, so it cannot come before it. models.js reads both. */
+  'data/response.js',
+  'data/models.js',
   'data/parse.js',
   /* Not a module — a classic script shared with the other planning modules and
      copied between them. It flattens in anyway: its only top-level name is
@@ -42,6 +54,42 @@ const strip = src => src
      other half of why this build had been failing: relevance.js grew one and
      the two rules above only ever matched a declaration. */
   .replace(/^export\s*\{[^}]*\}\s*;?\s*$/gm, '');
+
+/* ⚠️ THE LIST ABOVE IS HAND-MAINTAINED, AND THAT IS A TRAP WORTH GUARDING.
+
+   `strip()` deletes every import line, so a module missing from ORDER does not
+   announce itself — the flattened page simply references names that were never
+   declared and dies on first paint. It happened: five new modules went in and
+   the bundle reported "no collisions" over a page that could not run.
+
+   The collision check below cannot catch it either, because the problem is a
+   name declared ZERO times rather than twice. So the imports are read back out
+   of the source before they are stripped, and each one has to resolve to a
+   file that is in ORDER and EARLIER in it than the file importing it. */
+function checkOrder() {
+  const at = new Map(ORDER.map((p, i) => [p, i]));
+  const bad = [];
+  ORDER.forEach((p, i) => {
+    const src = read(p);
+    const dir = p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '';
+    for (const m of src.matchAll(/^\s*(?:import|export)[\s\S]*?from\s+['"](\.[^'"]+)['"]/gm)) {
+      /* Only relative specifiers — a bare one would be a package, and there
+         are none here by design. */
+      const target = new URL(m[1], new URL(dir, root)).pathname
+        .slice(new URL('.', root).pathname.length);
+      if (!at.has(target)) bad.push(`${p} imports ${target}, which is not in ORDER`);
+      else if (at.get(target) >= i) bad.push(`${p} imports ${target}, which comes after it in ORDER`);
+    }
+  });
+  return bad;
+}
+
+const orderProblems = checkOrder();
+if (orderProblems.length) {
+  console.error('the flattened bundle would reference names that were never declared:');
+  for (const b of [...new Set(orderProblems)]) console.error('  ' + b);
+  process.exit(1);
+}
 
 const parts = ORDER.map(p => `/* ── ${p} ── */\n${strip(read(p)).trim()}`);
 const js = parts.join('\n\n');

@@ -9,6 +9,8 @@
 import { MOMENTS } from './data/moments.js';
 import { AUDIENCES, CAT_COLOR, GROUPS, CAT_GROUPS, OFFICIAL } from './data/audiences.js';
 import { scoreMoments, BANDS, WEIGHTS, CONGESTION_MAX, weekKey, unclaimed, MODES, REACH_SOURCE, reachOf } from './data/relevance.js';
+import { MODELS, DEFAULT_MODEL, modelById, coverage } from './data/models.js';
+import { YOUGOV_SOURCE } from './data/yougov.js';
 import { parseAudienceData, buildAudience } from './data/parse.js';
 
 /* ---------- audiences the user has added ---------- */
@@ -132,19 +134,31 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 /* Direction and audience live in the hash, so a link carries what you were
    looking at — which is the whole point of five mockups: somebody has to be
    able to send back "03, sports superfans, this bar". */
+/* `#/<audiences>[/<combine>][/<model>]`, and a leading direction digit is
+   still read so that links written while there were five mockups keep working.
+
+   THE READER AND THE WRITER HAD DRIFTED APART. This function required the
+   direction segment, and render() had long since stopped writing one — so
+   every hash the app produced failed its own parse and no reload ever
+   restored anything. It went unnoticed because the fallback is a working
+   board. Now the digit is optional on the way in, never written on the way
+   out, and there is a test for the round trip. */
 function fromHash() {
-  /* `[a-z]+` here would not match a user-defined audience — their ids are
-     slugged from the name and "women1834" has digits in it — so a custom
-     audience never survived a reload. Several ids join on `+`, and the combine
-     mode is the third segment. */
-  const m = /^#\/(\d)\/([a-z0-9+]+)(?:\/([a-z]+))?/.exec(location.hash || '');
+  /* `[a-z]+` would not match a user-defined audience — their ids are slugged
+     from the name and "women1834" has digits in it — so a custom audience
+     never survived a reload either. */
+  const m = /^#\/(?:(\d)\/)?([a-z0-9+]+)((?:\/[a-z]+)*)$/.exec(location.hash || '');
   if (!m) return {};
-  const dir = +m[1];
+  const dir = m[1] ? +m[1] : undefined;
   const ids = m[2].split('+').filter(id => ROSTER().some(a => a.id === id));
+  /* The trailing segments are read by what they ARE rather than by position,
+     so a link carrying only a model still works and the order cannot rot. */
+  const rest = (m[3] || '').split('/').filter(Boolean);
   return {
     dir: dir >= 1 && dir <= 5 ? dir : undefined,
     auds: ids.length ? ids : undefined,
-    mode: MODES.some(x => x.id === m[3]) ? m[3] : undefined
+    mode: rest.find(x => MODES.some(y => y.id === x)),
+    model: rest.find(x => MODELS.some(y => y.id === x))
   };
 }
 const H = fromHash();
@@ -152,6 +166,10 @@ const H = fromHash();
 const S = {
   auds: H.auds || [AUDIENCES[0].id],   // one or several; never none
   mode: H.mode || 'blend',
+  /* Which model the board is being read through. Lives in the hash beside the
+     audience because it changes what the audience MEANS — a link that carries
+     one without the other carries half a claim. */
+  model: H.model || DEFAULT_MODEL,
   dir: H.dir || 3,
   off: new Set(),          // categories switched off
   showWatch: false,        // draw the Watch band as well as Anchor and Play
@@ -182,9 +200,15 @@ function audiences() {
 const audience = () => audiences()[0];
 const multi = () => audiences().length > 1;
 
+/* The active model, and the audiences it can actually speak for. Everything
+   that draws a score goes through these two rather than through relevance.js
+   directly — which is what lets one set of drawing code serve both models. */
+const MODEL = () => modelById(S.model);
+const COVER = () => coverage(MODEL(), audiences());
+
 let SCORED = [];
 function recompute() {
-  SCORED = scoreMoments(IN_WINDOW, audiences(), S.mode);
+  SCORED = MODEL().score(IN_WINDOW, audiences(), S.mode);
 }
 const visible = () => SCORED.filter(m => !S.off.has(m.cat));
 
@@ -195,6 +219,7 @@ function renderRail() {
   const a = audience();
   const sel = new Set(S.auds);
   const only = S.auds.length === 1;
+  renderModelToggle();
   /* One row. Two badges it can carry, and they answer different questions:
      "Yours" is whose it is, "Est." is what the numbers rest on. A custom
      audience defined in words is both. */
@@ -207,7 +232,14 @@ function renderRail() {
         <span class="at">
           <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}${
             x.est ? '<span class="est" title="Estimated \u2014 not a research cut">Est.</span>' : ''}${
-            x.pending ? '<span class="pend" title="No cut loaded \u2014 every category sits at par">No cut</span>' : ''}</span>
+            x.measured ? '<span class="meas" title="Measured \u2014 YouGov Profiles">Cut</span>' : ''}${
+            x.pending ? '<span class="pend" title="No cut loaded \u2014 every category sits at par">No cut</span>' : ''}${
+            /* The one badge that depends on the toggle rather than on the
+               audience. Under the response model an estimated audience has
+               nothing measured to score, and saying so ON THE ROW is the
+               difference between a reader understanding the board and
+               thinking the tool is broken. */
+            MODEL().supports(x) ? '' : `<span class="unsup" title="${esc(MODEL().label)} needs a research cut, and this audience does not have one">Needs a cut</span>`}</span>
           <span class="as">${x.pending
             ? `${esc(x.pa || '')}${x.pa ? ' \u00b7 ' : ''}awaiting cut`
             : `${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}`}</span>
@@ -220,7 +252,37 @@ function renderRail() {
         title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">\u00d7</button>` : ''}
     </div>`;
 
-  /* An empty group keeps its heading. The official group is the reason: a
+  /* THE TOGGLE.
+
+   Two buttons and a line of explanation, and then — when it matters — a
+   warning. The warning is the part worth having: switching to the response
+   model with an estimated audience selected produces a board full of nothing,
+   and a reader who was not told why will conclude the tool is broken rather
+   than that the audience has no research behind it. So the count of
+   audiences the model can speak for is drawn under the toggle whenever it is
+   not all of them, BEFORE the board redraws. */
+function renderModelToggle() {
+  const cur = MODEL();
+  const cov = COVER();
+  const el = document.getElementById('modelTog');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="rl-hd gap">Relevance model</div>
+    <div class="seg mdl">${MODELS.map(m => `
+      <button type="button" data-model="${m.id}" class="${m.id === S.model ? 'on' : ''}"
+        aria-pressed="${m.id === S.model}"
+        title="${esc(m.gist)}">${esc(m.short)}</button>`).join('')}</div>
+    <p class="mdl-gist">${esc(cur.gist)}</p>
+    ${cov.ok === cov.total ? '' : `
+      <p class="mdl-warn">${cov.ok
+        ? `Scores <b>${cov.ok} of ${cov.total}</b> selected audiences. ${cov.missing.map(x => esc(x.name)).join(', ')} ${cov.missing.length === 1 ? 'has' : 'have'} no research cut, so ${cov.missing.length === 1 ? 'it is' : 'they are'} left out of the board rather than scored at par.`
+        : `<b>Nothing to score.</b> ${cov.missing.length === 1 ? 'This audience has' : 'None of these audiences have'} a research cut behind ${cov.missing.length === 1 ? 'it' : 'them'}, and this model reads nothing else. Pick an official target, or switch back to ${esc(MODELS[0].short)}.`}</p>`}
+    <button class="mdl-help" id="modelHelpBtn" type="button"
+      aria-haspopup="dialog" aria-controls="modelHelp">Which should I use?</button>`;
+}
+
+/* An empty group keeps its heading. The official group is the reason: a
      planner has to be able to see that the PA's own targets have not been
      loaded, and a group that disappears when it is empty cannot say that. */
   document.getElementById('audList').innerHTML = GROUPS.map(g => {
@@ -280,7 +342,13 @@ function renderRail() {
 /* The two categories this audience over-indexes on hardest. It is the fastest
    honest summary of a cut, and it fits on the rail's second line. */
 function topCats(a) {
-  return Object.entries(a.aff).sort((x, y) => y[1] - x[1]).slice(0, 2).map(e => e[0].split(' ')[0]).join(' · ');
+  /* Nulls are dropped rather than sorted. Three of the twelve categories have
+     no battery in the research cut, and `null` sorts as though it were zero —
+     which would make "Holidays" look like the thing this audience cares
+     least about instead of the thing nobody asked them. */
+  const named = Object.entries(a.aff || {}).filter(([, v]) => typeof v === 'number');
+  if (!named.length) return 'no cut';
+  return named.sort((x, y) => y[1] - x[1]).slice(0, 2).map(e => e[0].split(' ')[0]).join(' \u00b7 ');
 }
 
 /* ============================================================
@@ -312,7 +380,7 @@ function renderHead() {
   }
 
   const v = visible();
-  const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
+  const b = Object.fromEntries(MODEL().bands.map(x => [x.id, v.filter(m => m.band && m.band.id === x.id).length]));
   const w = document.getElementById('watchTog');
   w.classList.toggle('on', S.showWatch);
   w.setAttribute('aria-pressed', String(S.showWatch));
@@ -367,16 +435,11 @@ function renderHead() {
    moments actually pop: a category hue at full strength is a mid-tone, and a
    board of mid-tones has no top end. The densest step is a near-black box in
    its own hue, carrying white type. */
-const SHADES = [
-  { min: 76, fill: 100, dark: 34, lit: true,  label: '76+' },
-  { min: 68, fill: 100, dark: 10, lit: true,  label: '68–75' },
-  { min: 63, fill: 74,  dark: 0,  lit: false, label: '63–67' },
-  { min: 59, fill: 50,  dark: 0,  lit: false, label: '59–62' },
-  { min: 56, fill: 31,  dark: 0,  lit: false, label: '56–58' },
-  { min: 48, fill: 18,  dark: 0,  lit: false, label: '48–55' },
-  { min: 0,  fill: 9,   dark: 0,  lit: false, label: 'under 48' }
-];
-const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
+/* Read from the active model — see the ramp note in data/models.js. */
+const shadeOf = s => {
+  const r = MODEL().shades;
+  return r.find(x => s >= x.min) || r[r.length - 1];
+};
 
 /* The ramp itself, drawn in the legend — the encoding is only usable if it is
    stated somewhere, and a reader should not have to infer that darker means
@@ -385,32 +448,40 @@ const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
 const shadeLegend = () => `
   <span class="li ramp">
     <b>Relevance</b>
-    <span class="rmp">${[...SHADES].reverse().map(s =>
+    <span class="rmp">${[...MODEL().shades].reverse().map(s =>
       `<i style="--f:${s.fill}%;--dk:${s.dark}%" title="score ${s.label}"></i>`).join('')}</span>
     <span class="rmp-x">paler = less relevant to this audience</span>
   </span>`;
 
-const bandLegend = () => BANDS.filter(b => b.id !== 'skip').map(b => {
-  const dim = b.id === 'watch' && !S.showWatch;
-  return `<span class="li${dim ? ' dim' : ''}">
-    <span class="key ${b.id}"></span>
-    <b>${b.label}</b> ${b.id === 'anchor' ? '72+' : b.id === 'play' ? '56–71' : '40–55'} · ${b.note}
-    ${dim ? '<i>— switch Watch on to draw these</i>' : ''}
-  </span>`;
-}).join('');
+/* The cuts are read off the active model's own bands rather than typed in.
+   They are not the same in both — the response model's Anchor starts at 70,
+   not 72 — and a legend quoting the other model's numbers is a legend that
+   lies about the board underneath it. */
+const bandLegend = () => {
+  const bands = MODEL().bands;
+  return bands.filter(b => b.id !== 'skip').map((b, i) => {
+    const dim = b.id === 'watch' && !S.showWatch;
+    const above = bands[i - 1];
+    const range = above ? `${b.min}–${above.min - 1}` : `${b.min}+`;
+    return `<span class="li${dim ? ' dim' : ''}">
+      <span class="key ${b.id}"></span>
+      <b>${b.label}</b> ${range} · ${b.note}
+      ${dim ? '<i>— switch Watch on to draw these</i>' : ''}
+    </span>`;
+  }).join('');
+};
 
 /* ============================================================
    THE FIVE COMPONENTS, WRITTEN OUT
    Shared vocabulary rather than one view's furniture: wherever a score is
    shown, the thing that produced it has to be openable.
    ============================================================ */
-const PART_META = {
-  aff:   { k: 'Affinity',      c: '#1A67D2', w: WEIGHTS.aff,   why: 'Category index for this audience, sharpened by any entity read.' },
-  scale: { k: 'Scale',         c: '#0B7A67', w: WEIGHTS.scale, why: 'How many of them actually show up.' },
-  act:   { k: 'Actionability', c: '#946200', w: WEIGHTS.act,   why: 'Whether there is a door in \u2014 a distributor, a sponsorship.' },
-  tim:   { k: 'Timing',        c: '#6D5DE0', w: WEIGHTS.tim,   why: "The sheet's own date confirmation." },
-  cong:  { k: 'Congestion',    c: '#C5221F', w: null,          why: 'Everything else fighting for the same week. A tax, not a term.' }
-};
+/* Drawn from the active model rather than declared here. Two models with
+   different components cannot share a hard-coded panel, and a panel that
+   names a component the board is not computing is worse than no panel. */
+const partMeta = () => Object.fromEntries(MODEL().parts.map(p => [p.key, {
+  k: p.name, c: p.color, w: p.weight, note: p.note || null, why: p.why
+}]));
 
 /* With several audiences selected, affinity is a combination \u2014 so the panel
    shows what it was combined FROM. A blended figure nobody can take apart is
@@ -431,12 +502,25 @@ function affByBlock(m) {
 }
 
 function partsBlock(m) {
-  return affByBlock(m) + `<div class="parts">${Object.entries(PART_META).map(([k, p]) => `
+  return affByBlock(m) + `<div class="parts">${Object.entries(partMeta()).map(([k, p]) => {
+    const v = m.parts[k];
+    /* A component with nothing behind it draws as an absence, not as a zero.
+       The response model genuinely has no fandom reading for a public holiday
+       — the cut carries no holiday battery — and a bar at 0 would say the
+       audience is indifferent, which is a finding nobody made. */
+    if (v == null) return `
+      <div class="part none">
+        <div class="pk"><span>${p.k}</span><b>—</b></div>
+        <div class="pb"><i style="width:0"></i></div>
+        <div class="pw">Not asked in this cut, so it is left out and the other components carry its weight.</div>
+      </div>`;
+    return `
     <div class="part">
-      <div class="pk"><span>${p.k}${p.w ? ` \u00b7 ${Math.round(p.w * 100)}%` : ' \u00b7 \u221225% max'}</span><b>${Math.round(m.parts[k])}</b></div>
-      <div class="pb"><i style="width:${Math.round(m.parts[k])}%;--pc:${p.c}"></i></div>
+      <div class="pk"><span>${p.k}${p.w ? ` \u00b7 ${Math.round(p.w * 100)}%` : (p.note ? ` \u00b7 ${p.note}` : '')}</span><b>${Math.round(v)}</b></div>
+      <div class="pb"><i style="width:${Math.round(v)}%;--pc:${p.c}"></i></div>
       <div class="pw">${p.why}</div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  }).join('')}</div>`;
 }
 
 /* ============================================================
@@ -487,10 +571,15 @@ function drawRibbon() {
                stays for the outline weight, but it no longer decides the fill —
                three bands drew as two visible shades, which threw away most of
                the range a reader could have seen. */
-            const sh = shadeOf(b.m.score);
-            return `<button class="bar ${b.m.band.id}${sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
-              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${sh.fill}%;--dk:${sh.dark}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
-              title="${esc(b.m.name)} — ${b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
+            /* No score is not a low score. Under the response model an
+               audience with no research cut behind it cannot be scored at
+               all, and the bar says so by drawing hollow rather than pale —
+               pale already means "scored, and low". */
+            const sh = shadeOf(b.m.score == null ? 0 : b.m.score);
+            const nd = b.m.score == null;
+            return `<button class="bar ${nd ? 'nodata' : b.m.band.id}${!nd && sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
+              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${nd ? 0 : sh.fill}%;--dk:${sh.dark}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
+              title="${esc(b.m.name)}${nd ? ' — not scored: no research cut for this audience' : ' — ' + b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
           }).join('')}</div>`).join('')}
         </div>
       </div>`;
@@ -549,7 +638,7 @@ function drawRibbon() {
      inside a total. */
   const weeks = weekAxis();
   const load = weeks.map(w => visible().filter(m => weekKey(m.start < WIN_START ? WIN_START : m.start) === w.key)
-    .reduce((s, m) => s + m.parts.aff, 0));
+    .reduce((s, m) => s + (m.parts[MODEL().driver] ?? 0), 0));
   const lMax = Math.max(1, ...load);
 
   /* TODAY. Drawn only when today is inside the planning window — the window
@@ -1215,7 +1304,10 @@ function openPop(m, anchor) {
     <div class="t">${esc(m.name)}</div>
     <div class="meta"><span class="dot" style="--c:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}<br>
       ${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''} · ${esc(m.conf)}</div>
-    <div class="row"><span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span></div>
+    <div class="row">${m.score == null
+      ? `<span class="sc none">—</span><span class="bandpill nodata">Not scored</span>`
+      : `<span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span>` +
+        (m.quadrant ? `<span class="quadpill" style="--c:${m.quadrant.color}" title="${esc(m.quadrant.note)}">${esc(m.quadrant.label)}</span>` : '')}</div>
     ${partsBlock(m)}
     ${reachNote(m)}
     ${m.notes ? `<div class="note">${esc(m.notes)}</div>` : ''}
@@ -1259,7 +1351,7 @@ async function writeTheRead(m, btn) {
       action: 'read-moment',
       moment: { name: m.name, cat: m.cat, start: m.start, end: m.end, conf: m.conf, plat: m.plat },
       audience: { name: audience().name, def: audience().def },
-      score: m.score, band: m.band.label, parts: m.parts
+      score: m.score, band: m.band ? m.band.label : 'not scored', parts: m.parts
     });
     box.innerHTML = `<p class="rdtxt">${esc(j.read)}</p>
       <button type="button" class="copy" data-copy="1">Copy</button>`;
@@ -1280,7 +1372,9 @@ function render() {
      not somewhere you went, and a back button that walks through every rail
      click is worse than one that leaves the page. */
   try {
-    const q = S.auds.join('+') + (multi() ? '/' + S.mode : '');
+    const q = S.auds.join('+')
+      + (multi() ? '/' + S.mode : '')
+      + (S.model !== DEFAULT_MODEL ? '/' + S.model : '');
     history.replaceState(null, '', '#/' + q);
   } catch (e) { void e; }
   renderRail();
@@ -1305,22 +1399,17 @@ function render() {
    leading zero is noise in a table where every value is below one. */
 const shr = w => w.toFixed(2).replace(/^0/, '');
 
-const METH_PARTS = [
-  { name: 'Affinity', w: WEIGHTS.aff,
-    q: 'Does this audience care?',
-    from: 'The audience’s index for the moment’s category, sharpened by an entity override where one matches. The only term that varies by audience.' },
-  { name: 'Scale', w: WEIGHTS.scale,
-    q: 'How many of them show up?',
-    from: `Measured reach for sport — ${REACH_SOURCE.name}, ${REACH_SOURCE.edition}. A keyword ladder over the moment’s name everywhere else.` },
-  { name: 'Actionability', w: WEIGHTS.act,
-    q: 'Is there a door in?',
-    from: 'A named distributor is a door; a declared sponsorship is an open one. A moment with neither is something you talk around.' },
-  { name: 'Timing', w: WEIGHTS.tim,
-    q: 'Is the date firm enough to plan against?',
-    from: 'The sheet’s own Date Confirmation column. A window is plannable; TBD scores 15, so a placeholder date can never read as buyable.' }
-];
+/* Read from the active model, not retyped. The panel's whole claim is that it
+   describes the formula the board just ran, and two models cannot share one
+   hard-coded list of components without one of them being described wrongly. */
+const methParts = () => MODEL().parts.map(x => ({
+  name: x.name, w: x.weight, q: x.q, from: x.why, note: x.note
+}));
 
 function openMethodology() {
+  const cur = MODEL();
+  const parts = methParts();
+  const weighted = parts.filter(x => x.w);
   const el = document.getElementById('meth');
   el.hidden = false;
   el.innerHTML = `
@@ -1328,67 +1417,230 @@ function openMethodology() {
     <div class="meth-card" role="dialog" aria-modal="true" aria-labelledby="methTitle">
       <div class="meth-hd">
         <div>
-          <div class="meth-kick">Methodology</div>
-          <h2 id="methTitle">How a moment’s relevance is worked out</h2>
+          <div class="meth-kick">Methodology \u00b7 ${esc(cur.label)}</div>
+          <h2 id="methTitle">How a moment\u2019s relevance is worked out</h2>
         </div>
-        <button class="meth-x" data-meth-close="1" type="button" aria-label="Close">×</button>
+        <button class="meth-x" data-meth-close="1" type="button" aria-label="Close">\u00d7</button>
       </div>
 
       <div class="meth-bd">
         <p class="meth-lede">Relevance is never a bare number. It is
-          <b>four named components and one multiplier</b>, each answering a question a
-          planner would otherwise have to ask out loud — so you can say <i>which part</i>
-          of a score is wrong rather than just distrusting the total.</p>
+          <b>${weighted.length} named components</b>${parts.length > weighted.length
+            ? ` and ${parts.length - weighted.length === 1 ? 'one term that works differently' : 'two terms that work differently'}` : ''},
+          each answering a question a planner would otherwise have to ask out loud — so you
+          can say <i>which part</i> of a score is wrong rather than just distrusting the total.</p>
 
-        <div class="meth-eq">score = ( <b>affinity</b>×${shr(WEIGHTS.aff)} + <b>scale</b>×${shr(WEIGHTS.scale)} + <b>actionability</b>×${shr(WEIGHTS.act)} + <b>timing</b>×${shr(WEIGHTS.tim)} )
-        × ( 1 − <b>congestion</b>/100 × ${shr(CONGESTION_MAX)} )</div>
+        <div class="meth-eq">score = ${cur.id === 'affinity'
+          ? `( ${weighted.map(x => `<b>${esc(x.name.toLowerCase())}</b>\u00d7${shr(x.w)}`).join(' + ')} )
+             \u00d7 ( 1 \u2212 <b>congestion</b>/100 \u00d7 ${shr(CONGESTION_MAX)} )`
+          : `${weighted.map(x => `<b>${esc(x.name.toLowerCase())}</b>\u00d7${shr(x.w)}`).join(' + ')}
+             <br>feasibility = ${Object.entries(cur.feasWeights).map(([k, v]) =>
+               `<b>${k === 'quiet' ? 'quiet week' : k === 'tim' ? 'timing' : 'access'}</b>\u00d7${shr(v)}`).join(' + ')}`}</div>
 
         <div class="meth-rows">
-          ${METH_PARTS.map(x => `
+          ${parts.map(x => `
             <div class="meth-r">
               <div class="meth-rn">${esc(x.name)}</div>
               <div class="meth-rq">${esc(x.q)}<i>${esc(x.from)}</i></div>
-              <div class="meth-rw">${shr(x.w)}</div>
+              <div class="meth-rw">${x.w ? shr(x.w) : esc(x.note || '\u2014')}</div>
             </div>`).join('')}
-          <div class="meth-r">
-            <div class="meth-rn">Congestion</div>
-            <div class="meth-rq">How loud is everything else that week?<i>Same-category rivals count four times an unrelated moment. It multiplies rather than subtracts, because it is a tax on a moment and not a fault in it — so a moment in the loudest week of the year is worth less, but never drops out of the running.</i></div>
-            <div class="meth-rw">−${Math.round(CONGESTION_MAX * 100)}%</div>
-          </div>
+          ${cur.id === 'affinity' ? '' : `
+            <div class="meth-r">
+              <div class="meth-rn">Congestion</div>
+              <div class="meth-rq">How loud is everything else that week?<i>Inside feasibility rather than against the score. Nobody was surveyed about how busy a week is, so under this model it cannot be a term \u2014 but it still decides whether a moment is worth entering.</i></div>
+              <div class="meth-rw">in feas.</div>
+            </div>`}
         </div>
 
         <div>
           <div class="meth-h" style="margin-bottom:9px">Bands, not numbers — nobody acts on 71 versus 68</div>
           <div class="meth-bands">
-            ${BANDS.map(b => `
+            ${cur.bands.map(b => `
               <div class="meth-band" style="--c:${b.color}">
                 <b>${esc(b.label)}</b><span>${b.min}+</span> ${esc(b.note)}
               </div>`).join('')}
           </div>
         </div>
 
+        ${cur.id === 'response' ? `
+        <div>
+          <div class="meth-h" style="margin-bottom:9px">And the second axis crosses them into four</div>
+          <div class="meth-bands">
+            ${cur.quadrants.map(q => `
+              <div class="meth-band" style="--c:${q.color}">
+                <b>${esc(q.label)}</b><span></span> ${esc(q.note)}
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${cur.id === 'affinity' ? `
         <div class="meth-note">
-          <div class="meth-h">What is still a placeholder</div>
-          <p>The six built-in audiences carry <b>invented</b> category indices — the right
+          <div class="meth-h">What is measured here and what is not</div>
+          <p>The four <b>official targets</b> carry a real cut — ${esc(YOUGOV_SOURCE.name)},
+            ${YOUGOV_SOURCE.banks} question banks — and are marked <b>Cut</b> on the rail.
+            Three of the twelve lanes have no battery in it (holidays, national days,
+            heritage) and sit at par for every audience rather than being guessed at.</p>
+          <p>The six <b>popular</b> audiences carry <b>invented</b> category indices — the right
             shape, none of it true. Scale outside sport is a keyword ladder over the
-            moment’s name, not a reach figure.</p>
+            moment\u2019s name, not a reach figure.</p>
           <p>Anything you define yourself is either read from data you paste in, or
             <b>estimated by Gemini</b> and labelled as such everywhere it appears.</p>
-        </div>
+        </div>` : `
+        <div class="meth-note">
+          <div class="meth-h">Where each number came from</div>
+          <p>Every figure is a ${esc(YOUGOV_SOURCE.name)} response, re-based onto the whole
+            audience. ${YOUGOV_SOURCE.conditional.length} of the
+            ${YOUGOV_SOURCE.banks} question banks were only put to people who qualified —
+            sponsorship actions only to those who had noticed a sponsor — so their indices
+            are rebuilt from the projected counts rather than taken as printed.</p>
+          <p>Fandom is read at the sharpest rung available and <b>the rung is reported</b> on
+            every moment: the named property, the sub-topic, or the lane. Reachability is
+            measured across the whole audience rather than across the part of it that
+            follows the moment, because this export does not carry that cross.</p>
+        </div>`}
 
         <div class="meth-note next">
-          <div class="meth-h">What changes when the real audience cuts land</div>
-          <p>The model moves to three dimensions, every one of them a measured survey
-            response: <b>Fandom ${shr(0.50)}</b> · <b>Reachability ${shr(0.30)}</b> ·
-            <b>Receptivity ${shr(0.20)}</b>.</p>
-          <p>Date confirmation, inventory and week congestion come out of the score
-            altogether and become a second <b>feasibility</b> axis — so a moment the
-            audience loves with no way in reads as <b>“find a door”</b> rather than
-            quietly sinking down the board.</p>
+          <div class="meth-h">Reading the other model</div>
+          <p>${esc(MODELS.find(m => m.id !== cur.id).label)} asks a different question:
+            ${esc(MODELS.find(m => m.id !== cur.id).gist)}</p>
+          <p>The toggle is at the top of the rail, and
+            <b>“Which should I use?”</b> under it sets the two side by side.</p>
         </div>
       </div>
     </div>`;
   el.querySelector('.meth-x').focus();
+}
+
+/* ============================================================
+   WHICH MODEL SHOULD I USE
+   ============================================================
+
+   Ed's brief for this panel was "explain each formula simply and without
+   jargon", and the hard part of that is not vocabulary — it is resisting the
+   urge to sell one of them. Both are defensible; they answer different
+   questions and they have different weaknesses, and a reader who leaves here
+   knowing only which one we prefer has been told nothing they can use.
+
+   So: what each one asks, in a sentence. What it is good at. What it is bad
+   at. When to pick it. The numbers are read from the models themselves, the
+   same as the methodology panel, so this cannot drift from what the board is
+   actually computing. */
+
+const MODEL_HELP = {
+  affinity: {
+    line: 'How much does this audience like this kind of thing — and is the moment big, buyable and uncrowded enough to be worth it?',
+    plain: [
+      ['It starts with taste.', 'Every audience has a score for each of the twelve lanes — sport, music, gaming and so on — where 100 means "no different from anybody else". A sports audience might sit at 170 on sport and 85 on fashion. That taste score is half the answer.'],
+      ['Then it asks four things about the moment itself.', 'How big is it. Whether there is a way to buy into it. Whether the date is firm enough to plan against. And how much else is happening that week, which is taken off the total rather than added to it.'],
+      ['The four are the same for everybody.', 'Only taste changes when you switch audience. That is deliberate: it means the board reorders because the audience genuinely wants different things, not because the model quietly reweighted itself.']
+    ],
+    good: [
+      'Works for every audience on the rail, including the estimated ones and anything you define yourself — so one board can hold them all side by side.',
+      'The big obvious moments rise to the top, because size is part of the score. If you are looking for tentpoles, this finds them.',
+      'Every component is something a planner already argues about, so a score you disagree with can be taken apart into the part you disagree with.'
+    ],
+    bad: [
+      'Half the score is not about the audience at all. Two very different audiences can end up with fairly similar boards, because a big, firmly-dated, buyable moment wins three terms out of four no matter who is watching.',
+      '"Size" outside sport is inferred from the moment\u2019s name rather than measured — the words "World Cup" score higher than the words "Album Release", which is a guess wearing a number.',
+      'A moment the audience would love but that has no obvious way in gets quietly marked down and disappears, instead of being flagged as something to go and build.'
+    ],
+    when: 'Use it for the first pass, for any board that mixes real and estimated audiences, and whenever you need the year\u2019s tentpoles ranked.'
+  },
+  response: {
+    line: 'Do these people actually follow this, can we reach them where it lives, and will they welcome a brand turning up?',
+    plain: [
+      ['Everything scored here is an answer somebody gave.', 'Nothing is inferred from the moment\u2019s name or its size. If nobody was asked, it does not score — it is left out and the remaining parts carry the weight.'],
+      ['Do they follow it? — half the score.', 'Read at the sharpest level available: the survey asked about this exact thing (the NFL Draft), or about this kind of thing (fighting games, horror films), or only about the lane. It combines how strongly they index with how many of them actually take part, so a small fervent niche cannot outrank a mainstream passion.'],
+      ['Can we reach them there? — three tenths.', 'Every moment has channels it lives on, and every audience has channels it uses heavily. This is the overlap — again crossed with how many of them are really on that channel, not just how distinctive it is.'],
+      ['Will they welcome a brand? — two tenths.', 'Whether they say advertising is worth their time, and whether they have actually done something about a sponsorship. This is a fact about the audience rather than the moment, so it lifts or lowers a whole board rather than reordering one.'],
+      ['Timing and access come out of the score entirely.', 'They move to a second axis called feasibility, and the two cross. A moment scoring high on relevance with nothing to buy no longer sinks quietly — it reads as "find a door", which is a brief for a partnership rather than a moment you never noticed you dropped.']
+    ],
+    good: [
+      'Every number traces back to a person answering a question. Nothing is a proxy for anything.',
+      'Audiences separate much harder, because all three parts vary by audience instead of just one.',
+      'The moments you cannot currently buy stop hiding. They come out as their own category with a name that says what to do about them.'
+    ],
+    bad: [
+      'Only works for the four audiences with a research cut behind them. The estimated ones cannot be scored at all, and a board mixing the two will be part empty.',
+      'It cannot see seasonality. A survey finds the same football fans in June as in November, so a moment out of season reads exactly like one in season.',
+      'Three lanes \u2014 holidays, national days, heritage months \u2014 have no questions behind them in this cut, so they score on reach and receptivity only and say so.',
+      'Reachability is measured across the whole audience rather than across the part of it that cares, because the export does not carry that cross. It slightly flatters moments on broadly popular channels.'
+    ],
+    when: 'Use it once you have narrowed to the PA\u2019s own targets, when you need to defend a choice with research, or when you want to find the moments worth building an access route into.'
+  }
+};
+
+function openModelHelp() {
+  const el = document.getElementById('modelHelp');
+  el.hidden = false;
+  const card = m => {
+    const h = MODEL_HELP[m.id];
+    const on = m.id === S.model;
+    return `
+      <div class="mh-card${on ? ' on' : ''}">
+        <div class="mh-hd">
+          <b>${esc(m.label)}</b>
+          ${on ? '<span class="mh-now">You are reading this one</span>' : `<button class="mh-pick" type="button" data-model="${m.id}" data-help-close="1">Switch to it</button>`}
+        </div>
+        <p class="mh-line">${esc(h.line)}</p>
+        <div class="mh-eq">${m.parts.filter(p => p.weight).map(p =>
+            `<b>${esc(p.name.toLowerCase())}</b>&nbsp;\u00d7&nbsp;${p.weight.toFixed(2).replace(/^0/, '')}`).join(' &nbsp;+&nbsp; ')}${
+            m.parts.some(p => !p.weight) ? ` &nbsp;\u2014 then ${m.parts.filter(p => !p.weight).map(p => `<b>${esc(p.name.toLowerCase())}</b>`).join(' and ')}` : ''}</div>
+
+        <div class="mh-h">How it works</div>
+        ${h.plain.map(([t, b]) => `<p class="mh-p"><b>${esc(t)}</b> ${esc(b)}</p>`).join('')}
+
+        <div class="mh-cols">
+          <div class="mh-col good">
+            <div class="mh-h">What it is good at</div>
+            <ul>${h.good.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          </div>
+          <div class="mh-col bad">
+            <div class="mh-h">Where it falls down</div>
+            <ul>${h.bad.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          </div>
+        </div>
+
+        <p class="mh-when"><b>Reach for it when</b> ${esc(h.when)}</p>
+      </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="meth-scrim" data-help-close="1"></div>
+    <div class="meth-card wide" role="dialog" aria-modal="true" aria-labelledby="mhTitle">
+      <div class="meth-hd">
+        <div>
+          <div class="meth-kick">Relevance model</div>
+          <h2 id="mhTitle">Two ways to read the same year</h2>
+        </div>
+        <button class="meth-x" data-help-close="1" type="button" aria-label="Close">\u00d7</button>
+      </div>
+      <div class="meth-bd">
+        <p class="meth-lede">Both models score every moment out of 100 and sort the year by the
+          answer. They disagree about <b>what should count</b>, and that disagreement is worth
+          understanding before you take either board to a client.</p>
+        <div class="mh-grid">${MODELS.map(card).join('')}</div>
+        <div class="meth-note">
+          <div class="meth-h">The short version</div>
+          <p><b>${esc(MODELS[0].label)}</b> asks how much they like it and whether it is worth buying.
+            <b>${esc(MODELS[1].label)}</b> asks what they told a researcher, and refuses to guess about
+            anything else.</p>
+          <p>The first works everywhere and is easier to argue with. The second is better
+            evidence and only covers the four targets with a
+            ${esc(YOUGOV_SOURCE.name)} cut behind them. Neither is the right answer on its own,
+            which is why the toggle is at the top of the rail rather than buried in a setting.</p>
+        </div>
+      </div>
+    </div>`;
+  el.querySelector('.meth-x').focus();
+}
+
+function closeModelHelp() {
+  const el = document.getElementById('modelHelp');
+  el.hidden = true;
+  el.innerHTML = '';
+  const b = document.getElementById('modelHelpBtn');
+  if (b) b.focus();
 }
 
 function closeMethodology() {
@@ -1399,12 +1651,29 @@ function closeMethodology() {
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close]');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-model],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close],#modelHelpBtn,[data-help-close]');
   if (!t) { closePop(); return; }
 
   /* Tested before the popover-closing paths below and before the audience
      toggle: the i sits inside the row, so without its own branch a click on it
      would both open the panel and switch the audience on or off. */
+  /* Tested before the close handler: the "Switch to it" button inside the
+     comparison carries BOTH data-model and data-help-close, and it has to do
+     the switch on the way out rather than only shutting the panel. */
+  if (t.dataset.model) {
+    const next = t.dataset.model;
+    if (t.dataset.helpClose) closeModelHelp();
+    if (next !== S.model && MODELS.some(m => m.id === next)) {
+      S.model = next;
+      recompute();
+      render();
+    }
+    return;
+  }
+
+  if (t.id === 'modelHelpBtn') { openModelHelp(); return; }
+  if (t.dataset.helpClose) { closeModelHelp(); return; }
+
   if (t.dataset.info) {
     const a = ROSTER().find(x => x.id === t.dataset.info);
     /* A second click on the same i closes it, rather than redrawing the same
@@ -1514,6 +1783,7 @@ document.addEventListener('keydown', e => {
      closing a tooltip while a half-filled dialog sits behind it would read as
      the key having done nothing. */
   if (draft) return closeAudPanel();
+  if (!document.getElementById('modelHelp').hidden) return closeModelHelp();
   if (!document.getElementById('meth').hidden) return closeMethodology();
   closePop();
 });
@@ -1577,7 +1847,7 @@ function boardDigest() {
             .reduce((s, m) => s + m.score, 0)
   })).sort((x, y) => y.total - x.total);
 
-  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score} ${m.band.label}`;
+  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score == null ? 'not scored' : m.score + ' ' + m.band.label}`;
   const shown = S.showWatch ? 'Anchor, Play and Watch' : 'Anchor and Play only';
 
   return [
@@ -1598,7 +1868,7 @@ function boardDigest() {
     ...v.slice(0, 25).map(m => '  ' + line(m)),
     ``,
     `THE UNCLAIMED MOMENTS — high affinity, quiet week:`,
-    ...unclaimed(v).map(m => `  ${m.start} · ${m.name} · affinity ${Math.round(m.parts.aff)}, congestion ${Math.round(m.parts.cong)}`),
+    ...unclaimed(v.map(m => ({ ...m, parts: { ...m.parts, aff: m.parts[MODEL().driver] ?? 0 } }))).map(m => `  ${m.start} · ${m.name} · ${MODEL().parts[0].name.toLowerCase()} ${Math.round(m.parts[MODEL().driver] ?? 0)}, congestion ${Math.round(m.parts.cong)}`),
     ``,
     `BUSIEST WEEKS: ${load.slice(0, 3).map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`,
     `QUIETEST WEEKS WITH ANYTHING IN THEM: ${load.filter(w => w.total > 0).slice(-3)

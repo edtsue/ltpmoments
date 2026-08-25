@@ -1903,3 +1903,233 @@ button, input, select { font-family: inherit; }
 .meth-note.next .meth-h { color: var(--pill-green); }
 .meth-note p { margin: 0 0 6px; }
 .meth-note p:last-child { margin-bottom: 0; }
+
+/* ============================================================
+   THE RELEVANCE MODEL TOGGLE
+   ============================================================
+
+   Top of the rail, above the audiences, because the model decides what a
+   score MEANS and the audience decides whose score it is — read downward
+   that is the right sentence. It borrows `.seg` from the combine control
+   rather than inventing a second kind of switch: a reader who has learned
+   one two-button row in this rail should not have to learn another.        */
+.rl-model { margin-bottom: 4px; }
+.rl-model .rl-hd { margin-top: 0; }
+
+/* Wider than the combine segment and set in the mono face, because this one
+   is a mode rather than a preference and should read as a label on the board
+   you are looking at. */
+.seg.mdl button {
+  height: 30px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.mdl-gist {
+  margin: 7px 3px 0;
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink3);
+}
+
+/* THE WARNING IS THE POINT OF THE WHOLE CONTROL.
+
+   Switching to the response model with an estimated audience selected draws a
+   board of hollow bars. A reader who was not told why will conclude the tool
+   is broken rather than that the audience has no research behind it — so the
+   count is stated here, under the toggle, before the eye reaches the board. */
+.mdl-warn {
+  margin: 7px 0 0;
+  padding: 7px 9px;
+  border-left: 2px solid var(--pill-amber);
+  border-radius: 0 6px 6px 0;
+  background: rgba(148, 98, 0, .08);
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink2);
+}
+.mdl-warn b { color: var(--pill-amber); font-weight: 700; }
+[data-theme="dark"] .mdl-warn { background: rgba(217, 162, 43, .1); }
+
+.mdl-help {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--vi);
+  font-size: 11px;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.mdl-help:hover { color: var(--shell-ink); }
+.mdl-help:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; border-radius: 3px; }
+
+/* MEASURED. The counterpart to "Est." — this audience's numbers came out of a
+   research cut. Green rather than amber: amber has meant "take this with a
+   pinch of salt" everywhere else in the rail, and this is the opposite claim. */
+.aud .meas {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(11, 122, 103, .15);
+  color: #085F51;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+[data-theme="dark"] .aud .meas { color: #4FC2AC; background: rgba(79, 194, 172, .16); }
+
+/* NEEDS A CUT. The only badge that depends on the toggle rather than on the
+   audience, and it disappears again the moment the model changes back. */
+.aud .unsup {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--a08);
+  color: var(--shell-ink3);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+/* A MOMENT THE ACTIVE MODEL CANNOT SCORE.
+
+   Hollow, not pale. Pale already means "scored, and low" — the whole left end
+   of the shade ramp — so an unscored bar has to be a different KIND of mark
+   rather than a fainter one, or the board quietly reports indifference the
+   audience never expressed. */
+.bar.nodata {
+  background: transparent !important;
+  border: 1px dashed var(--shell-ink3);
+  opacity: .5;
+  color: var(--shell-ink3);
+}
+.bandpill.nodata { background: var(--a08); color: var(--shell-ink3); }
+.sc.none { color: var(--shell-ink3); }
+
+/* The same absence inside the score panel. */
+.part.none { opacity: .62; }
+.part.none .pk b { color: var(--shell-ink3); }
+
+/* WHICH SQUARE OF THE MATRIX. Only the response model draws this — it is the
+   second axis crossing the first, and "find a door" is the reading the whole
+   feasibility split exists to produce. */
+.quadpill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--c);
+  border-radius: 999px;
+  color: var(--c);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   THE MODEL COMPARISON
+   ============================================================
+   Two cards side by side, each arguing for and against itself. The layout is
+   the argument: neither card is first, neither is wider, and the downsides
+   column is exactly as prominent as the upsides one. A comparison that
+   presents one model above the other has already made the choice.          */
+.meth-card.wide { max-width: 1080px; }
+
+.mh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.mh-card {
+  padding: 14px 15px 15px;
+  border: 1px solid var(--shell-line);
+  border-radius: 12px;
+  background: var(--card);
+}
+/* The one you are reading gets an edge, not a colour — it is a statement of
+   where you are, not a recommendation. */
+.mh-card.on { border-color: var(--shell-ink); box-shadow: inset 0 0 0 1px var(--shell-ink); }
+
+.mh-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mh-hd b { font-size: 14px; color: var(--shell-ink); }
+.mh-now {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+.mh-pick {
+  margin-left: auto;
+  padding: 5px 11px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--shell-ink2);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mh-pick:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+
+.mh-line { margin: 0 0 10px; font-size: 12.5px; line-height: 1.5; color: var(--shell-ink); }
+
+.mh-eq {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--sunken);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--shell-ink2);
+}
+.mh-eq b { color: var(--shell-ink); }
+
+.mh-h {
+  margin: 14px 0 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+.mh-p { margin: 0 0 7px; font-size: 11.8px; line-height: 1.55; color: var(--shell-ink2); }
+.mh-p b { color: var(--shell-ink); }
+
+.mh-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .mh-cols { grid-template-columns: 1fr; } }
+.mh-col ul { margin: 0; padding-left: 15px; }
+.mh-col li { font-size: 11.5px; line-height: 1.5; color: var(--shell-ink2); margin-bottom: 5px; }
+.mh-col.good .mh-h { color: var(--pill-green); }
+.mh-col.bad .mh-h { color: #C5221F; }
+
+.mh-when {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--shell-line);
+  font-size: 11.8px;
+  line-height: 1.55;
+  color: var(--shell-ink2);
+}
+.mh-when b { color: var(--shell-ink); }

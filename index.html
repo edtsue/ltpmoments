@@ -113,6 +113,15 @@
       <span class="modpill">6.2</span>
     </div>
 
+    <!-- WHICH MODEL, ABOVE WHICH AUDIENCE, AND IN THAT ORDER.
+         The model decides what a score means; the audience decides whose
+         score it is. Read top to bottom that is the right sentence, and it
+         puts the one control that changes every number on the board where a
+         reader meets it before they meet a number. The link under it opens
+         the comparison — not a tooltip, because choosing between two models
+         is a paragraph's worth of decision, not a hint's worth. -->
+    <div class="rl-model" id="modelTog"></div>
+
     <!-- The list draws its own headings, one per group — official, popular,
          custom — so there is no single "Target audiences" heading here any
          more. See GROUPS in data/audiences.js. -->
@@ -254,6 +263,12 @@
      add-an-audience dialog, and two dialogs sharing a class name is a cascade
      collision waiting to happen. Empty until opened. -->
 <div class="meth-host" id="meth" hidden></div>
+
+<!-- The model comparison. Same host pattern and same `meth-` furniture as the
+     methodology overlay, because they are the same kind of thing — a panel
+     that argues for what the board is doing — and two overlays that behave
+     differently is one more thing to learn for no reason. -->
+<div class="meth-host" id="modelHelp" hidden></div>
 
 <!-- The fold on the module bar. Shared with the other planning modules and
      copied between them, so it knows nothing about what travels in the strip.

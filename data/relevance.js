@@ -192,8 +192,26 @@ export function entityHits(key, m) {
    population", and the model should treat it as exactly the midpoint. */
 export function affinityOf(m, aud) {
   let idx = aud.aff[m.cat] ?? 100;
-  for (const [key, v] of Object.entries(aud.ent || {})) {
-    if (entityHits(key, m)) idx = Math.max(idx, v);
+
+  /* AN AUDIENCE BUILT FROM THE RESEARCH CUT GETS THE ORDERED READ.
+
+     data/entity-map.js lists the survey's 88 entities most-specific-first, so
+     the first pattern that matches a moment is the sharpest thing the study
+     has to say about it: "NFL Draft" rather than "NFL". Taking the highest of
+     every match instead — which is what the free-text path below does — would
+     quietly promote each moment to whichever of its readings flattered it
+     most. That is not a sharper read, it is a thumb on the scale.
+
+     Only audiences whose `ent` came out of the cut can be read this way,
+     because only they are keyed on the map. Anything typed or pasted by a
+     user falls through to the scan, where there is no order to trust. */
+  const mapped = aud.measured ? entityFor(m) : null;
+  if (mapped && aud.ent && aud.ent[mapped] != null) {
+    idx = aud.ent[mapped];
+  } else {
+    for (const [key, v] of Object.entries(aud.ent || {})) {
+      if (entityHits(key, m)) idx = Math.max(idx, v);
+    }
   }
   /* Logistic on log-index, centred on 100. Monotonic, saturating at both ends,
      and steepest exactly where the data actually sits. */
@@ -232,6 +250,7 @@ export function weekKey(iso) {
 /* ---------- the score ---------- */
 
 import { SPORTS_REACH, REACH_SOURCE } from './sports-reach.js';
+import { entityFor } from './entity-map.js';
 
 export { REACH_SOURCE };
 export const WEIGHTS = { aff: 0.50, scale: 0.20, act: 0.15, tim: 0.15 };

@@ -1906,6 +1906,236 @@ button, input, select { font-family: inherit; }
 .meth-note p { margin: 0 0 6px; }
 .meth-note p:last-child { margin-bottom: 0; }
 
+/* ============================================================
+   THE RELEVANCE MODEL TOGGLE
+   ============================================================
+
+   Top of the rail, above the audiences, because the model decides what a
+   score MEANS and the audience decides whose score it is — read downward
+   that is the right sentence. It borrows `.seg` from the combine control
+   rather than inventing a second kind of switch: a reader who has learned
+   one two-button row in this rail should not have to learn another.        */
+.rl-model { margin-bottom: 4px; }
+.rl-model .rl-hd { margin-top: 0; }
+
+/* Wider than the combine segment and set in the mono face, because this one
+   is a mode rather than a preference and should read as a label on the board
+   you are looking at. */
+.seg.mdl button {
+  height: 30px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.mdl-gist {
+  margin: 7px 3px 0;
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink3);
+}
+
+/* THE WARNING IS THE POINT OF THE WHOLE CONTROL.
+
+   Switching to the response model with an estimated audience selected draws a
+   board of hollow bars. A reader who was not told why will conclude the tool
+   is broken rather than that the audience has no research behind it — so the
+   count is stated here, under the toggle, before the eye reaches the board. */
+.mdl-warn {
+  margin: 7px 0 0;
+  padding: 7px 9px;
+  border-left: 2px solid var(--pill-amber);
+  border-radius: 0 6px 6px 0;
+  background: rgba(148, 98, 0, .08);
+  font-size: 10.8px;
+  line-height: 1.45;
+  color: var(--shell-ink2);
+}
+.mdl-warn b { color: var(--pill-amber); font-weight: 700; }
+[data-theme="dark"] .mdl-warn { background: rgba(217, 162, 43, .1); }
+
+.mdl-help {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--vi);
+  font-size: 11px;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.mdl-help:hover { color: var(--shell-ink); }
+.mdl-help:focus-visible { outline: 2px solid var(--vi); outline-offset: 2px; border-radius: 3px; }
+
+/* MEASURED. The counterpart to "Est." — this audience's numbers came out of a
+   research cut. Green rather than amber: amber has meant "take this with a
+   pinch of salt" everywhere else in the rail, and this is the opposite claim. */
+.aud .meas {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(11, 122, 103, .15);
+  color: #085F51;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+[data-theme="dark"] .aud .meas { color: #4FC2AC; background: rgba(79, 194, 172, .16); }
+
+/* NEEDS A CUT. The only badge that depends on the toggle rather than on the
+   audience, and it disappears again the moment the model changes back. */
+.aud .unsup {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--a08);
+  color: var(--shell-ink3);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+/* A MOMENT THE ACTIVE MODEL CANNOT SCORE.
+
+   Hollow, not pale. Pale already means "scored, and low" — the whole left end
+   of the shade ramp — so an unscored bar has to be a different KIND of mark
+   rather than a fainter one, or the board quietly reports indifference the
+   audience never expressed. */
+.bar.nodata {
+  background: transparent !important;
+  border: 1px dashed var(--shell-ink3);
+  opacity: .5;
+  color: var(--shell-ink3);
+}
+.bandpill.nodata { background: var(--a08); color: var(--shell-ink3); }
+.sc.none { color: var(--shell-ink3); }
+
+/* The same absence inside the score panel. */
+.part.none { opacity: .62; }
+.part.none .pk b { color: var(--shell-ink3); }
+
+/* WHICH SQUARE OF THE MATRIX. Only the response model draws this — it is the
+   second axis crossing the first, and "find a door" is the reading the whole
+   feasibility split exists to produce. */
+.quadpill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--c);
+  border-radius: 999px;
+  color: var(--c);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   THE MODEL COMPARISON
+   ============================================================
+   Two cards side by side, each arguing for and against itself. The layout is
+   the argument: neither card is first, neither is wider, and the downsides
+   column is exactly as prominent as the upsides one. A comparison that
+   presents one model above the other has already made the choice.          */
+.meth-card.wide { max-width: 1080px; }
+
+.mh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.mh-card {
+  padding: 14px 15px 15px;
+  border: 1px solid var(--shell-line);
+  border-radius: 12px;
+  background: var(--card);
+}
+/* The one you are reading gets an edge, not a colour — it is a statement of
+   where you are, not a recommendation. */
+.mh-card.on { border-color: var(--shell-ink); box-shadow: inset 0 0 0 1px var(--shell-ink); }
+
+.mh-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mh-hd b { font-size: 14px; color: var(--shell-ink); }
+.mh-now {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+.mh-pick {
+  margin-left: auto;
+  padding: 5px 11px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--shell-ink2);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mh-pick:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+
+.mh-line { margin: 0 0 10px; font-size: 12.5px; line-height: 1.5; color: var(--shell-ink); }
+
+.mh-eq {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--sunken);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--shell-ink2);
+}
+.mh-eq b { color: var(--shell-ink); }
+
+.mh-h {
+  margin: 14px 0 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--shell-ink3);
+}
+.mh-p { margin: 0 0 7px; font-size: 11.8px; line-height: 1.55; color: var(--shell-ink2); }
+.mh-p b { color: var(--shell-ink); }
+
+.mh-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .mh-cols { grid-template-columns: 1fr; } }
+.mh-col ul { margin: 0; padding-left: 15px; }
+.mh-col li { font-size: 11.5px; line-height: 1.5; color: var(--shell-ink2); margin-bottom: 5px; }
+.mh-col.good .mh-h { color: var(--pill-green); }
+.mh-col.bad .mh-h { color: #C5221F; }
+
+.mh-when {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--shell-line);
+  font-size: 11.8px;
+  line-height: 1.55;
+  color: var(--shell-ink2);
+}
+.mh-when b { color: var(--shell-ink); }
+
 /* A sliding strip of chrome, and the button that folds it away.
    Shared across the planning modules — this file is copied between them the
    way `_gate.js` is, and it styles the fold rather than anything travelling in
@@ -2076,6 +2306,15 @@ button, input, select { font-family: inherit; }
       <span class="modpill">6.2</span>
     </div>
 
+    <!-- WHICH MODEL, ABOVE WHICH AUDIENCE, AND IN THAT ORDER.
+         The model decides what a score means; the audience decides whose
+         score it is. Read top to bottom that is the right sentence, and it
+         puts the one control that changes every number on the board where a
+         reader meets it before they meet a number. The link under it opens
+         the comparison — not a tooltip, because choosing between two models
+         is a paragraph's worth of decision, not a hint's worth. -->
+    <div class="rl-model" id="modelTog"></div>
+
     <!-- The list draws its own headings, one per group — official, popular,
          custom — so there is no single "Target audiences" heading here any
          more. See GROUPS in data/audiences.js. -->
@@ -2217,6 +2456,12 @@ button, input, select { font-family: inherit; }
      add-an-audience dialog, and two dialogs sharing a class name is a cascade
      collision waiting to happen. Empty until opened. -->
 <div class="meth-host" id="meth" hidden></div>
+
+<!-- The model comparison. Same host pattern and same `meth-` furniture as the
+     methodology overlay, because they are the same kind of thing — a panel
+     that argues for what the board is doing — and two overlays that behave
+     differently is one more thing to learn for no reason. -->
+<div class="meth-host" id="modelHelp" hidden></div>
 
 <!-- The fold on the module bar. Shared with the other planning modules and
      copied between them, so it knows nothing about what travels in the strip.
@@ -3211,6 +3456,555 @@ const MOMENTS = [{"id":"m1","name":"Alice in Wonderland 100th Anniversary","cat"
 {"id":"m979","name":"Intergalatic: The Heretic Prophet","cat":"Gaming","start":"2030-12-31","end":"2030-12-31","conf":"TBD","type":"Singular Event","src":"NaughtyDog","plat":"PlayStation","pas":[],"notes":"From the studio that created Crash Bandicoot, Jax & Dexter, Uncharted, and The Last of Us comes their next new IP staring Tati Gabriel (Chilling Adventures of Sabrina, Uncharted), Kumail Nanjiani (The Eternals, Portlandia), Tony Dalton (Better Call Saul, Hawkeye), and Stephen Chang (The Last of Us, BOSCH) and scored by Trent Reznor and Atticus Ross","spons":"","single":false,"cc":true,"from":"csv"},
 {"id":"m980","name":"Rihanna R9 Album Release","cat":"Music","start":"2030-12-31","end":"2030-12-31","conf":"TBD","type":"Singular Event","src":"Westbury Road","plat":"UMG","pas":[],"notes":"This is likely never going to happen, however Rihanna continues to tease the project","spons":"","single":false,"cc":false,"from":"csv"}];
 
+/* ── data/yougov.js ── */
+/* Generated by tools/build-yougov.mjs — do not edit by hand.
+   Source: Google Audience Playgrounds (YouGov data) - Sheet1.csv
+   4 audiences, 30 question banks, 18 of them conditional.
+
+   Every number here is a measured survey response. Where a lane has no
+   battery in the cut the value is null rather than 100 — par and "not asked"
+   are different claims and the board draws them differently. */
+
+const YOUGOV_SOURCE = {
+  name: 'YouGov Profiles',
+  cut: 'Google Audience Playgrounds',
+  pop: 269602511,
+  banks: 30,
+  conditional: ["Statements agreed with about Advertising","Statements agreed with about Retail","Sponsorship actions taken","TV networks regularly watched - extended list","Events attended - last 12 months","AdBlocker/AntiTrackingSoftware - used","Statements agreed with about Internet activities & behavior","Statements agreed with about Leisure & Entertainment","Statements agreed with about Media","ELOI","Genres followed","Genre(s) of Blogs/Vlogs followed","Genres of user-generated content consumed","Genres of user-generated content created","Gaming genres played","Music festival genre","Radio listening - genres","Apps - genres downloaded"]
+};
+
+const YOUGOV = [
+  {
+    id: "search26", pa: "Search",
+    name: "Search '26",
+    full: "Search Audience '26",
+    size: "78.2M", sizeN: 78184728,
+    def: "The Search product area’s own 2026 target. The broadest of the four by a distance — a quarter of US adults — so it moves the board by weight of numbers rather than by intensity.",
+    aff: {"Sports":113.6,"Music":105.2,"Movies":98.8,"TV & Streaming":95.8,"Gaming":155.1,"Tech":141.8,"Fashion & Awards":127.7,"Tours & Concerts":184.2,"Culture":116.9,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affP: {"Sports":0.1681,"Music":0.2859,"Movies":0.4506,"TV & Streaming":0.3019,"Gaming":0.2398,"Tech":0.245,"Fashion & Awards":0.2476,"Tours & Concerts":0.1462,"Culture":0.1296,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affFrom: {"Sports":{"rows":58,"banks":["PDLC"]},"Music":{"rows":15,"banks":["Music genres preferred"]},"Movies":{"rows":16,"banks":["Movies - genres watched"]},"TV & Streaming":{"rows":32,"banks":["TV - genres watched","Streaming services used"]},"Gaming":{"rows":29,"banks":["Video game genres preferred","Gaming genres played (centred)"]},"Tech":{"rows":5,"banks":["Online content genres preferred","Podcast genre - listened to","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)"]},"Fashion & Awards":{"rows":10,"banks":["ELOI (centred)","Online content genres preferred","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)","Events attended - last 12 months (centred)"]},"Tours & Concerts":{"rows":19,"banks":["Music festival genre (centred)","Events attended - last 12 months (centred)"]},"Culture":{"rows":9,"banks":["Events attended - last 12 months (centred)","Podcast genre - listened to","Online content genres preferred","Book genres preferred"]},"Holidays":{"rows":0,"banks":[],"note":"no battery in this cut"},"National Days":{"rows":0,"banks":[],"note":"no battery in this cut"},"Heritage & Identity":{"rows":0,"banks":[],"note":"no battery in this cut"}},
+    ent: {"Super Bowl":72.4,"NFL Draft":92,"NFL Combine":101,"NFL Pro Bowl":86.9,"NFL Honors":113.2,"NFL Kickoff":76,"College World Series Baseball":96.3,"MLB World Series":65.3,"MLB All Star":79.7,"MLB Draft":101.5,"NBA All Star":110.1,"NBA Draft":126.1,"NBA Finals":102.9,"NHL All Star":94.8,"NHL Draft":120.4,"NHL Stanley Cup":83.6,"MLS Cup":133.1,"Division 1 Women's College Basketball":102.8,"March Madness":75.9,"College Football Playoff":71.4,"Daytona 500":73.6,"Indy 500":74.6,"The Masters":74.2,"PGA Championship":78.8,"The British Open":96.8,"US Open (Golf)":87,"WWE Wrestlemania":125.2,"Latin Grammys":138,"Grammy Awards":113.5,"Academy Awards":101.8,"Emmy Awards":104.2,"Golden Globes":101.9,"Espy Awards":104.4,"WNBA":102.2,"NFL":79.9,"NBA":109.6,"MLB":74.4,"NHL":93.9,"Division 1 Football":78.9,"Division 1 Men's College Basketball":92,"Major League Soccer":130.9,"National Women's Soccer League":123.1,"English Premier League":167.6,"UEFA Champions League":183.7,"La Liga (soccer)":183.9,"Liga MX":175.7,"Serie A (soccer)":174.4,"Bundesliga (soccer)":176.8,"Ligue 1":182.4,"FA Cup":181,"Copa Libertadores":165.7,"Copa Sudamericana":161.3,"FIFA Women's World Cup":137.3,"FIFA Football World Cup":146.5,"FIBA Basketball World Cup":161.7,"World Baseball Classic":101.7,"Olympic Games (Summer)":86.7,"Olympic Winter Games":85,"NASCAR":98.2,"Formula 1":136.7,"Formula E":149.2,"IndyCar (IRL)":97.1,"24 Hours of Le Mans":135.4,"IMSA Sports Car Championship":139.3,"FIA World Endurance Championship":161.3,"NHRA":101.2,"Supercross":125.2,"Pro Motocross":139.6,"MonsterJam":120.5,"PBR":102.3,"Wimbledon":100.6,"Australian Open":117.9,"French Open":111.2,"US Open":106.9,"ATP Men's Tennis":117.9,"WTA Women's Tennis":113.8,"LPGA Women's Golf Tour":108.5,"PGA Men's Golf Tour":84.6,"European Tour (golf)":131.5,"Ultimate Fighting Championships":116.7,"All Elite Wrestling":145.9,"World Wrestling Entertainment (WWE)":133.2,"United Football League (UFL)":129.8,"World Surf League":146.5,"Esports":183.6,"ICC T20 World Cup (cricket)":175.9,"World Armwrestling League":163.4,"NBA G-League":131.7},
+    entP: {"Super Bowl":0.3777,"NFL Draft":0.2058,"NFL Combine":0.1349,"NFL Pro Bowl":0.1588,"NFL Honors":0.1338,"NFL Kickoff":0.2107,"College World Series Baseball":0.0837,"MLB World Series":0.2337,"MLB All Star":0.1846,"MLB Draft":0.1098,"NBA All Star":0.2204,"NBA Draft":0.1952,"NBA Finals":0.3139,"NHL All Star":0.1319,"NHL Draft":0.109,"NHL Stanley Cup":0.172,"MLS Cup":0.1439,"Division 1 Women's College Basketball":0.0976,"March Madness":0.2174,"College Football Playoff":0.2162,"Daytona 500":0.1372,"Indy 500":0.1285,"The Masters":0.1183,"PGA Championship":0.1065,"The British Open":0.0941,"US Open (Golf)":0.1244,"WWE Wrestlemania":0.2138,"Latin Grammys":0.15,"Grammy Awards":0.2943,"Academy Awards":0.2846,"Emmy Awards":0.2248,"Golden Globes":0.2058,"Espy Awards":0.0962,"WNBA":0.2461,"NFL":0.4092,"NBA":0.3914,"MLB":0.2734,"NHL":0.2172,"Division 1 Football":0.1477,"Division 1 Men's College Basketball":0.1328,"Major League Soccer":0.2752,"National Women's Soccer League":0.202,"English Premier League":0.2735,"UEFA Champions League":0.2252,"La Liga (soccer)":0.246,"Liga MX":0.1078,"Serie A (soccer)":0.1975,"Bundesliga (soccer)":0.1952,"Ligue 1":0.167,"FA Cup":0.1787,"Copa Libertadores":0.1191,"Copa Sudamericana":0.1142,"FIFA Women's World Cup":0.2056,"FIFA Football World Cup":0.3314,"FIBA Basketball World Cup":0.1629,"World Baseball Classic":0.1429,"Olympic Games (Summer)":0.3638,"Olympic Winter Games":0.3346,"NASCAR":0.1822,"Formula 1":0.2282,"Formula E":0.0723,"IndyCar (IRL)":0.0683,"24 Hours of Le Mans":0.0923,"IMSA Sports Car Championship":0.0879,"FIA World Endurance Championship":0.1105,"NHRA":0.0532,"Supercross":0.0569,"Pro Motocross":0.096,"MonsterJam":0.0873,"PBR":0.0751,"Wimbledon":0.1934,"Australian Open":0.1563,"French Open":0.1528,"US Open":0.1973,"ATP Men's Tennis":0.1508,"WTA Women's Tennis":0.1595,"LPGA Women's Golf Tour":0.1015,"PGA Men's Golf Tour":0.1283,"European Tour (golf)":0.0891,"Ultimate Fighting Championships":0.259,"All Elite Wrestling":0.1044,"World Wrestling Entertainment (WWE)":0.2457,"United Football League (UFL)":0.1408,"World Surf League":0.0896,"Esports":0.1394,"ICC T20 World Cup (cricket)":0.075,"World Armwrestling League":0.0848,"NBA G-League":0.1342},
+    topic: {"Fighting":175.3,"Shooter":169.9,"Battle Royale":207.7,"Racing":168.2,"Sports":159,"Role-Playing (RPG)":168.6,"Simulation":168.2,"Strategy":121.5,"Platformer":191.2,"Building":167.7,"Action Adventure":163,"Multiplayer Online Battle Arena (MOBA)":178.5,"Horror":119.9,"Animation":146.8,"Science Fiction":99.4,"Fantasy":120.4,"Action":97.1,"Comedy":97.3,"Musical":114.8,"Documentary":83.4,"Mystery":86.5,"Historical":81.3,"Romance":118.6,"Family":102.2,"Reality":103.7,"Crime":84.2,"Sci-Fi & Fantasy":102.9,"Docuseries":83.1,"Drama":91.4,"International":105.8,"Soap opera":102.2,"Classic / Cult":95.9,"K-Pop":177.8,"Hip-Hop/Rap":142.2,"Country":82.8,"Latin":117.5,"Electronic/Dance":140.7,"Rock":81.6,"Metal":106.1,"R&B/Soul":101.9,"Jazz":95,"Classical":95.3,"Indie":155.6,"Pop":117.3,"Folk":108.8,"Reggae":102.5,"Blues":80.4},
+    topicP: {"Fighting":0.2514,"Shooter":0.3528,"Battle Royale":0.213,"Racing":0.2405,"Sports":0.2428,"Role-Playing (RPG)":0.3136,"Simulation":0.2912,"Strategy":0.3239,"Platformer":0.1365,"Building":0.2128,"Action Adventure":0.3508,"Multiplayer Online Battle Arena (MOBA)":0.1441,"Horror":0.4335,"Animation":0.4863,"Science Fiction":0.434,"Fantasy":0.442,"Action":0.5997,"Comedy":0.6528,"Musical":0.2636,"Documentary":0.4007,"Mystery":0.4138,"Historical":0.3245,"Romance":0.4494,"Family":0.4029,"Reality":0.3203,"Crime":0.4507,"Sci-Fi & Fantasy":0.3979,"Docuseries":0.2749,"Drama":0.474,"International":0.1676,"Soap opera":0.0897,"Classic / Cult":0.2101,"K-Pop":0.1765,"Hip-Hop/Rap":0.5295,"Country":0.3212,"Latin":0.1732,"Electronic/Dance":0.259,"Rock":0.4594,"Metal":0.2185,"R&B/Soul":0.3712,"Jazz":0.2079,"Classical":0.2459,"Indie":0.2676,"Pop":0.5473,"Folk":0.1722,"Reggae":0.1611,"Blues":0.1774},
+    reach: {"NBC":42.6,"ESPN":88.4,"NFL Network":75.1,"FOX":69.1,"CBS":46.6,"Amazon Prime Video":89.4,"ABC":49.1,"NBA TV":135.1,"TNT":63.7,"MLB Network":59,"TBS":43.3,"NHL Network":112.1,"SEC Network":77.3,"truTV":54,"The Golf Channel":85.1,"Tennis Channel":139.8,"USA Network":72.9,"Telemundo":130.5,"Paramount+ with Showtime":78,"Univision":108.6,"Apple TV+":104.4,"FS1":74.1,"FOX Deportes":194.2,"ESPN Deportes":171.7,"CBS Sports Network":16.2,"Peacock":86.1,"WWE Network":166.2,"Netflix":108.7,"Twitch":205.1,"YouTube":109.4,"Discord":201.9,"Disney+":117,"Disney Channel":108.6,"Hulu":103.8,"FX":73.2,"Freeform":109.2,"HBO Max":107.9,"HBO":73.4,"Cartoon Network":142.9,"Bravo":74.3,"SyFy":43.1,"E!":116.2,"MTV":129.3,"Comedy Central":98.2,"Nickelodeon":189.3,"Fox News Channel":72.4,"Fox One":141.3,"Cine Sony":207.3,"Starz":62,"AMC":63.6,"IFC":52.5,"Sundance":61.8,"Instagram":127.5,"TikTok":142.7,"Reddit":144.1,"X":144,"LinkedIn":104.9,"Facebook":79.7,"Hallmark Channel":38.6,"BET":114.5},
+    reachP: {"NBC":0.1109,"ESPN":0.1508,"NFL Network":0.0259,"FOX":0.1482,"CBS":0.1331,"Amazon Prime Video":0.4845,"ABC":0.1394,"NBA TV":0.0263,"TNT":0.0596,"MLB Network":0.0125,"TBS":0.036,"NHL Network":0.0117,"SEC Network":0.0149,"truTV":0.0218,"The Golf Channel":0.0232,"Tennis Channel":0.0231,"USA Network":0.0705,"Telemundo":0.0415,"Paramount+ with Showtime":0.0462,"Univision":0.0285,"Apple TV+":0.1873,"FS1":0.033,"FOX Deportes":0.0311,"ESPN Deportes":0.0249,"CBS Sports Network":0.0014,"Peacock":0.2677,"WWE Network":0.0583,"Netflix":0.6738,"Twitch":0.1578,"YouTube":0.7999,"Discord":0.2917,"Disney+":0.4043,"Disney Channel":0.1142,"Hulu":0.4151,"FX":0.0636,"Freeform":0.0475,"HBO Max":0.3325,"HBO":0.1213,"Cartoon Network":0.0923,"Bravo":0.0447,"SyFy":0.0274,"E!":0.0349,"MTV":0.0634,"Comedy Central":0.1033,"Nickelodeon":0.1059,"Fox News Channel":0.1181,"Fox One":0.0658,"Cine Sony":0.0066,"Starz":0.0265,"AMC":0.0514,"IFC":0.0098,"Sundance":0.0103,"Instagram":0.681,"TikTok":0.515,"Reddit":0.3372,"X":0.378,"LinkedIn":0.2407,"Facebook":0.5665,"Hallmark Channel":0.0307,"BET":0.0634},
+    recep: {"welcome":105.7,"respond":122.8,"value":113.9,"rows":24}
+  },
+  {
+    id: "gemini26", pa: "Gemini",
+    name: "Gemini '26",
+    full: "Gemini Audience '26",
+    size: "18.6M", sizeN: 18602573,
+    def: "Gemini’s 2026 target. The one audience here that under-indexes on live sport and over-indexes hard on education, indie games and Discord — a moments board built for them looks nothing like the other three.",
+    aff: {"Sports":84.5,"Music":101.8,"Movies":98.2,"TV & Streaming":92.5,"Gaming":112.4,"Tech":99.6,"Fashion & Awards":87.1,"Tours & Concerts":85.7,"Culture":108.6,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affP: {"Sports":0.1235,"Music":0.2831,"Movies":0.4488,"TV & Streaming":0.2929,"Gaming":0.1737,"Tech":0.1697,"Fashion & Awards":0.1701,"Tours & Concerts":0.0712,"Culture":0.119,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affFrom: {"Sports":{"rows":58,"banks":["PDLC"]},"Music":{"rows":15,"banks":["Music genres preferred"]},"Movies":{"rows":16,"banks":["Movies - genres watched"]},"TV & Streaming":{"rows":32,"banks":["TV - genres watched","Streaming services used"]},"Gaming":{"rows":29,"banks":["Video game genres preferred","Gaming genres played (centred)"]},"Tech":{"rows":5,"banks":["Online content genres preferred","Podcast genre - listened to","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)"]},"Fashion & Awards":{"rows":10,"banks":["ELOI (centred)","Online content genres preferred","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)","Events attended - last 12 months (centred)"]},"Tours & Concerts":{"rows":19,"banks":["Music festival genre (centred)","Events attended - last 12 months (centred)"]},"Culture":{"rows":9,"banks":["Events attended - last 12 months (centred)","Podcast genre - listened to","Online content genres preferred","Book genres preferred"]},"Holidays":{"rows":0,"banks":[],"note":"no battery in this cut"},"National Days":{"rows":0,"banks":[],"note":"no battery in this cut"},"Heritage & Identity":{"rows":0,"banks":[],"note":"no battery in this cut"}},
+    ent: {"Super Bowl":52.5,"NFL Draft":59.9,"NFL Combine":60.6,"NFL Pro Bowl":50.9,"NFL Honors":60.3,"NFL Kickoff":54.6,"College World Series Baseball":58.3,"MLB World Series":46.5,"MLB All Star":52.7,"MLB Draft":62.3,"NBA All Star":55.1,"NBA Draft":66.2,"NBA Finals":55.8,"NHL All Star":47.2,"NHL Draft":75.8,"NHL Stanley Cup":49.5,"MLS Cup":74,"Division 1 Women's College Basketball":69.6,"March Madness":61.9,"College Football Playoff":47.4,"Daytona 500":37.6,"Indy 500":48.6,"The Masters":37.9,"PGA Championship":45.5,"The British Open":52.1,"US Open (Golf)":35.8,"WWE Wrestlemania":49.4,"Latin Grammys":72.7,"Grammy Awards":73.1,"Academy Awards":71.1,"Emmy Awards":70.9,"Golden Globes":65.5,"Espy Awards":50.5,"WNBA":90.6,"NFL":74.7,"NBA":90.2,"MLB":66.6,"NHL":80.7,"Division 1 Football":59.4,"Division 1 Men's College Basketball":65.8,"Major League Soccer":94.5,"National Women's Soccer League":95.3,"English Premier League":109.6,"UEFA Champions League":120.1,"La Liga (soccer)":119.4,"Liga MX":98.7,"Serie A (soccer)":112.6,"Bundesliga (soccer)":116.9,"Ligue 1":113.2,"FA Cup":130.3,"Copa Libertadores":98.4,"Copa Sudamericana":105.8,"FIFA Women's World Cup":111.9,"FIFA Football World Cup":121,"FIBA Basketball World Cup":104.9,"World Baseball Classic":85.1,"Olympic Games (Summer)":85.9,"Olympic Winter Games":85.7,"NASCAR":74.1,"Formula 1":111.4,"Formula E":76.7,"IndyCar (IRL)":55.7,"24 Hours of Le Mans":84.3,"IMSA Sports Car Championship":49.3,"FIA World Endurance Championship":105.4,"NHRA":35.7,"Supercross":55.2,"Pro Motocross":82.5,"MonsterJam":63.5,"PBR":52.2,"Wimbledon":80.4,"Australian Open":89.8,"French Open":80.3,"US Open":84,"ATP Men's Tennis":81,"WTA Women's Tennis":85.8,"LPGA Women's Golf Tour":67.2,"PGA Men's Golf Tour":55.7,"European Tour (golf)":71.7,"Ultimate Fighting Championships":76.1,"All Elite Wrestling":92.7,"World Wrestling Entertainment (WWE)":91.2,"United Football League (UFL)":84.6,"World Surf League":92.3,"Esports":115.4,"ICC T20 World Cup (cricket)":95.9,"World Armwrestling League":95.7,"NBA G-League":80.7},
+    entP: {"Super Bowl":0.2739,"NFL Draft":0.1339,"NFL Combine":0.081,"NFL Pro Bowl":0.0931,"NFL Honors":0.0713,"NFL Kickoff":0.1515,"College World Series Baseball":0.0508,"MLB World Series":0.1662,"MLB All Star":0.1222,"MLB Draft":0.0674,"NBA All Star":0.1103,"NBA Draft":0.1025,"NBA Finals":0.1702,"NHL All Star":0.0656,"NHL Draft":0.0686,"NHL Stanley Cup":0.1018,"MLS Cup":0.08,"Division 1 Women's College Basketball":0.066,"March Madness":0.1774,"College Football Playoff":0.1437,"Daytona 500":0.0701,"Indy 500":0.0837,"The Masters":0.0603,"PGA Championship":0.0614,"The British Open":0.0507,"US Open (Golf)":0.0511,"WWE Wrestlemania":0.0843,"Latin Grammys":0.079,"Grammy Awards":0.1895,"Academy Awards":0.1987,"Emmy Awards":0.153,"Golden Globes":0.1323,"Espy Awards":0.0466,"WNBA":0.2182,"NFL":0.3828,"NBA":0.3224,"MLB":0.2445,"NHL":0.1867,"Division 1 Football":0.1113,"Division 1 Men's College Basketball":0.095,"Major League Soccer":0.1986,"National Women's Soccer League":0.1563,"English Premier League":0.179,"UEFA Champions League":0.1473,"La Liga (soccer)":0.1597,"Liga MX":0.0605,"Serie A (soccer)":0.1275,"Bundesliga (soccer)":0.1291,"Ligue 1":0.1036,"FA Cup":0.1286,"Copa Libertadores":0.0708,"Copa Sudamericana":0.0749,"FIFA Women's World Cup":0.1675,"FIFA Football World Cup":0.2736,"FIBA Basketball World Cup":0.1057,"World Baseball Classic":0.1196,"Olympic Games (Summer)":0.3604,"Olympic Winter Games":0.3375,"NASCAR":0.1375,"Formula 1":0.1859,"Formula E":0.0372,"IndyCar (IRL)":0.0391,"24 Hours of Le Mans":0.0574,"IMSA Sports Car Championship":0.0311,"FIA World Endurance Championship":0.0722,"NHRA":0.0188,"Supercross":0.0251,"Pro Motocross":0.0567,"MonsterJam":0.046,"PBR":0.0383,"Wimbledon":0.1545,"Australian Open":0.1191,"French Open":0.1103,"US Open":0.155,"ATP Men's Tennis":0.1036,"WTA Women's Tennis":0.1202,"LPGA Women's Golf Tour":0.0628,"PGA Men's Golf Tour":0.0846,"European Tour (golf)":0.0486,"Ultimate Fighting Championships":0.1689,"All Elite Wrestling":0.0663,"World Wrestling Entertainment (WWE)":0.1683,"United Football League (UFL)":0.0917,"World Surf League":0.0564,"Esports":0.0877,"ICC T20 World Cup (cricket)":0.0409,"World Armwrestling League":0.0497,"NBA G-League":0.0822},
+    topic: {"Fighting":141.6,"Shooter":136.5,"Battle Royale":165.6,"Racing":117.6,"Sports":111.7,"Role-Playing (RPG)":157.3,"Simulation":164.2,"Strategy":125,"Platformer":145,"Building":166.5,"Action Adventure":137.3,"Multiplayer Online Battle Arena (MOBA)":118.4,"Horror":112.1,"Animation":151.9,"Science Fiction":97.9,"Fantasy":124.3,"Action":97.9,"Comedy":97.3,"Musical":123.7,"Documentary":83.1,"Mystery":83.1,"Historical":85.6,"Romance":120.2,"Family":95.4,"Reality":103,"Crime":75.2,"Sci-Fi & Fantasy":105.4,"Docuseries":80.9,"Drama":92.2,"International":104.9,"Soap opera":74.9,"Classic / Cult":81.4,"K-Pop":176.8,"Hip-Hop/Rap":135.3,"Country":63.1,"Latin":108.3,"Electronic/Dance":139.5,"Rock":83.9,"Metal":97.5,"R&B/Soul":101,"Jazz":97.4,"Classical":86.7,"Indie":204.7,"Pop":134.4,"Folk":113.8,"Reggae":83.2,"Blues":62.5},
+    topicP: {"Fighting":0.203,"Shooter":0.2835,"Battle Royale":0.1699,"Racing":0.1682,"Sports":0.1706,"Role-Playing (RPG)":0.2926,"Simulation":0.2841,"Strategy":0.3332,"Platformer":0.1035,"Building":0.2112,"Action Adventure":0.2955,"Multiplayer Online Battle Arena (MOBA)":0.0956,"Horror":0.4054,"Animation":0.5031,"Science Fiction":0.4276,"Fantasy":0.456,"Action":0.6044,"Comedy":0.6526,"Musical":0.2841,"Documentary":0.3993,"Mystery":0.3979,"Historical":0.3416,"Romance":0.4553,"Family":0.3757,"Reality":0.3182,"Crime":0.4023,"Sci-Fi & Fantasy":0.4075,"Docuseries":0.2678,"Drama":0.4782,"International":0.1662,"Soap opera":0.0657,"Classic / Cult":0.1783,"K-Pop":0.1755,"Hip-Hop/Rap":0.5039,"Country":0.2447,"Latin":0.1597,"Electronic/Dance":0.2567,"Rock":0.472,"Metal":0.2007,"R&B/Soul":0.3676,"Jazz":0.2133,"Classical":0.224,"Indie":0.3519,"Pop":0.6272,"Folk":0.1802,"Reggae":0.1307,"Blues":0.1381},
+    reach: {"NBC":24.3,"ESPN":49.9,"NFL Network":56.1,"FOX":38.5,"CBS":29.9,"Amazon Prime Video":94.5,"ABC":32.6,"NBA TV":59.5,"TNT":29.2,"MLB Network":23.6,"TBS":20.9,"NHL Network":70.9,"SEC Network":53.4,"truTV":27.6,"The Golf Channel":22.2,"Tennis Channel":31.6,"USA Network":15.4,"Telemundo":90.6,"Paramount+ with Showtime":21,"Univision":63.9,"Apple TV+":100,"FS1":32.3,"FOX Deportes":65.4,"ESPN Deportes":75.1,"CBS Sports Network":25.8,"Peacock":87.4,"WWE Network":62.1,"Netflix":110.9,"Twitch":179.6,"YouTube":115.9,"Discord":257.7,"Disney+":116.6,"Disney Channel":65.6,"Hulu":110,"FX":29.6,"Freeform":52.2,"HBO Max":115.5,"HBO":41,"Cartoon Network":77,"Bravo":20.4,"SyFy":18.3,"E!":57.7,"MTV":58.3,"Comedy Central":51.2,"Nickelodeon":95.8,"Fox News Channel":31.1,"Fox One":65.5,"Cine Sony":31.3,"Starz":21.1,"AMC":24.4,"IFC":12.1,"Sundance":9.2,"Instagram":141.5,"TikTok":132.4,"Reddit":157.2,"X":132.5,"LinkedIn":131.8,"Facebook":59.8,"Hallmark Channel":25,"BET":59.9},
+    reachP: {"NBC":0.0633,"ESPN":0.0852,"NFL Network":0.0193,"FOX":0.0825,"CBS":0.0854,"Amazon Prime Video":0.5125,"ABC":0.0924,"NBA TV":0.0116,"TNT":0.0274,"MLB Network":0.005,"TBS":0.0174,"NHL Network":0.0074,"SEC Network":0.0103,"truTV":0.0112,"The Golf Channel":0.006,"Tennis Channel":0.0052,"USA Network":0.0149,"Telemundo":0.0288,"Paramount+ with Showtime":0.0124,"Univision":0.0168,"Apple TV+":0.1794,"FS1":0.0144,"FOX Deportes":0.0105,"ESPN Deportes":0.0109,"CBS Sports Network":0.0022,"Peacock":0.2719,"WWE Network":0.0218,"Netflix":0.6877,"Twitch":0.1382,"YouTube":0.847,"Discord":0.3723,"Disney+":0.4028,"Disney Channel":0.069,"Hulu":0.4399,"FX":0.0257,"Freeform":0.0227,"HBO Max":0.356,"HBO":0.0677,"Cartoon Network":0.0497,"Bravo":0.0123,"SyFy":0.0116,"E!":0.0173,"MTV":0.0286,"Comedy Central":0.0539,"Nickelodeon":0.0536,"Fox News Channel":0.0507,"Fox One":0.0305,"Cine Sony":0.001,"Starz":0.009,"AMC":0.0197,"IFC":0.0022,"Sundance":0.0015,"Instagram":0.7553,"TikTok":0.4775,"Reddit":0.368,"X":0.3478,"LinkedIn":0.3026,"Facebook":0.4248,"Hallmark Channel":0.0198,"BET":0.0332},
+    recep: {"welcome":100.9,"respond":106.6,"value":103.7,"rows":24}
+  },
+  {
+    id: "seekers26", pa: "Pixel",
+    name: "Millennial Seekers '26",
+    full: "Millennial Seekers Proxy '26 v2",
+    size: "36.1M", sizeN: 36126737,
+    def: "The Pixel proxy, v2. Sits close to par on most things and separates on motoring, horror and the practical end of podcasting — a cut that rewards specificity rather than scale.",
+    aff: {"Sports":93.9,"Music":103.9,"Movies":104.2,"TV & Streaming":97.6,"Gaming":118.1,"Tech":128.1,"Fashion & Awards":109,"Tours & Concerts":101,"Culture":106.8,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affP: {"Sports":0.1368,"Music":0.2805,"Movies":0.4723,"TV & Streaming":0.3061,"Gaming":0.1782,"Tech":0.2231,"Fashion & Awards":0.2089,"Tours & Concerts":0.0834,"Culture":0.1175,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affFrom: {"Sports":{"rows":58,"banks":["PDLC"]},"Music":{"rows":15,"banks":["Music genres preferred"]},"Movies":{"rows":16,"banks":["Movies - genres watched"]},"TV & Streaming":{"rows":32,"banks":["TV - genres watched","Streaming services used"]},"Gaming":{"rows":29,"banks":["Video game genres preferred","Gaming genres played (centred)"]},"Tech":{"rows":5,"banks":["Online content genres preferred","Podcast genre - listened to","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)"]},"Fashion & Awards":{"rows":10,"banks":["ELOI (centred)","Online content genres preferred","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)","Events attended - last 12 months (centred)"]},"Tours & Concerts":{"rows":19,"banks":["Music festival genre (centred)","Events attended - last 12 months (centred)"]},"Culture":{"rows":9,"banks":["Events attended - last 12 months (centred)","Podcast genre - listened to","Online content genres preferred","Book genres preferred"]},"Holidays":{"rows":0,"banks":[],"note":"no battery in this cut"},"National Days":{"rows":0,"banks":[],"note":"no battery in this cut"},"Heritage & Identity":{"rows":0,"banks":[],"note":"no battery in this cut"}},
+    ent: {"Super Bowl":83.1,"NFL Draft":93.4,"NFL Combine":83.3,"NFL Pro Bowl":82.8,"NFL Honors":81.1,"NFL Kickoff":91.2,"College World Series Baseball":130.8,"MLB World Series":84.9,"MLB All Star":97.2,"MLB Draft":133.7,"NBA All Star":115.5,"NBA Draft":103.5,"NBA Finals":108.7,"NHL All Star":120,"NHL Draft":107.7,"NHL Stanley Cup":102.3,"MLS Cup":133.5,"Division 1 Women's College Basketball":138.2,"March Madness":85.8,"College Football Playoff":82.4,"Daytona 500":71.1,"Indy 500":64.6,"The Masters":84.3,"PGA Championship":63,"The British Open":69.9,"US Open (Golf)":62.3,"WWE Wrestlemania":124.1,"Latin Grammys":118.2,"Grammy Awards":101.9,"Academy Awards":91.2,"Emmy Awards":94.7,"Golden Globes":95.5,"Espy Awards":96.7,"WNBA":78.4,"NFL":73,"NBA":89.6,"MLB":75.4,"NHL":74,"Division 1 Football":114.2,"Division 1 Men's College Basketball":126.5,"Major League Soccer":80.6,"National Women's Soccer League":80.7,"English Premier League":103.5,"UEFA Champions League":116.3,"La Liga (soccer)":105.8,"Liga MX":145.5,"Serie A (soccer)":99.6,"Bundesliga (soccer)":88.3,"Ligue 1":98.2,"FA Cup":105.9,"Copa Libertadores":130.6,"Copa Sudamericana":131.2,"FIFA Women's World Cup":114,"FIFA Football World Cup":99.3,"FIBA Basketball World Cup":110.1,"World Baseball Classic":99,"Olympic Games (Summer)":81.9,"Olympic Winter Games":76.6,"NASCAR":76.5,"Formula 1":85.3,"Formula E":140.9,"IndyCar (IRL)":108.5,"24 Hours of Le Mans":100.1,"IMSA Sports Car Championship":87.7,"FIA World Endurance Championship":116.4,"NHRA":103.7,"Supercross":162.2,"Pro Motocross":119.9,"MonsterJam":134.6,"PBR":124.1,"Wimbledon":87.8,"Australian Open":95.7,"French Open":89.6,"US Open":92.6,"ATP Men's Tennis":97.3,"WTA Women's Tennis":85,"LPGA Women's Golf Tour":76,"PGA Men's Golf Tour":69.1,"European Tour (golf)":107.5,"Ultimate Fighting Championships":94.8,"All Elite Wrestling":130.9,"World Wrestling Entertainment (WWE)":103,"United Football League (UFL)":106.6,"World Surf League":119.2,"Esports":160.9,"ICC T20 World Cup (cricket)":112.4,"World Armwrestling League":101.8,"NBA G-League":107.5},
+    entP: {"Super Bowl":0.4334,"NFL Draft":0.2089,"NFL Combine":0.1113,"NFL Pro Bowl":0.1513,"NFL Honors":0.0959,"NFL Kickoff":0.2531,"College World Series Baseball":0.1138,"MLB World Series":0.3036,"MLB All Star":0.2253,"MLB Draft":0.1446,"NBA All Star":0.2313,"NBA Draft":0.1603,"NBA Finals":0.3315,"NHL All Star":0.167,"NHL Draft":0.0975,"NHL Stanley Cup":0.2104,"MLS Cup":0.1444,"Division 1 Women's College Basketball":0.1312,"March Madness":0.2459,"College Football Playoff":0.2496,"Daytona 500":0.1326,"Indy 500":0.1113,"The Masters":0.1344,"PGA Championship":0.0851,"The British Open":0.0679,"US Open (Golf)":0.0891,"WWE Wrestlemania":0.212,"Latin Grammys":0.1285,"Grammy Awards":0.2643,"Academy Awards":0.2548,"Emmy Awards":0.2044,"Golden Globes":0.1928,"Espy Awards":0.0891,"WNBA":0.1888,"NFL":0.3739,"NBA":0.3202,"MLB":0.2771,"NHL":0.1712,"Division 1 Football":0.2139,"Division 1 Men's College Basketball":0.1827,"Major League Soccer":0.1693,"National Women's Soccer League":0.1323,"English Premier League":0.1689,"UEFA Champions League":0.1426,"La Liga (soccer)":0.1415,"Liga MX":0.0892,"Serie A (soccer)":0.1128,"Bundesliga (soccer)":0.0975,"Ligue 1":0.0899,"FA Cup":0.1046,"Copa Libertadores":0.094,"Copa Sudamericana":0.0929,"FIFA Women's World Cup":0.1706,"FIFA Football World Cup":0.2245,"FIBA Basketball World Cup":0.111,"World Baseball Classic":0.1391,"Olympic Games (Summer)":0.3434,"Olympic Winter Games":0.3015,"NASCAR":0.1418,"Formula 1":0.1424,"Formula E":0.0683,"IndyCar (IRL)":0.0762,"24 Hours of Le Mans":0.0683,"IMSA Sports Car Championship":0.0554,"FIA World Endurance Championship":0.0797,"NHRA":0.0545,"Supercross":0.0737,"Pro Motocross":0.0824,"MonsterJam":0.0976,"PBR":0.0911,"Wimbledon":0.1687,"Australian Open":0.1269,"French Open":0.1232,"US Open":0.171,"ATP Men's Tennis":0.1244,"WTA Women's Tennis":0.119,"LPGA Women's Golf Tour":0.0711,"PGA Men's Golf Tour":0.1049,"European Tour (golf)":0.0728,"Ultimate Fighting Championships":0.2105,"All Elite Wrestling":0.0937,"World Wrestling Entertainment (WWE)":0.1901,"United Football League (UFL)":0.1156,"World Surf League":0.0729,"Esports":0.1222,"ICC T20 World Cup (cricket)":0.0479,"World Armwrestling League":0.0528,"NBA G-League":0.1095},
+    topic: {"Fighting":133.8,"Shooter":125.8,"Battle Royale":115.6,"Racing":137.5,"Sports":117.2,"Role-Playing (RPG)":140.1,"Simulation":125.4,"Strategy":104.1,"Platformer":158.3,"Building":127.2,"Action Adventure":130,"Multiplayer Online Battle Arena (MOBA)":109.7,"Horror":126.7,"Animation":133.9,"Science Fiction":111,"Fantasy":119.5,"Action":101.9,"Comedy":101.5,"Musical":97.5,"Documentary":97.4,"Mystery":97,"Historical":86.9,"Romance":104.4,"Family":107.7,"Reality":103.7,"Crime":94.4,"Sci-Fi & Fantasy":109.5,"Docuseries":106.8,"Drama":97,"International":124.3,"Soap opera":90.9,"Classic / Cult":107.8,"K-Pop":150.8,"Hip-Hop/Rap":127,"Country":80.8,"Latin":130,"Electronic/Dance":146.6,"Rock":94.8,"Metal":111.1,"R&B/Soul":102.9,"Jazz":83.6,"Classical":94.2,"Indie":134.6,"Pop":113.6,"Folk":99.4,"Reggae":107.8,"Blues":71.8},
+    topicP: {"Fighting":0.1918,"Shooter":0.2612,"Battle Royale":0.1185,"Racing":0.1966,"Sports":0.179,"Role-Playing (RPG)":0.2606,"Simulation":0.217,"Strategy":0.2774,"Platformer":0.1131,"Building":0.1614,"Action Adventure":0.2797,"Multiplayer Online Battle Arena (MOBA)":0.0886,"Horror":0.4582,"Animation":0.4434,"Science Fiction":0.4849,"Fantasy":0.4384,"Action":0.6292,"Comedy":0.6809,"Musical":0.2239,"Documentary":0.4682,"Mystery":0.4642,"Historical":0.3467,"Romance":0.3954,"Family":0.4244,"Reality":0.3202,"Crime":0.5053,"Sci-Fi & Fantasy":0.4232,"Docuseries":0.3534,"Drama":0.5029,"International":0.197,"Soap opera":0.0799,"Classic / Cult":0.2362,"K-Pop":0.1497,"Hip-Hop/Rap":0.4729,"Country":0.3132,"Latin":0.1918,"Electronic/Dance":0.2698,"Rock":0.5333,"Metal":0.2287,"R&B/Soul":0.3746,"Jazz":0.1831,"Classical":0.2432,"Indie":0.2315,"Pop":0.53,"Folk":0.1574,"Reggae":0.1695,"Blues":0.1584},
+    reach: {"NBC":58.2,"ESPN":61.5,"NFL Network":98.7,"FOX":66.8,"CBS":56,"Amazon Prime Video":91.1,"ABC":58,"NBA TV":136.1,"TNT":66.3,"MLB Network":95.3,"TBS":73.1,"NHL Network":184,"SEC Network":19,"truTV":73.5,"The Golf Channel":26.6,"Tennis Channel":51.5,"USA Network":41,"Telemundo":132.2,"Paramount+ with Showtime":85.1,"Univision":143,"Apple TV+":98.1,"FS1":83.5,"FOX Deportes":94.3,"ESPN Deportes":57.4,"CBS Sports Network":225.6,"Peacock":100.6,"WWE Network":85.2,"Netflix":102.9,"Twitch":171.7,"YouTube":108.9,"Discord":127.5,"Disney+":106.8,"Disney Channel":54.3,"Hulu":106.9,"FX":79.4,"Freeform":110.3,"HBO Max":115.8,"HBO":71.1,"Cartoon Network":110.8,"Bravo":82.3,"SyFy":101.6,"E!":94.4,"MTV":109.8,"Comedy Central":87.3,"Nickelodeon":86,"Fox News Channel":42.6,"Fox One":116.8,"Cine Sony":50,"Starz":85.3,"AMC":79.5,"IFC":110.2,"Sundance":99,"Instagram":115.5,"TikTok":103.8,"Reddit":150.1,"X":110.5,"LinkedIn":110.3,"Facebook":97.1,"Hallmark Channel":50.7,"BET":78.4},
+    reachP: {"NBC":0.1517,"ESPN":0.1049,"NFL Network":0.034,"FOX":0.1432,"CBS":0.16,"Amazon Prime Video":0.4939,"ABC":0.1646,"NBA TV":0.0265,"TNT":0.0621,"MLB Network":0.0202,"TBS":0.0608,"NHL Network":0.0191,"SEC Network":0.0037,"truTV":0.0297,"The Golf Channel":0.0072,"Tennis Channel":0.0085,"USA Network":0.0397,"Telemundo":0.042,"Paramount+ with Showtime":0.0504,"Univision":0.0376,"Apple TV+":0.1761,"FS1":0.0372,"FOX Deportes":0.0151,"ESPN Deportes":0.0083,"CBS Sports Network":0.0191,"Peacock":0.3129,"WWE Network":0.0299,"Netflix":0.6381,"Twitch":0.1321,"YouTube":0.7963,"Discord":0.1842,"Disney+":0.3691,"Disney Channel":0.0571,"Hulu":0.4275,"FX":0.0689,"Freeform":0.048,"HBO Max":0.3567,"HBO":0.1174,"Cartoon Network":0.0716,"Bravo":0.0495,"SyFy":0.0646,"E!":0.0284,"MTV":0.0538,"Comedy Central":0.0919,"Nickelodeon":0.0481,"Fox News Channel":0.0695,"Fox One":0.0544,"Cine Sony":0.0016,"Starz":0.0365,"AMC":0.0642,"IFC":0.0205,"Sundance":0.0165,"Instagram":0.6165,"TikTok":0.3746,"Reddit":0.3514,"X":0.2901,"LinkedIn":0.2531,"Facebook":0.6901,"Hallmark Channel":0.0402,"BET":0.0434},
+    recep: {"welcome":110.8,"respond":118.4,"value":114.5,"rows":24}
+  },
+  {
+    id: "yttv2544", pa: "YouTube TV",
+    name: "YTTV Sport 25–44",
+    full: "YTTV: 25-44 HHI 50+ Live Sport + stream (avid fan)",
+    size: "24.3M", sizeN: 24264226,
+    def: "YouTube TV’s 25–44 HHI $50k+ live-sport streamers who describe themselves as avid fans. Over-indexes on essentially every sport in the study, so the interesting question for them is never “do they care” but “is there a way in”.",
+    aff: {"Sports":171.8,"Music":123.9,"Movies":121.5,"TV & Streaming":124.9,"Gaming":175.6,"Tech":197.2,"Fashion & Awards":140.7,"Tours & Concerts":160,"Culture":142.4,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affP: {"Sports":0.2524,"Music":0.3339,"Movies":0.5506,"TV & Streaming":0.3965,"Gaming":0.2777,"Tech":0.3376,"Fashion & Awards":0.2674,"Tours & Concerts":0.1322,"Culture":0.1623,"Holidays":null,"National Days":null,"Heritage & Identity":null},
+    affFrom: {"Sports":{"rows":58,"banks":["PDLC"]},"Music":{"rows":15,"banks":["Music genres preferred"]},"Movies":{"rows":16,"banks":["Movies - genres watched"]},"TV & Streaming":{"rows":32,"banks":["TV - genres watched","Streaming services used"]},"Gaming":{"rows":29,"banks":["Video game genres preferred","Gaming genres played (centred)"]},"Tech":{"rows":5,"banks":["Online content genres preferred","Podcast genre - listened to","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)"]},"Fashion & Awards":{"rows":10,"banks":["ELOI (centred)","Online content genres preferred","Magazine genres read","Genres followed (centred)","Genre(s) of Blogs/Vlogs followed (centred)","Events attended - last 12 months (centred)"]},"Tours & Concerts":{"rows":19,"banks":["Music festival genre (centred)","Events attended - last 12 months (centred)"]},"Culture":{"rows":9,"banks":["Events attended - last 12 months (centred)","Podcast genre - listened to","Online content genres preferred","Book genres preferred"]},"Holidays":{"rows":0,"banks":[],"note":"no battery in this cut"},"National Days":{"rows":0,"banks":[],"note":"no battery in this cut"},"Heritage & Identity":{"rows":0,"banks":[],"note":"no battery in this cut"}},
+    ent: {"Super Bowl":143.9,"NFL Draft":141.6,"NFL Combine":156.7,"NFL Pro Bowl":140.8,"NFL Honors":156.8,"NFL Kickoff":135.5,"College World Series Baseball":244.4,"MLB World Series":144.4,"MLB All Star":164.9,"MLB Draft":290.4,"NBA All Star":154.5,"NBA Draft":175,"NBA Finals":202.8,"NHL All Star":193.4,"NHL Draft":197.9,"NHL Stanley Cup":185.5,"MLS Cup":271.4,"Division 1 Women's College Basketball":219.6,"March Madness":159,"College Football Playoff":138.8,"Daytona 500":139.7,"Indy 500":156,"The Masters":125.7,"PGA Championship":102.4,"The British Open":161.8,"US Open (Golf)":131.1,"WWE Wrestlemania":187.9,"Latin Grammys":206.5,"Grammy Awards":127.8,"Academy Awards":154.4,"Emmy Awards":142.4,"Golden Globes":134.7,"Espy Awards":115.6,"WNBA":137.4,"NFL":136,"NBA":165,"MLB":140.3,"NHL":156.9,"Division 1 Football":200.2,"Division 1 Men's College Basketball":230.3,"Major League Soccer":166.1,"National Women's Soccer League":142.9,"English Premier League":237.2,"UEFA Champions League":281.7,"La Liga (soccer)":202.8,"Liga MX":250.6,"Serie A (soccer)":201.8,"Bundesliga (soccer)":175.7,"Ligue 1":223.1,"FA Cup":269.6,"Copa Libertadores":290.2,"Copa Sudamericana":258.5,"FIFA Women's World Cup":207,"FIFA Football World Cup":215.6,"FIBA Basketball World Cup":205.7,"World Baseball Classic":177.9,"Olympic Games (Summer)":139,"Olympic Winter Games":130.6,"NASCAR":131.3,"Formula 1":174.4,"Formula E":228.2,"IndyCar (IRL)":204.8,"24 Hours of Le Mans":203.3,"IMSA Sports Car Championship":88.6,"FIA World Endurance Championship":261.4,"NHRA":166.3,"Supercross":265,"Pro Motocross":222.6,"MonsterJam":245.9,"PBR":156.3,"Wimbledon":155.8,"Australian Open":163.6,"French Open":162.7,"US Open":156.6,"ATP Men's Tennis":165.4,"WTA Women's Tennis":150.4,"LPGA Women's Golf Tour":136.7,"PGA Men's Golf Tour":141.7,"European Tour (golf)":230.7,"Ultimate Fighting Championships":133.4,"All Elite Wrestling":245.4,"World Wrestling Entertainment (WWE)":163.6,"United Football League (UFL)":192,"World Surf League":163.9,"Esports":307.8,"ICC T20 World Cup (cricket)":172.4,"World Armwrestling League":155.7,"NBA G-League":195.6},
+    entP: {"Super Bowl":0.7504,"NFL Draft":0.3167,"NFL Combine":0.2094,"NFL Pro Bowl":0.2571,"NFL Honors":0.1854,"NFL Kickoff":0.3758,"College World Series Baseball":0.2126,"MLB World Series":0.5166,"MLB All Star":0.3821,"MLB Draft":0.3141,"NBA All Star":0.3094,"NBA Draft":0.271,"NBA Finals":0.6186,"NHL All Star":0.2691,"NHL Draft":0.1791,"NHL Stanley Cup":0.3818,"MLS Cup":0.2935,"Division 1 Women's College Basketball":0.2084,"March Madness":0.4555,"College Football Playoff":0.4203,"Daytona 500":0.2604,"Indy 500":0.2689,"The Masters":0.2003,"PGA Championship":0.1383,"The British Open":0.1572,"US Open (Golf)":0.1876,"WWE Wrestlemania":0.321,"Latin Grammys":0.2244,"Grammy Awards":0.3312,"Academy Awards":0.4314,"Emmy Awards":0.3072,"Golden Globes":0.2719,"Espy Awards":0.1065,"WNBA":0.3309,"NFL":0.6966,"NBA":0.5892,"MLB":0.5154,"NHL":0.3629,"Division 1 Football":0.3749,"Division 1 Men's College Basketball":0.3327,"Major League Soccer":0.3491,"National Women's Soccer League":0.2344,"English Premier League":0.3872,"UEFA Champions League":0.3454,"La Liga (soccer)":0.2713,"Liga MX":0.1538,"Serie A (soccer)":0.2285,"Bundesliga (soccer)":0.194,"Ligue 1":0.2042,"FA Cup":0.2663,"Copa Libertadores":0.2087,"Copa Sudamericana":0.183,"FIFA Women's World Cup":0.3099,"FIFA Football World Cup":0.4875,"FIBA Basketball World Cup":0.2073,"World Baseball Classic":0.2501,"Olympic Games (Summer)":0.5831,"Olympic Winter Games":0.5142,"NASCAR":0.2434,"Formula 1":0.2911,"Formula E":0.1106,"IndyCar (IRL)":0.1439,"24 Hours of Le Mans":0.1386,"IMSA Sports Car Championship":0.0559,"FIA World Endurance Championship":0.1791,"NHRA":0.0874,"Supercross":0.1205,"Pro Motocross":0.153,"MonsterJam":0.1782,"PBR":0.1147,"Wimbledon":0.2993,"Australian Open":0.2169,"French Open":0.2237,"US Open":0.2891,"ATP Men's Tennis":0.2116,"WTA Women's Tennis":0.2107,"LPGA Women's Golf Tour":0.1279,"PGA Men's Golf Tour":0.2151,"European Tour (golf)":0.1563,"Ultimate Fighting Championships":0.296,"All Elite Wrestling":0.1755,"World Wrestling Entertainment (WWE)":0.3018,"United Football League (UFL)":0.2083,"World Surf League":0.1002,"Esports":0.2338,"ICC T20 World Cup (cricket)":0.0735,"World Armwrestling League":0.0809,"NBA G-League":0.1992},
+    topic: {"Fighting":237.4,"Shooter":221,"Battle Royale":278.4,"Racing":253.3,"Sports":292.2,"Role-Playing (RPG)":212.5,"Simulation":131.1,"Strategy":131.4,"Platformer":361.1,"Building":156,"Action Adventure":203.2,"Multiplayer Online Battle Arena (MOBA)":286.6,"Horror":129.7,"Animation":153.6,"Science Fiction":134.1,"Fantasy":153.2,"Action":118.9,"Comedy":122.2,"Musical":127.4,"Documentary":105.6,"Mystery":108.2,"Historical":114.5,"Romance":113.8,"Family":121.5,"Reality":121.5,"Crime":104,"Sci-Fi & Fantasy":126.4,"Docuseries":132,"Drama":117.5,"International":180.5,"Soap opera":135,"Classic / Cult":145.2,"K-Pop":148.1,"Hip-Hop/Rap":138,"Country":100.2,"Latin":129.5,"Electronic/Dance":193.2,"Rock":110,"Metal":119.5,"R&B/Soul":94.9,"Jazz":129.6,"Classical":120.6,"Indie":186.3,"Pop":130.5,"Folk":135,"Reggae":125.8,"Blues":120.4},
+    topicP: {"Fighting":0.3404,"Shooter":0.4588,"Battle Royale":0.2856,"Racing":0.3622,"Sports":0.4462,"Role-Playing (RPG)":0.3954,"Simulation":0.2269,"Strategy":0.3503,"Platformer":0.2579,"Building":0.1979,"Action Adventure":0.4373,"Multiplayer Online Battle Arena (MOBA)":0.2313,"Horror":0.4692,"Animation":0.5087,"Science Fiction":0.5857,"Fantasy":0.5621,"Action":0.7342,"Comedy":0.8201,"Musical":0.2927,"Documentary":0.5074,"Mystery":0.5177,"Historical":0.4571,"Romance":0.4309,"Family":0.4789,"Reality":0.3753,"Crime":0.5564,"Sci-Fi & Fantasy":0.4889,"Docuseries":0.4367,"Drama":0.6095,"International":0.286,"Soap opera":0.1185,"Classic / Cult":0.3179,"K-Pop":0.147,"Hip-Hop/Rap":0.5141,"Country":0.3887,"Latin":0.191,"Electronic/Dance":0.3555,"Rock":0.6193,"Metal":0.246,"R&B/Soul":0.3454,"Jazz":0.2838,"Classical":0.3114,"Indie":0.3203,"Pop":0.6087,"Folk":0.2138,"Reggae":0.1977,"Blues":0.2658},
+    reach: {"NBC":139.4,"ESPN":261.2,"NFL Network":289.5,"FOX":170.6,"CBS":123.4,"Amazon Prime Video":126.2,"ABC":120.7,"NBA TV":564.2,"TNT":172.6,"MLB Network":344.2,"TBS":191.7,"NHL Network":712.5,"SEC Network":52.6,"truTV":102.8,"The Golf Channel":116.1,"Tennis Channel":205.2,"USA Network":200,"Telemundo":280,"Paramount+ with Showtime":180.7,"Univision":227.1,"Apple TV+":167,"FS1":243.2,"FOX Deportes":374.6,"ESPN Deportes":255.7,"CBS Sports Network":61.4,"Peacock":127.1,"WWE Network":392.4,"Netflix":127.1,"Twitch":223.1,"YouTube":117.9,"Discord":198.2,"Disney+":154.6,"Disney Channel":149.5,"Hulu":134,"FX":193.5,"Freeform":169.8,"HBO Max":178.4,"HBO":186.2,"Cartoon Network":213.8,"Bravo":140.8,"SyFy":178.1,"E!":223.2,"MTV":309,"Comedy Central":191.9,"Nickelodeon":232.2,"Fox News Channel":137.8,"Fox One":241.1,"Starz":128.8,"AMC":155.6,"IFC":247.2,"Sundance":219.4,"Instagram":143.5,"TikTok":127.8,"Reddit":200.4,"X":178.8,"LinkedIn":176.2,"Facebook":107.2,"Hallmark Channel":61.1,"BET":195.2},
+    reachP: {"NBC":0.3634,"ESPN":0.4457,"NFL Network":0.0998,"FOX":0.3658,"CBS":0.3524,"Amazon Prime Video":0.6842,"ABC":0.3423,"NBA TV":0.1098,"TNT":0.1617,"MLB Network":0.0731,"TBS":0.1594,"NHL Network":0.0741,"SEC Network":0.0102,"truTV":0.0416,"The Golf Channel":0.0316,"Tennis Channel":0.0338,"USA Network":0.1933,"Telemundo":0.089,"Paramount+ with Showtime":0.107,"Univision":0.0597,"Apple TV+":0.2997,"FS1":0.1082,"FOX Deportes":0.06,"ESPN Deportes":0.0372,"CBS Sports Network":0.0052,"Peacock":0.395,"WWE Network":0.1376,"Netflix":0.788,"Twitch":0.1716,"YouTube":0.8617,"Discord":0.2864,"Disney+":0.5344,"Disney Channel":0.1571,"Hulu":0.5359,"FX":0.1679,"Freeform":0.0738,"HBO Max":0.5496,"HBO":0.3077,"Cartoon Network":0.1381,"Bravo":0.0847,"SyFy":0.1132,"E!":0.067,"MTV":0.1515,"Comedy Central":0.202,"Nickelodeon":0.1299,"Fox News Channel":0.2248,"Fox One":0.1123,"Starz":0.0551,"AMC":0.1258,"IFC":0.0461,"Sundance":0.0366,"Instagram":0.7661,"TikTok":0.461,"Reddit":0.4689,"X":0.4691,"LinkedIn":0.4044,"Facebook":0.7618,"Hallmark Channel":0.0485,"BET":0.1081},
+    recep: {"welcome":120.2,"respond":174.7,"value":144.9,"rows":24}
+  }
+];
+
+/* ── data/entity-map.js ── */
+/* WHICH SURVEY ROW SPEAKS FOR WHICH MOMENT.
+
+   The YouGov cut carries 91 entity-level interest rows — 58 sports and 33
+   named events. The calendar carries 980 moments written by hand in a
+   spreadsheet. Nothing joins them automatically: the survey says
+   "NFL - level of interest - Top 2" and the sheet says "NFL Week 10: 49ers At
+   Cowboys". This table is that join, written out so it can be argued with.
+
+   THREE RULES, ALL OF THEM LEARNED THE HARD WAY.
+
+   1. WHOLE WORDS, ALWAYS. An earlier cut of this idea tested `RegExp(key)`
+      and "CES" matched the "ces" inside "Academy of Motion Picture Arts and
+      Sciences", which handed the Oscars a 190 tech index and made them the
+      most relevant moment of the year for an audience that does not watch
+      them. Every pattern here is anchored. Three-letter league codes are that
+      same trap with a bigger surface.
+
+   2. MOST SPECIFIC WINS, AND ORDER IS HOW THAT IS EXPRESSED. The survey holds
+      both "NFL" (an 80 index for Search) and "NFL Draft" (106.5). A moment
+      called "NFL Draft" is the second thing, not the first, so the specific
+      events are listed before the leagues they belong to and the FIRST match
+      is taken. Taking the highest of the matches instead would quietly
+      promote every moment to whichever of its readings flattered it most,
+      which is not a sharper read — it is a thumb on the scale.
+
+   3. NEAR MISSES ARE LEFT UNMATCHED ON PURPOSE. A moment with no row falls
+      back to its category index and REPORTS that it did. A wrong join is far
+      worse than a missing one: it is invisible, and it survives a demo.
+
+   Order inside a block matters where two patterns overlap — Latin Grammys
+   before Grammys, US Open (Golf) before US Open, or the general one swallows
+   the specific one. */
+
+/* [survey key, pattern over the moment's name / source / platform]
+   The key must match a row title in the YouGov cut exactly as
+   tools/build-yougov.mjs normalises it, or the build fails loudly. */
+const ENTITY_MAP = [
+  /* ---- named events: the survey asks about these by name ---- */
+  ['Super Bowl',                  /\bsuper bowl\b/i],
+  ['NFL Draft',                   /\bNFL draft\b/i],
+  ['NFL Combine',                 /\bNFL combine\b/i],
+  ['NFL Pro Bowl',                /\bpro bowl\b/i],
+  ['NFL Honors',                  /\bNFL honors\b/i],
+  ['NFL Kickoff',                 /\bNFL (season )?kick[\s-]?off\b/i],
+  /* Before the MLB row deliberately: "NCAA Men's College World Series" and
+     "Little League World Series" both contain "world series", and the general
+     pattern would swallow them into a league they have nothing to do with. */
+  ['College World Series Baseball', /\bcollege world series\b|\bcollege softball world series\b/i],
+  ['MLB World Series',            /(?<!little league )\bworld series\b(?!\s*of\s*poker)/i],
+  ['MLB All Star',                /\bMLB all[\s-]?star\b|\bhome run derby\b|\bHR derby\b/i],
+  ['MLB Draft',                   /\bMLB draft\b/i],
+  ['NBA All Star',                /\bNBA all[\s-]?star\b/i],
+  ['NBA Draft',                   /\bNBA draft\b/i],
+  ['NBA Finals',                  /\bNBA finals\b/i],
+  ['NHL All Star',                /\bNHL all[\s-]?star\b/i],
+  ['NHL Draft',                   /\bNHL draft\b/i],
+  ['NHL Stanley Cup',             /\bstanley cup\b/i],
+  ['MLS Cup',                     /\bMLS cup\b/i],
+  /* The survey has one "March Madness" row but two college-basketball rows,
+     and the men's and women's tournaments do not index alike. Route the
+     women's brackets to the women's row and leave the unmarked ones — which
+     in this sheet always mean the men's draw — on March Madness. */
+  ["Division 1 Women's College Basketball", /\bmarch madness women\b|\bwomen'?s final four\b|\bwomen'?s college basketball\b|\bWNBA draft\b/i],
+  ['March Madness',               /\bmarch madness\b|\bfinal four\b|\bselection sunday\b|\bchamp week\b|\btournament challenge\b/i],
+  /* The survey separates the playoff from the regular season, and so does
+     the sheet — "CFB Semifinals" is not "College Football Season Kickoff".
+     They index a long way apart (YTTV 137 against 201), so the bowl games,
+     the bracket and the Heisman route here and everything else falls to the
+     Division 1 Football row below. */
+  ['College Football Playoff',    /\bcollege football playoff\b|\bCFB (playoffs?|semifinals?|quarterfinals?|first round|national championship|bowl games?|conference championship|rivalry|hall of fame|big 12|ACC|big ten|SEC)\b|\bheisman\b|\brose bowl\b|\borange bowl\b|\bsugar bowl\b|\bfiesta bowl\b|\bpeach bowl\b|\bcotton bowl\b|\barmy\s*navy\b/i],
+  ['Daytona 500',                 /\bdaytona\b/i],
+  ['Indy 500',                    /\bindy 500\b|\bindianapolis 500\b/i],
+  ['The Masters',                 /\bthe masters\b|\bmasters golf\b/i],
+  ['PGA Championship',            /\bPGA championship\b/i],
+  ['The British Open',            /\bbritish open\b|\bopen championship\b/i],
+  ['US Open (Golf)',              /\bUS open\b[^,]*\bgolf\b/i],
+  ['WWE Wrestlemania',            /\bwrestlemania\b/i],
+  ['Latin Grammys',               /\blatin grammys?\b/i],
+  ['Grammy Awards',               /\bgrammys?\b|\bgrammy awards?\b/i],
+  ['Academy Awards',              /\boscars?\b|\bacademy awards?\b/i],
+  ['Emmy Awards',                 /\bemmys?\b|\bemmy awards?\b/i],
+  ['Golden Globes',               /\bgolden globes?\b/i],
+  ['Espy Awards',                 /\bespys?\b|\bespy awards?\b/i],
+
+  /* ---- leagues and properties ---- */
+  ['WNBA',                        /\bWNBA\b/i],
+  ['NFL',                         /\bNFL\b|\bthanksgiving football\b/i],
+  ['NBA',                         /\bNBA\b|\binside the NBA\b/i],
+  ['MLB',                         /\bMLB\b|\blittle league world series\b/i],
+  ['NHL',                         /\bNHL\b|\bwinter classic\b|\bstadium series\b/i],
+  ['Division 1 Football',         /\bcollege football\b|\bCFB\b|\bcollege gameday\b/i],
+  ["Division 1 Men's College Basketball", /\bmen'?s college basketball\b|\bcollege hockey finals\b/i],
+  ['Major League Soccer',         /\bMLS\b/i],
+  ["National Women's Soccer League", /\bNWSL\b/i],
+  ['English Premier League',      /\bpremier league\b(?!\s*lacrosse)/i],
+  ['UEFA Champions League',       /\bchampions league\b|\bUEFA euro\b/i],
+  ['La Liga (soccer)',            /\bla liga\b|\bel clasico\b|\bcopa del rey\b|\bcopa de la reina\b/i],
+  ['Liga MX',                     /\bliga MX\b|\bCONCACAF\b/i],
+  ['Serie A (soccer)',            /\bserie A\b/i],
+  ['Bundesliga (soccer)',         /\bbundesliga\b/i],
+  ['Ligue 1',                     /\bligue 1\b/i],
+  ['FA Cup',                      /\bFA cup\b/i],
+  ['Copa Libertadores',           /\bcopa libertadores\b/i],
+  ['Copa Sudamericana',           /\bcopa sudamericana?\b/i],
+  ["FIFA Women's World Cup",      /\bFIFA women'?s world cup\b|\bwomen'?s world cup\b/i],
+  ['FIFA Football World Cup',     /\bFIFA world cup\b|\bworld cup\b(?!\s*of)/i],
+  ['FIBA Basketball World Cup',   /\bFIBA\b/i],
+  ['World Baseball Classic',      /\bworld baseball classic\b/i],
+  ['Olympic Games (Summer)',      /\bsummer olympics?\b|\bsummer paralympics?\b|\bspecial olympics\b/i],
+  ['Olympic Winter Games',        /\bwinter olympics?\b|\bwinter paralympics?\b/i],
+  ['NASCAR',                      /\bNASCAR\b|\bbrickyard\b|\bcoke zero\b/i],
+  ['Formula 1',                   /\bformula 1\b|\bF1\b|\bgrand prix\b/i],
+  ['Formula E',                   /\bformula E\b/i],
+  ['IndyCar (IRL)',               /\bindycar\b/i],
+  ['24 Hours of Le Mans',         /\ble mans\b/i],
+  ['IMSA Sports Car Championship', /\bIMSA\b/i],
+  ['FIA World Endurance Championship', /\bworld endurance\b/i],
+  ['NHRA',                        /\bNHRA\b/i],
+  ['Supercross',                  /\bsupercross\b/i],
+  ['Pro Motocross',               /\bmotocross\b/i],
+  ['MonsterJam',                  /\bmonster jam\b|\bmonsterjam\b|\bmonster truck\b/i],
+  ['PBR',                         /\bPBR\b/i],
+  ['Wimbledon',                   /\bwimbledon\b/i],
+  ['Australian Open',             /\baustralian open\b/i],
+  ['French Open',                 /\bfrench open\b|\broland[\s-]?garros\b/i],
+  ['US Open',                     /\bUS open\b/i],
+  ["ATP Men's Tennis",            /\bATP\b/i],
+  ["WTA Women's Tennis",          /\bWTA\b/i],
+  ["LPGA Women's Golf Tour",      /\bLPGA\b/i],
+  ["PGA Men's Golf Tour",         /\bPGA\b/i],
+  ['European Tour (golf)',        /\bDP world tour\b|\bryder cup\b/i],
+  ['Ultimate Fighting Championships', /\bUFC\b/i],
+  ['All Elite Wrestling',         /\bAEW\b|\ball elite wrestling\b/i],
+  ['World Wrestling Entertainment (WWE)', /\bWWE\b|\broyal rumble\b|\bsummerslam\b/i],
+  ['United Football League (UFL)', /\bUFL\b|\bunited football league\b/i],
+  ['World Surf League',           /\bworld surf\b|\bsurf league\b/i],
+  ['Esports',                     /\besports\b|\bgame awards\b|\bleague of legends\b|\bvalorant\b|\boverwatch\b/i],
+  ['ICC T20 World Cup (cricket)', /\bcricket\b|\bT20\b/i],
+  ['World Armwrestling League',   /\barmwrestling\b/i],
+  ['NBA G-League',                /\bG[\s-]?league\b/i]
+];
+
+/* The pattern is tested against the moment's name first, then its source and
+   its platform — a moment called "Inside the NBA" and a moment sourced from
+   "NBA" are both the NBA. Kept as one function so the boundary rule has
+   exactly one home. */
+function entityFor(m) {
+  for (const [key, re] of ENTITY_MAP) {
+    if (re.test(m.name) || re.test(m.src || '') || re.test(m.plat || '')) return key;
+  }
+  return null;
+}
+
+/* ── data/topic-map.js ── */
+/* THE MIDDLE RUNG.
+
+   The response model resolves a moment to a survey row at whichever of three
+   rungs it can reach: the named property, the sub-topic, or the category. The
+   first and the last were easy. This file is the one in between, and leaving
+   it out for a first cut made a fault visible that is worth writing down.
+
+   WITHOUT A MIDDLE RUNG, A WHOLE CATEGORY TIES. Fandom at category level is
+   one number per category per audience, so every gaming moment in the year
+   scored identically, and so did every film. Two hundred moments on the same
+   score is not an ordering. Worse, the top of the board became whichever
+   category the audience indexed highest on — so Search '26 and Gemini '26,
+   who happen to peak on the same category, returned THE SAME TOP TEN despite
+   being 60 index points apart on it. An audience switch that returns the same
+   answer is the one failure this tool is built to prevent, and a coarse
+   resolution reintroduces it by a side door.
+
+   The survey has the answer already: fourteen video game genres, sixteen film
+   genres, sixteen television genres, sixteen music genres. A moment is a
+   fighting game or a horror film, and those index very differently — Search
+   '26 runs 175 on fighting games and 93 on puzzle.
+
+   WHAT THIS TABLE IS NOT. It is not a classifier. It matches on words in the
+   moment's name, it gets a bit under half of them, and the rest fall through
+   to the category rung and SAY SO. A moment tagged with the wrong genre would
+   be worse than one tagged with none, so the patterns are deliberately narrow
+   — "Onimusha" is not matched to anything, because guessing from a title is
+   how a model starts inventing.                                             */
+
+/* [category, [[survey row label, pattern], ...]]
+   Row labels must exist in the bank named for the category in
+   tools/build-yougov.mjs, which asserts them at build time. */
+const TOPIC_BANKS = {
+  'Gaming':           'Video game genres preferred',
+  'Movies':           'Movies - genres watched',
+  'TV & Streaming':   'TV - genres watched',
+  'Music':            'Music genres preferred',
+  'Tours & Concerts': 'Music genres preferred'
+};
+
+const TOPIC_MAP = {
+  'Gaming': [
+    ['Fighting',        /\bfighting\b|street fighter|tekken|mortal kombat|smash bros|\bEVO\b|tokon/i],
+    ['Shooter',         /\bshooter\b|\bFPS\b|call of duty|battlefield|halo|doom|counter[\s-]?strike|rainbow six|borderlands/i],
+    ['Battle Royale',   /battle royale|fortnite|\bPUBG\b|apex legends|warzone/i],
+    ['Racing',          /\bracing\b|forza|gran turismo|need for speed|mario kart|\bF1 2\d/i],
+    ['Sports',          /\bmadden\b|\bFIFA \d|\bEA sports\b|\bNBA 2K\b|\bMLB the show\b|\bWWE 2K\b|football manager/i],
+    ['Role-Playing (RPG)', /\bRPG\b|final fantasy|persona|elder scrolls|dragon quest|legend of heroes|baldur|witcher|monster hunter|pokemon|pokémon|xenoblade|fire emblem/i],
+    ['Simulation',      /\bsimulator\b|\bsims\b|animal crossing|harvest moon|stardew|farming sim/i],
+    ['Strategy',        /\bstrategy\b|civilization|total war|starcraft|age of empires|\bXCOM\b/i],
+    ['Platformer',      /\bplatformer\b|\bmario\b(?!\s*kart)|sonic|donkey kong|kirby|hollow knight|crash bandicoot/i],
+    ['Building',        /minecraft|cities: ?skylines|\bfactorio\b|satisfactory/i],
+    ['Action Adventure', /\bzelda\b|god of war|assassin'?s creed|grand theft auto|\bGTA\b|red dead|spider[\s-]?man|wolverine|tomb raider|uncharted|ghost of|resident evil|silent hill|onimusha|\bnioh\b|phantom blade|\bmetro\b|control:|marvel'?s /i],
+    ['Multiplayer Online Battle Arena (MOBA)', /\bMOBA\b|league of legends|\bDOTA\b|smite/i]
+  ],
+  'Movies': [
+    ['Horror',          /\bhorror\b|\bscream\b|conjuring|halloween(?!\s*(day|week))|insidious|nosferatu|\bsaw\b|final destination|\bIT chapter\b|resident evil|paranormal activity|blair witch|a quiet place|28 (days|weeks|years) later|\bwerwulf\b|la llorona|other mommy|\bhexed\b|\bthe uprising\b|\bbloodborne\b|whisper man|even dead burn|camp miasma/i],
+    ['Animation',       /\banimation\b|\banimated\b|pixar|dreamworks|illumination|minions|shrek|toy story|frozen|moana|zootopia|\bhow to train\b|ice age|angry birds|paw patrol|\bsimpsons\b|ninja turtles|cat in the hat|sonic the hedgehog|super mario|legend of aang|\bhoppers\b|\bgatto\b|\bwildwood\b|\bdonkey\b|magic school bus|sesame|seasame|\bbad fairies\b|forgotten island|lord of the wings/i],
+    ['Science Fiction', /\bsci[\s-]?fi\b|science fiction|star wars|star trek|dune\b|blade runner|tron|\balien\b|predator|matrix|avatar|project hail mary|klara and the sun|hunger games|sunrise on the reaping|mandalorian|horizon zero dawn|death stranding|\bapex\b|the dog stars|children of blood and bone/i],
+    ['Fantasy',         /\bfantasy\b|lord of the rings|hobbit|narnia|wicked|harry potter|\bdungeons\b|elden ring|legend of zelda|minecraft movie|\bthe odyssey\b|animal friends|\bcoyote vs acme\b/i],
+    ['Action',          /\bmarvel\b|\bDC\b|avengers|batman|superman|spider[\s-]?man|x[\s-]?men|mission: ?impossible|john wick|\bfast x\b|\b007\b|james bond|jurassic|godzilla|\bkong\b|transformers|black panther|ghost rider|\bblade\b|\bsupergirl\b|\bclayface\b|dynamic duo|masters of the universe|john rambo|mortal combat|mortal kombat|street ?fighter|call of duty film|\bthe mummy\b|violent night|\bkaroshi\b|\bcliffhanger\b|\bmutiny\b|\bonslaught\b|miami vice/i],
+    ['Comedy',          /\bcomedy\b|\bhappy gilmore\b|spinal tap|naked gun|super troopers|scary movie|spaceballs|meet the parents|focker|jumanji|jumaji|\bidiots\b|the comeback king|\bbuds\b|\bsend help\b|the wrong girls|how to rob a bank/i],
+    ['Musical',         /\bmusical\b|\bwicked\b|mamma mia|\bmoulin\b/i],
+    ['Documentary',     /\bdocumentary\b|\bdocu\b|\bmichael\b|\bkylie\b|\brafa\b|\bhershey\b|\bGOAT\b/i],
+    ['Mystery',         /\bmystery\b|enola holmes|the whisper|\bdisclosure\b|the third parent|calabasas confidential|voicemails for/i],
+    ['Historical',      /\bhistorical\b|christmas carol|\bebenezer\b/i],
+    ['Romance',         /\bromance\b|\bromantic\b|\bit ends with us\b|devil wears prada|pretty woman|the proposal|wuthering heights|practical magic|you me & tuscany|reminders of him|\bverity\b|the housemaid|\bthe bride\b|i want your sex/i],
+    ['Family',          /\bfamily film\b|\bpaddington\b|\bpeppa\b|\bbluey\b|\bsmurfs\b/i]
+  ],
+  'TV & Streaming': [
+    ['Animation',       /\banimated\b|\banimation\b|\banime\b|simpsons|south park|rick and morty|bob'?s burgers|family guy|arcane|\bavatar: the last\b|x[\s-]?men '?97|batman.*crusader|\bblue eye samurai\b/i],
+    ['Reality',         /\breality\b|\bbachelor\b|survivor|love island|big brother|real housewives|\bdrag race\b|\btop chef\b|dancing with the stars|the voice|\bidol\b|project runway|vanderpump|khloe kardashian|\bthe kardashians\b|house of stassi|streamer games/i],
+    ['Crime',           /\bcrime\b|\blaw ?& ?order\b|\bNCIS\b|\bFBI\b|criminal minds|true detective|\bCSI\b|\bmindhunter\b|will trent|the rookie|\bcape fear\b|\bthe savant\b|ride or die/i],
+    ['Sci-Fi & Fantasy', /\bstar trek\b|\bstar wars\b|\bstranger things\b|\bwitcher\b|house of the dragon|rings of power|\bfoundation\b|\bsevrance\b|\bseverance\b|\bwheel of time\b|\bdoctor who\b|dune: ?prophecy|\bthe last sunrise\b/i],
+    ['Horror',          /\bhorror\b|\bwalking dead\b|\bAHS\b|american horror|\bfrom\b|\byellowjackets\b/i],
+    ['Docuseries',      /\bdocuseries\b|\bdocumentary series\b|\b30 for 30\b/i],
+    ['Comedy',          /\bcomedy\b|\bsitcom\b|\bSNL\b|saturday night live|\babbott elementary\b|\bthe office\b|ted lasso|always sunny|shifting gears|\badults \(|\bludwig\b|legally blond|\belle \(/i],
+    ['Drama',           /\bdrama\b|\bsuccession\b|\bthe last of us\b|\bthe bear\b|\bwhite lotus\b|\byellowstone\b|\bhandmaid\b|outer banks|\bthe shards\b|\bsugar\b|\bcamp rock\b|\bthe hawk\b|sterling point/i],
+    ['International',   /\bK[\s-]?drama\b|\bkorean\b|\btelenovela\b|\bsquid game\b|\bmoney heist\b/i],
+    ['Soap opera',      /\bsoap\b|general hospital|days of our lives|\byoung and the restless\b/i],
+    ['Classic / Cult',  /little house on the prairie|\btwin peaks\b|\bX[\s-]?files\b/i]
+  ],
+  'Music': [
+    ['K-Pop',           /\bK[\s-]?pop\b|\bBTS\b|blackpink|stray kids|\bTWICE\b|\bseventeen\b|\bNewJeans\b/i],
+    ['Hip-Hop/Rap',     /\bhip[\s-]?hop\b|\brap\b|\bdrake\b|kendrick|travis scott|\bcardi\b|\bnicki\b|\bmegan thee\b|\bplayboi\b|\btyler, the creator\b|\bDJ khaled\b|\bJ cole\b|lil wayne|don toliver|\b2 chainz\b|tucker wetmore/i],
+    ['Country',         /\bcountry\b|morgan wallen|luke combs|zach bryan|\bchris stapleton\b|\bshaboozey\b/i],
+    ['Latin',           /\blatin\b|bad bunny|karol g|peso pluma|\brosalia\b|\bshakira\b|\bmaluma\b|\bregg?aeton\b/i],
+    ['Electronic/Dance', /\bEDM\b|electronic|\bhouse music\b|\btechno\b|calvin harris|\bskrillex\b|\bfred again\b|\bdeadmau5\b|john summit|head in the clouds/i],
+    ['Rock',            /\brock\b|foo fighters|pearl jam|\bmetallica\b|green day|\bAC\/DC\b|\bmy chemical\b|rolling stones|\bweezer\b|\bthe strokes\b|brandon flowers|\bthe killers\b/i],
+    ['Metal',           /\bmetal\b|\bslipknot\b|\bghost\b tour|\bgojira\b/i],
+    ['R&B/Soul',        /\bR&B\b|\bsoul\b|\bSZA\b|\bthe weeknd\b|\bbeyonc\b|\busher\b|\bbruno mars\b|daniel caesar|\bkehlani\b|jorja smith|steve lacy|\bjungle\b/i],
+    ['Jazz',            /\bjazz\b/i],
+    ['Classical',       /\bclassical\b|\bsymphony\b|\borchestra\b|\bopera\b|\bphilharmonic\b/i],
+    ['Indie',           /\bindie\b|\bboygenius\b|\bphoebe bridgers\b|\bmitski\b|\bclairo\b|\binterpol\b|bloc party|\bbjork\b|\bbj\u00f6rk\b|lana del rey/i],
+    ['Pop',             /\bpop\b|taylor swift|sabrina carpenter|olivia rodrigo|dua lipa|\bariana\b|\bbillie eilish\b|\bcharli xcx\b|\bchappell roan\b|harry styles|\bolivia dean\b|\bmadonna\b|lady gaga|carly rae jepsen|ellie goulding|\btyla\b|sam smith|niall horan|jonas brothers|5 seconds of summer|gracie abrams|alex warren|\bKATSEYE\b|\bWILLOW\b|role model|\bjoji\b|dermot kennedy|shania twain|\bblossoms\b|beabadoobee/i],
+    ['Folk',            /\bfolk\b|\bmumford\b|\bnoah kahan\b|\bsuki waterhouse\b|kacey musgraves/i],
+    ['Reggae',          /\breggae\b|\bbob marley\b/i],
+    ['Blues',           /\bblues\b|jack white/i]
+  ]
+};
+/* Tours & Concerts is scored on the same music-genre battery as Music — a
+   Sabrina Carpenter tour and a Sabrina Carpenter album are the same taste. */
+TOPIC_MAP['Tours & Concerts'] = TOPIC_MAP['Music'];
+
+/* WHO MADE IT, WHERE THE TITLE WILL NOT SAY.
+
+   Half the film lane is a title and nothing else — "Digger", "The Weight",
+   "Apex" — and guessing a genre from those would be inventing. The sheet's
+   rights-holder column often answers it outright though, because some studios
+   only make one thing: everything Blumhouse releases is a horror film and
+   everything Pixar releases is animation. Only specialist houses are listed.
+   A general studio like Warner or Universal tells you nothing, so it is not
+   here, and its films stay on the category rung. */
+const STUDIO_TOPIC = {
+  'Movies': [
+    ['Horror',    /blumhouse|atomic monster|monkeypaw|boulderlight|\bA24\b.*horror/i],
+    ['Animation', /pixar|laika|dreamworks animation|nickelodeon movies|illumination|prime focus/i],
+    ['Action',    /marvel studios|DC Studios|87north|87eleven|activision|legendary entertainment/i],
+    ['Comedy',    /apatow|broken lizard|point grey|tribeca enterprises/i]
+  ],
+  'TV & Streaming': [
+    ['Animation', /cartoon network|adult swim|nickelodeon|disney (junior|XD)/i],
+    ['Reality',   /\bbravo\b|\bTLC\b/i]
+  ]
+};
+
+/* The sub-topic for a moment, or null. Narrow on purpose: an unmatched
+   moment drops to its category and the rung says so, which is a weaker claim
+   the reader can see, rather than a wrong one they cannot.
+
+   The title is asked first and the studio second — a Blumhouse comedy is
+   still a comedy, and the title is the more direct evidence of the two. */
+function topicFor(m) {
+  const rules = TOPIC_MAP[m.cat];
+  if (rules) {
+    for (const [label, re] of rules) {
+      if (re.test(m.name) || re.test(m.notes || '')) return label;
+    }
+  }
+  const studios = STUDIO_TOPIC[m.cat];
+  if (studios) {
+    const who = `${m.src || ''} ${m.plat || ''}`;
+    if (who.trim()) for (const [label, re] of studios) if (re.test(who)) return label;
+  }
+  return null;
+}
+
+/* ── data/channel-map.js ── */
+/* WHERE A MOMENT IS ACTUALLY WATCHED.
+
+   The response model's second term asks a question the affinity model never
+   did: not "do they care" but "can we reach them there". That needs a channel
+   mix per moment — which networks, services and platforms this moment lives
+   on — crossed with how heavily the audience uses each one.
+
+   Nothing in the calendar states that outright. The sheet gives a distributor
+   ("Disney", "NBCU", "UMG") and a category, and this table turns those into a
+   mix. It is DECLARED JUDGEMENT, not measurement, and it is written out here
+   rather than buried so that a planner who disagrees can point at the line
+   they disagree with.
+
+   THREE RUNGS, MOST SPECIFIC FIRST, AND THE RUNG IS REPORTED.
+
+     property     the moment is a sports property with a known broadcast home
+     distributor  the sheet names who is putting it out
+     category     nothing but the lane it sits in
+
+   A score built on the third rung is a much weaker claim than one built on
+   the first, so `channelsFor` returns the rung alongside the mix and the UI
+   says which one it used. A model that will not admit how it got a number is
+   a model that cannot be argued with.
+
+   Weights inside a mix are relative and are renormalised at score time, so
+   they only have to be right about each other. */
+
+/* Channel names must match a row in the YouGov cut exactly — a network from
+   the extended list, a streaming service, or a social network. The build
+   fails loudly on a name that is not in the sheet, because a silently dropped
+   channel makes a moment look narrowly distributed rather than mis-typed. */
+
+/* Rung one: sports properties, keyed by the ENTITY_MAP key the moment
+   resolved to. US rights as they stand for the 2026-27 seasons. */
+const PROPERTY_CHANNELS = {
+  'Super Bowl':        [['NBC', 3], ['ESPN', 1], ['NFL Network', 1]],
+  'NFL':               [['NFL Network', 2], ['ESPN', 2], ['FOX', 2], ['CBS', 2], ['NBC', 2], ['Amazon Prime Video', 1]],
+  'NFL Draft':         [['NFL Network', 3], ['ESPN', 2], ['ABC', 1]],
+  'NFL Combine':       [['NFL Network', 3], ['ESPN', 1]],
+  'NFL Pro Bowl':      [['ESPN', 2], ['ABC', 1]],
+  'NFL Honors':        [['CBS', 2], ['NFL Network', 1]],
+  'NFL Kickoff':       [['NBC', 2], ['NFL Network', 1]],
+  'NBA':               [['NBA TV', 2], ['ESPN', 3], ['TNT', 2], ['ABC', 2], ['Amazon Prime Video', 1]],
+  'NBA Finals':        [['ABC', 3], ['ESPN', 2], ['NBA TV', 1]],
+  'NBA All Star':      [['TNT', 2], ['NBA TV', 2], ['ESPN', 1]],
+  'NBA Draft':         [['ESPN', 2], ['ABC', 1], ['NBA TV', 1]],
+  'MLB':               [['MLB Network', 2], ['ESPN', 2], ['FOX', 2], ['TBS', 2]],
+  'MLB World Series':  [['FOX', 3], ['MLB Network', 1]],
+  'MLB All Star':      [['FOX', 3], ['MLB Network', 1]],
+  'MLB Draft':         [['MLB Network', 3], ['ESPN', 1]],
+  'NHL':               [['NHL Network', 2], ['ESPN', 3], ['TNT', 3]],
+  'NHL Stanley Cup':   [['ESPN', 2], ['ABC', 2], ['TNT', 2], ['NHL Network', 1]],
+  'NHL All Star':      [['ESPN', 2], ['NHL Network', 1]],
+  'NHL Draft':         [['ESPN', 2], ['NHL Network', 2]],
+  'WNBA':              [['ESPN', 3], ['ABC', 2], ['CBS', 1], ['NBA TV', 1]],
+  'College Football Playoff':  [['ESPN', 4], ['ABC', 2], ['TNT', 1]],
+  'Division 1 Football':       [['ESPN', 3], ['SEC Network', 2], ['FOX', 2], ['ABC', 2], ['CBS', 1]],
+  'March Madness':             [['CBS', 3], ['TBS', 2], ['TNT', 2], ['truTV', 1]],
+  "Division 1 Men's College Basketball":   [['ESPN', 3], ['CBS', 2], ['FOX', 1], ['SEC Network', 1]],
+  "Division 1 Women's College Basketball": [['ESPN', 3], ['ABC', 2], ['SEC Network', 1]],
+  'College World Series Baseball': [['ESPN', 4], ['SEC Network', 1]],
+  'PGA Championship':  [['The Golf Channel', 2], ['CBS', 3]],
+  "PGA Men's Golf Tour": [['The Golf Channel', 3], ['CBS', 2], ['NBC', 1]],
+  "LPGA Women's Golf Tour": [['The Golf Channel', 3], ['NBC', 1]],
+  'The Masters':       [['CBS', 3], ['ESPN', 2]],
+  'The British Open':  [['NBC', 2], ['The Golf Channel', 2]],
+  'US Open (Golf)':    [['NBC', 2], ['The Golf Channel', 2]],
+  'European Tour (golf)': [['The Golf Channel', 3], ['NBC', 1]],
+  'Wimbledon':         [['ESPN', 3], ['Tennis Channel', 2], ['ABC', 1]],
+  'US Open':           [['ESPN', 3], ['Tennis Channel', 2]],
+  'Australian Open':   [['ESPN', 3], ['Tennis Channel', 2]],
+  'French Open':       [['Tennis Channel', 3], ['NBC', 2]],
+  "ATP Men's Tennis":  [['Tennis Channel', 3], ['ESPN', 2]],
+  "WTA Women's Tennis": [['Tennis Channel', 3], ['ESPN', 2]],
+  'English Premier League': [['USA Network', 3], ['NBC', 2], ['Telemundo', 1]],
+  'UEFA Champions League':  [['Paramount+ with Showtime', 3], ['CBS', 2], ['Univision', 1]],
+  'Major League Soccer':    [['FOX', 2], ['Apple TV+', 3], ['FS1', 1]],
+  'MLS Cup':                [['FOX', 2], ['Apple TV+', 3]],
+  'Liga MX':           [['Univision', 3], ['Telemundo', 2], ['FOX Deportes', 1]],
+  'La Liga (soccer)':  [['ESPN Deportes', 2], ['ESPN', 2], ['Univision', 1]],
+  'Serie A (soccer)':  [['Paramount+ with Showtime', 2], ['CBS Sports Network', 1]],
+  'Bundesliga (soccer)': [['ESPN', 2], ['ESPN Deportes', 1]],
+  'Ligue 1':           [['FOX', 1], ['FS1', 1]],
+  'FA Cup':            [['ESPN', 2], ['ESPN Deportes', 1]],
+  'FIFA Football World Cup':  [['FOX', 3], ['Telemundo', 3], ['FS1', 1]],
+  "FIFA Women's World Cup":   [['FOX', 3], ['Telemundo', 2]],
+  'Copa Libertadores': [['FOX Deportes', 3], ['Univision', 1]],
+  'Copa Sudamericana': [['FOX Deportes', 3], ['Univision', 1]],
+  "National Women's Soccer League": [['ESPN', 2], ['CBS', 1], ['Amazon Prime Video', 1]],
+  'Olympic Games (Summer)':   [['NBC', 4], ['Peacock', 3], ['USA Network', 1]],
+  'Olympic Winter Games':     [['NBC', 4], ['Peacock', 3], ['USA Network', 1]],
+  'NASCAR':            [['FOX', 2], ['FS1', 2], ['NBC', 2], ['Amazon Prime Video', 1]],
+  'Daytona 500':       [['FOX', 4], ['FS1', 1]],
+  'Formula 1':         [['ESPN', 3], ['ABC', 1]],
+  'IndyCar (IRL)':     [['FOX', 3], ['FS1', 1]],
+  'Indy 500':          [['FOX', 4]],
+  'World Wrestling Entertainment (WWE)': [['WWE Network', 2], ['USA Network', 3], ['Netflix', 2]],
+  'WWE Wrestlemania':  [['Netflix', 3], ['WWE Network', 1]],
+  'All Elite Wrestling': [['TBS', 2], ['TNT', 2]],
+  'Ultimate Fighting Championships': [['ESPN', 3], ['Paramount+ with Showtime', 2]],
+  'Espy Awards':       [['ABC', 3], ['ESPN', 2]],
+  'Esports':           [['Twitch', 4], ['YouTube', 3], ['Discord', 1]]
+};
+
+/* Rung two: whoever the sheet says is putting it out. */
+const DISTRIBUTOR_CHANNELS = [
+  [/disney/i,     [['Disney+', 3], ['ABC', 2], ['Disney Channel', 1], ['Hulu', 2], ['FX', 1], ['Freeform', 1]]],
+  [/netflix/i,    [['Netflix', 5]]],
+  [/warner|hbo/i, [['HBO Max', 3], ['HBO', 2], ['TNT', 1], ['TBS', 1], ['Cartoon Network', 1]]],
+  [/nbcu|nbc/i,   [['Peacock', 3], ['NBC', 3], ['USA Network', 1], ['Bravo', 1], ['SyFy', 1], ['E!', 1]]],
+  [/amazon/i,     [['Amazon Prime Video', 5]]],
+  [/paramount/i,  [['Paramount+ with Showtime', 3], ['CBS', 2], ['MTV', 1], ['Comedy Central', 1], ['Nickelodeon', 1]]],
+  [/\bfox\b/i,    [['FOX', 4], ['FS1', 1], ['Fox News Channel', 1], ['Fox One', 1]]],
+  [/apple/i,      [['Apple TV+', 5]]],
+  [/^sony$|cine sony/i, [['Cine Sony', 2], ['Netflix', 1]]],
+  [/lionsgate|a24|neon|focus features|magnolia|mubi|ifc|vertical|angel studios|trafalgar|ketchup/i,
+                  [['Starz', 1], ['AMC', 1], ['IFC', 1], ['Sundance', 1]]],
+  [/umg|live nation|aeg|saban/i, [['YouTube', 4], ['Instagram', 2], ['TikTok', 2], ['MTV', 1]]],
+  [/xbox|playstation|nintendo|sega|capcom|bandai|rockstar|\bEA\b|remedy|gun interactive|s-game|geoff keighley|gamescom|decal/i,
+                  [['Twitch', 4], ['YouTube', 3], ['Discord', 2], ['Reddit', 1]]],
+  [/samsung|microsoft|google|salesforce|IEEE|CNCF/i, [['YouTube', 3], ['X', 2], ['LinkedIn', 2], ['Reddit', 1]]],
+  [/comic con|vanity fair|CFDA|sundance institute/i, [['Instagram', 3], ['YouTube', 2], ['X', 1], ['E!', 1]]]
+];
+
+/* Rung three: nothing but the lane. Weak on purpose — a mix this generic
+   should not be able to lift a moment far, and the UI marks it. */
+const CATEGORY_CHANNELS = {
+  'Sports':             [['ESPN', 3], ['FOX', 2], ['CBS', 2], ['NBC', 2], ['FS1', 1]],
+  'TV & Streaming':     [['Netflix', 3], ['Hulu', 2], ['Disney+', 2], ['HBO Max', 2], ['Amazon Prime Video', 2]],
+  'Movies':             [['Netflix', 2], ['HBO Max', 2], ['Amazon Prime Video', 2], ['Hulu', 1], ['YouTube', 1]],
+  'Music':              [['YouTube', 4], ['Instagram', 2], ['TikTok', 2], ['MTV', 1]],
+  'Tours & Concerts':   [['YouTube', 3], ['Instagram', 3], ['TikTok', 2], ['Facebook', 1]],
+  'Gaming':             [['Twitch', 4], ['YouTube', 3], ['Discord', 2], ['Reddit', 2]],
+  'Tech':               [['YouTube', 3], ['X', 2], ['Reddit', 2], ['LinkedIn', 2]],
+  'Fashion & Awards':   [['Instagram', 3], ['YouTube', 2], ['TikTok', 2], ['E!', 1], ['ABC', 1]],
+  'Culture':            [['YouTube', 2], ['Facebook', 2], ['Instagram', 2], ['ABC', 1], ['NBC', 1]],
+  'Holidays':           [['Facebook', 3], ['YouTube', 2], ['ABC', 1], ['NBC', 1], ['CBS', 1], ['Hallmark Channel', 1]],
+  'National Days':      [['Facebook', 3], ['YouTube', 2], ['X', 1], ['ABC', 1]],
+  'Heritage & Identity': [['Facebook', 2], ['YouTube', 2], ['Instagram', 2], ['Univision', 1], ['BET', 1], ['Telemundo', 1]]
+};
+
+/* The mix for one moment, and the rung it came from. `entity` is the
+   ENTITY_MAP key the moment already resolved to, passed in rather than
+   recomputed so the two tables can never disagree about what a moment is. */
+function channelsFor(m, entity) {
+  if (entity && PROPERTY_CHANNELS[entity]) {
+    return { mix: PROPERTY_CHANNELS[entity], rung: 'property' };
+  }
+  const hay = `${m.plat || ''} ${m.src || ''}`;
+  if (hay.trim()) {
+    for (const [re, mix] of DISTRIBUTOR_CHANNELS) {
+      if (re.test(hay)) return { mix, rung: 'distributor' };
+    }
+  }
+  const cat = CATEGORY_CHANNELS[m.cat];
+  return cat ? { mix: cat, rung: 'category' } : { mix: [], rung: 'none' };
+}
+
 /* ── data/audiences.js ── */
 /* PLACEHOLDER AUDIENCE DATA.
 
@@ -3236,6 +4030,7 @@ const MOMENTS = [{"id":"m1","name":"Alice in Wonderland 100th Anniversary","cat"
    Order matters beyond layout: ROSTER() is built in this order, so the
    fallback for a hash pointing at a deleted audience resolves to the most
    authoritative thing available rather than to whatever sorts first. */
+
 const GROUPS = [
   {
     id: 'official',
@@ -3244,7 +4039,7 @@ const GROUPS = [
        stage you are standing on — so it belongs to the group whose numbers
        come from the PA rather than from anyone's estimate. */
     color: '#1A67D2',
-    empty: 'None loaded yet — the PA’s own cut goes here.'
+    empty: 'None loaded yet.'
   },
   {
     id: 'popular',
@@ -3337,32 +4132,43 @@ const AUDIENCES = [
 
    Deliberately outside the AUDIENCES markers above: that block is rewritten
    whole by tools/define-audiences.mjs, and these are not the script's to
-   touch. Nothing here is generated and nothing here is estimated.
+   touch. Nothing here is generated by a language model and nothing here is
+   estimated.
 
-   They carry NO AFFINITY YET. That is not an oversight, it is the state — the
-   names are agreed and the cut has not landed. It matters because of how the
-   score is built: a category an audience does not mention falls back to par at
-   100, so an audience with no cut at all scores every moment identically to
-   every other audience with no cut. It would look like a working audience
-   switch and be nothing of the kind, which is the exact failure this tool
-   exists to make impossible.
+   THESE ARE NOW A REAL CUT. Until 2026-08-25 this list carried four names and
+   no numbers, marked `pending`, because an audience whose categories all sit
+   at par scores every moment identically to every other audience with no cut
+   — an audience switch that returns the same answer, which is the exact
+   failure this tool exists to make impossible.
 
-   So they are marked `pending`, the rail says so on the row, and the board
-   says so when one is selected. Fill in `aff` — twelve indices on a 100 base —
-   and the marking disappears on its own.                                     */
-const OFFICIAL = [
-  { id: 'search1834',  pa: 'Search', name: 'Search 18–34' },
-  { id: 'gemini1849',  pa: 'Gemini', name: 'Gemini 18–49' },
-  { id: 'geministud',  pa: 'Gemini', name: 'Gemini Students' },
-  { id: 'pixel2549',   pa: 'Pixel',  name: 'Pixel 25–49 Millennial Seekers' }
-].map(a => Object.assign({
+   The cut that landed is YouGov Profiles, exported as Google Audience
+   Playgrounds: 884 survey rows against four PA targets. It carries far more
+   than the affinity model can use — entity-level interest, channel usage and
+   attitudes to advertising as well as genre affinity — which is why there are
+   now two models to read it with. See data/yougov.js for the numbers,
+   tools/build-yougov.mjs for every judgement made in producing them.
+
+   The roster changed with the data rather than being mapped onto it. Gemini
+   Students is gone because the cut does not contain a students cell, and
+   YouTube TV's live-sport audience is here because it does. Inventing a
+   Students column out of the Gemini one would have been the same lie as
+   leaving them all at par, only harder to see. */
+const OFFICIAL = YOUGOV.map(a => ({
   group: 'official',
-  pending: true,
-  def: '',
-  size: '',
-  aff: {},
-  ent: {}
-}, a));
+  id: a.id, pa: a.pa, name: a.name, full: a.full, def: a.def, size: a.size,
+  /* The affinity model reads these two and nothing else, which is the point:
+     the four official targets score through exactly the same code path as the
+     six estimated ones, so the two are comparable on the same board. Three
+     categories come through null — the cut has no holiday, civic-calendar or
+     heritage battery — and `affinityOf` treats null as par while the rail and
+     the methodology say which three and why. */
+  aff: a.aff,
+  ent: a.ent,
+  /* Marked as measured rather than estimated. The rail carries no badge for
+     these: "Est." says a number was guessed at, and the absence of it is the
+     strongest claim the row can make. */
+  measured: true
+}));
 
 /* The twelve categories, gathered into five families for the board.
 
@@ -3691,8 +4497,26 @@ function entityHits(key, m) {
    population", and the model should treat it as exactly the midpoint. */
 function affinityOf(m, aud) {
   let idx = aud.aff[m.cat] ?? 100;
-  for (const [key, v] of Object.entries(aud.ent || {})) {
-    if (entityHits(key, m)) idx = Math.max(idx, v);
+
+  /* AN AUDIENCE BUILT FROM THE RESEARCH CUT GETS THE ORDERED READ.
+
+     data/entity-map.js lists the survey's 88 entities most-specific-first, so
+     the first pattern that matches a moment is the sharpest thing the study
+     has to say about it: "NFL Draft" rather than "NFL". Taking the highest of
+     every match instead — which is what the free-text path below does — would
+     quietly promote each moment to whichever of its readings flattered it
+     most. That is not a sharper read, it is a thumb on the scale.
+
+     Only audiences whose `ent` came out of the cut can be read this way,
+     because only they are keyed on the map. Anything typed or pasted by a
+     user falls through to the scan, where there is no order to trust. */
+  const mapped = aud.measured ? entityFor(m) : null;
+  if (mapped && aud.ent && aud.ent[mapped] != null) {
+    idx = aud.ent[mapped];
+  } else {
+    for (const [key, v] of Object.entries(aud.ent || {})) {
+      if (entityHits(key, m)) idx = Math.max(idx, v);
+    }
   }
   /* Logistic on log-index, centred on 100. Monotonic, saturating at both ends,
      and steepest exactly where the data actually sits. */
@@ -3729,6 +4553,7 @@ function weekKey(iso) {
 }
 
 /* ---------- the score ---------- */
+
 
 
 const WEIGHTS = { aff: 0.50, scale: 0.20, act: 0.15, tim: 0.15 };
@@ -3847,6 +4672,471 @@ function combineAffinity(values, weights, mode) {
     value: values.reduce((s, v, i) => s + v * weights[i], 0) / total,
     weighted: true
   };
+}
+
+/* ── data/response.js ── */
+/* THE RESPONSE MODEL — relevance as measured audience response, and nothing
+   else.
+
+   The affinity model in relevance.js scores a moment on five things, one of
+   which varies by audience and four of which are facts about the moment. It
+   works, and for a board built on estimated audiences it is the honest shape.
+   But it answers a slightly different question than the one a planner asks at
+   stage 6.2, and it took a real research cut landing to make that visible.
+
+   THE RULE THIS MODEL IS BUILT ON: every scored quantity is a measured survey
+   response. Moment-side data selects WHICH responses to read; it never adds
+   or subtracts points of its own. That single line is what makes the model
+   coherent, and it is the test for whether a new term belongs — if a term
+   would move the score without anybody having answered a question
+   differently, it does not go in the score.
+
+     FANDOM        Do they follow this?         weight .50
+     REACHABILITY  Can we get to them there?    weight .30
+     RECEPTIVITY   Will they welcome a brand?   weight .20
+
+   WHAT CAME OUT OF THE SCORE, AND WHY THAT IS AN IMPROVEMENT. Timing,
+   inventory and week congestion are not audience responses — nobody was asked
+   about them — so under the rule above they cannot be terms. They become a
+   second axis, FEASIBILITY, and the two cross into a matrix. The moment an
+   audience loves with no way in stops quietly sinking to the middle of the
+   board and starts reading as "find a door", which is a partnership brief for
+   stage 6.3 rather than a moment you never noticed you had dropped.
+
+   WHY THE AVERAGES ARE GEOMETRIC AND THE MIXES ARE ARITHMETIC. An index is
+   ratio data: 200 is twice as much as 100 and par has to map to par exactly,
+   which only a geometric mean guarantees. Reach is not — two channels that
+   each reach a third of the audience genuinely add up, so the channel mix is
+   an ordinary weighted mean before the curve is applied.
+
+   WHAT THIS CUT CANNOT DO, SAID OUT LOUD. The design asks for reachability
+   among the people who are FANS of the moment, not among the whole audience.
+   That needs a conditional cross the export does not carry, so reachability
+   here is channel usage across the whole audience. It over-credits a moment
+   whose channel is popular with the audience generally and unpopular with the
+   part of it that cares. `crossed: false` travels with every result rather
+   than living in a footnote.                                                 */
+
+
+
+
+
+const RESPONSE_WEIGHTS = { fan: 0.50, rch: 0.30, rcp: 0.20 };
+
+/* Feasibility is a second axis, not a fourth term. Its shares are its own and
+   deliberately do not sum with the three above. */
+const FEASIBILITY_WEIGHTS = { tim: 0.45, act: 0.40, quiet: 0.15 };
+
+/* The curve every index passes through. Logistic on the log of the index,
+   centred so that 100 — "no different from the population" — lands on exactly
+   50. Monotonic, saturating at both ends, and steepest where real indices
+   actually sit. Shared with the affinity model on purpose: two models that
+   disagree about what an index of 140 is worth cannot be compared at all. */
+function curve(idx) {
+  const t = Math.log(Math.max(20, idx) / 100) / Math.log(2);
+  return Math.max(0, Math.min(100, 100 / (1 + Math.exp(-2.1 * t))));
+}
+
+/* Participation, on the same 0-100 scale. Half the audience taking part is
+   full marks and the 0.6 exponent lifts the middle, exactly as the sports
+   reach term does — a share is a long thin distribution and a score is not. */
+const P_FULL = 0.5;
+function participationScore(p) {
+  if (!(p > 0)) return 0;
+  return Math.max(0, Math.min(100, 100 * Math.pow(Math.min(1, p / P_FULL), 0.6)));
+}
+
+/* Which audiences this model can speak for. An audience with no YouGov cut
+   has no measured responses, so it cannot be scored here at all — and the
+   right answer is to say so, not to fall back to par. A par board looks like
+   an answer, which is the worst thing an empty one can look like. */
+const BY_ID = new Map(YOUGOV.map(a => [a.id, a]));
+const hasResponseData = a => !!(a && BY_ID.has(a.id));
+const responseDataFor = a => BY_ID.get(a && a.id) || null;
+
+/* ---------- fandom ---------- */
+
+/* THREE RUNGS, BLENDED RATHER THAN SWITCHED BETWEEN.
+
+     entity     the survey asked about this exact property — "NFL Draft"
+     sub-topic  it asked about this kind of thing — "Fighting", "Horror"
+     category   it asked about the lane — Gaming, Movies
+
+   The category is the reliable read and carries the majority; the sharper
+   rung adjusts it. Switching outright to the sharp rung would make the score
+   lurch between two moments that differ only in whether somebody thought to
+   put one of them on a questionnaire.
+
+   THE MIDDLE RUNG IS NOT OPTIONAL, AND LEAVING IT OUT PROVED IT. With only
+   entity and category, every unmatched moment in a category scored exactly
+   the same — two hundred films on one number — and the top of the board
+   became whichever category the audience indexed highest. Search '26 and
+   Gemini '26 then returned the SAME TOP TEN, sixty index points apart, which
+   is the one failure this tool exists to prevent. See data/topic-map.js.
+
+   The rung is REPORTED on every result. A moment scored on its category alone
+   is a much weaker claim than one scored on a named property, and a model
+   that will not say which it did cannot be argued with. */
+const DEEP = 0.35;
+
+function fandomOf(m, aud) {
+  const d = responseDataFor(aud);
+  if (!d) return null;
+
+  const broad = d.aff[m.cat];
+  const key = entityFor(m);
+  const top = key ? d.ent[key] : null;
+  const topP = key ? d.entP[key] : null;
+
+  const tKey = top == null ? topicFor(m) : null;
+  const mid = tKey && d.topic ? d.topic[tKey] : null;
+  const midP = tKey && d.topicP ? d.topicP[tKey] : null;
+
+  const deep = top != null ? top : mid;
+  const rungName = top != null ? 'entity' : (mid != null ? 'sub-topic' : 'category');
+
+  /* Volume comes from the deepest rung that measured it, and the CATEGORY
+     rung measures it too — so there is always a volume term unless the cut
+     has nothing on the lane at all. This is the half of the spec that got
+     dropped in the first cut, and dropping it let a niche the audience loves
+     outrank a mainstream one it merely likes, on every board at once. */
+  const part = topP != null ? topP : (midP != null ? midP : d.affP && d.affP[m.cat]);
+
+  /* No rung has anything to say. Holidays, National Days and Heritage &
+     Identity have no battery in this cut, and if the moment is not a named
+     property or a recognised sub-topic either, then there is genuinely no
+     measured response to read. */
+  if (broad == null && deep == null) {
+    return { value: null, rung: 'none', broad: null, deep: null, entity: key, topic: tKey };
+  }
+
+  const idx = (broad != null && deep != null) ? Math.pow(broad, 1 - DEEP) * Math.pow(deep, DEEP)
+            : (deep != null ? deep : broad);
+
+  /* Participation is only measured at the entity rung — the genre batteries
+     say how an audience indexes, not how many of them turn up to a given
+     moment. Without it the term falls back to the index alone rather than
+     guessing a share, and says so through the rung. */
+  const value = part != null && part > 0
+    ? Math.pow(curve(idx), 1 - DEEP) * Math.pow(participationScore(part), DEEP)
+    : curve(idx);
+
+  return {
+    value: Math.max(0, Math.min(100, value)),
+    rung: broad != null && deep != null ? `${rungName} + category` : rungName,
+    broad, deep, part, partRung: topP != null ? 'entity' : (midP != null ? 'sub-topic' : 'category'),
+    entity: key, topic: tKey
+  };
+}
+
+/* ---------- reachability ---------- */
+
+function reachabilityOf(m, aud) {
+  const d = responseDataFor(aud);
+  if (!d) return null;
+  const { mix, rung } = channelsFor(m, entityFor(m));
+
+  let num = 0, den = 0, pen = 0; const used = [];
+  for (const [ch, w] of mix) {
+    const i = d.reach[ch];
+    if (i == null || !(w > 0)) continue;
+    num += i * w; den += w;
+    pen += ((d.reachP && d.reachP[ch]) || 0) * w;
+    used.push([ch, i, (d.reachP && d.reachP[ch]) || 0]);
+  }
+  if (!den) return { value: null, rung: 'none', channels: [] };
+
+  /* Arithmetic, then curved. Reach mixes arithmetically — see the note at the
+     top — so the mean is taken on the indices and the curve is applied once
+     to the result rather than to each channel in turn.
+
+     AND THEN CROSSED WITH HOW MANY OF THEM ARE ACTUALLY THERE. An index of
+     205 on a platform a fifth of the audience opens is not more reach than an
+     index of 110 on one that two thirds of them open, and scoring on the
+     index alone said it was — which put niche-but-fervent channels at the top
+     of three boards out of four and made a moment's channel mix a popularity
+     contest between subcultures. Same shape as the fandom term above, for the
+     same reason: index leads, volume anchors. */
+  const idx = num / den, share = pen / den;
+  used.sort((a, b) => b[1] - a[1]);
+  return {
+    value: share > 0 ? Math.pow(curve(idx), 1 - DEEP) * Math.pow(participationScore(share), DEEP) : curve(idx),
+    rung, index: idx, share, channels: used.slice(0, 4), crossed: false
+  };
+}
+
+/* ---------- receptivity ---------- */
+
+/* The one term with no moment in it. Whether an audience welcomes a brand
+   turning up, and whether they do anything about it, are facts about the
+   audience — so this shifts a whole board up or down rather than reordering
+   it. That is not a bug to be engineered away: it is what makes two audiences'
+   boards comparable, and it is why an audience that indexes 145 on responding
+   to sponsorship is worth more per moment than one that indexes 104. */
+function receptivityOf(aud) {
+  const d = responseDataFor(aud);
+  if (!d || d.recep.value == null) return null;
+  return {
+    value: curve(d.recep.value),
+    welcome: d.recep.welcome, respond: d.recep.respond, index: d.recep.value
+  };
+}
+
+/* ---------- feasibility ---------- */
+
+/* Everything that is true of the moment rather than of the audience. Same
+   three inputs the affinity model folds into its score, doing a different job
+   here: they no longer compete with relevance, they qualify it. */
+function feasibilityOf(m, cong) {
+  const tim = timingOf(m);
+  const act = actionabilityOf(m);
+  const quiet = 100 - Math.max(0, Math.min(100, cong || 0));
+  return {
+    value: tim * FEASIBILITY_WEIGHTS.tim + act * FEASIBILITY_WEIGHTS.act + quiet * FEASIBILITY_WEIGHTS.quiet,
+    tim, act, quiet
+  };
+}
+
+/* The four squares. Names are the decision each one asks for, in the same
+   spirit as the affinity model's bands — nobody acts on "68 by 54". */
+const QUADRANTS = [
+  { id: 'anchor', label: 'Anchor',      color: '#0B7A67', note: 'They care and there is a way in. Build a beat on it.' },
+  { id: 'door',   label: 'Find a door', color: '#B3451E', note: 'They care and there is no way in yet. This is a partnership brief, not a pass.' },
+  { id: 'easy',   label: 'Easy win',    color: '#1A67D2', note: 'Wide open, moderate pull. Buy in with what already exists.' },
+  { id: 'skip',   label: 'Skip',        color: '#5C6279', note: 'Neither. Say out loud we are not doing it.' }
+];
+const QUAD_CUT = { rel: 55, feas: 60 };
+function quadrantOf(rel, feas) {
+  const hot = rel >= QUAD_CUT.rel, open = feas >= QUAD_CUT.feas;
+  return QUADRANTS.find(q => q.id === (hot ? (open ? 'anchor' : 'door') : (open ? 'easy' : 'skip')));
+}
+
+/* ---------- the score ---------- */
+
+const RESPONSE_BANDS = [
+  { id: 'anchor', label: 'Anchor', min: 70, color: '#0B7A67', note: 'Build a beat on it.' },
+  { id: 'play',   label: 'Play',   min: 54, color: '#1A67D2', note: 'Buy in with what exists.' },
+  { id: 'watch',  label: 'Watch',  min: 38, color: '#946200', note: 'Know about it. No line item.' },
+  { id: 'skip',   label: 'Skip',   min: 0,  color: '#5C6279', note: 'Say out loud we are not doing it.' }
+];
+const responseBandOf = s => RESPONSE_BANDS.find(b => s >= b.min) || RESPONSE_BANDS[RESPONSE_BANDS.length - 1];
+
+/* Only fandom and reachability combine across several audiences —
+   receptivity is per-audience by construction, so it combines the same way
+   but for a different reason, and a blend of two audiences' receptivity is
+   still a meaningful thing to state. Feasibility never combines: it has no
+   audience in it. */
+function scoreMomentsResponse(moments, aud, mode) {
+  const auds = (Array.isArray(aud) ? aud : [aud]).filter(Boolean);
+  const scorable = auds.filter(hasResponseData);
+  const weights = scorable.map(sizeOf);
+  const cong = congestionIndex(moments);
+
+  return moments.map(m => {
+    const feas = feasibilityOf(m, cong.get(m.id) ?? 0);
+
+    if (!scorable.length) {
+      /* No cut, no score. Everything is null and the board draws the absence
+         rather than a par row that reads like a finding. */
+      return {
+        ...m, parts: { fan: null, rch: null, rcp: null, feas: feas.value, cong: cong.get(m.id) ?? 0 },
+        detail: { feas }, score: null, band: null, quadrant: null,
+        noData: true, affBy: null, affWeighted: false
+      };
+    }
+
+    const each = scorable.map(a => {
+      const f = fandomOf(m, a), r = reachabilityOf(m, a), p = receptivityOf(a);
+      return { id: a.id, name: a.name, f, r, p, value: f && f.value != null ? f.value : 0 };
+    });
+
+    const pick = (get) => combineAffinity(
+      each.map(e => { const v = get(e); return v && v.value != null ? v.value : null; })
+          .filter(v => v != null),
+      weights, mode || 'blend');
+
+    const fan = pick(e => e.f), rch = pick(e => e.r), rcp = pick(e => e.p);
+    const anyFandom = each.some(e => e.f && e.f.value != null);
+
+    const parts = {
+      fan: anyFandom ? fan.value : null,
+      rch: rch.value, rcp: rcp.value,
+      feas: feas.value, cong: cong.get(m.id) ?? 0
+    };
+    /* A moment with no measured fandom is not a zero — it is a moment the
+       study did not ask about. It scores on what there is, with the missing
+       term's weight redistributed across the terms that do have an answer, so
+       the absence cannot be read as a low opinion. */
+    let num = 0, den = 0;
+    for (const [k, w] of Object.entries(RESPONSE_WEIGHTS)) {
+      if (parts[k] == null) continue;
+      num += parts[k] * w; den += w;
+    }
+    const score = den ? Math.round(num / den) : null;
+
+    return {
+      ...m, parts, score,
+      band: score == null ? null : responseBandOf(score),
+      quadrant: score == null ? null : quadrantOf(score, feas.value),
+      detail: { feas, each, partial: den > 0 && den < 1 },
+      noData: score == null,
+      affBy: each.length > 1 ? each.map(e => ({ id: e.id, name: e.name, value: e.f && e.f.value != null ? e.f.value : 0 })) : null,
+      affWeighted: fan.weighted
+    };
+  });
+}
+
+/* ── data/models.js ── */
+/* TWO MODELS, ONE BOARD.
+
+   The board can be read two ways and the difference is not cosmetic — it is a
+   different answer to "what makes a moment relevant". Which is why this is a
+   toggle at the top of the rail rather than a setting somewhere: it belongs
+   next to the audience because it changes what the audience means.
+
+     AFFINITY MODEL   what the tool has always run. Five components, one of
+                      which varies by audience, four of which are facts about
+                      the moment. Works for EVERY audience on the rail,
+                      including the six estimated ones and anything a user
+                      defines, so it is the model that keeps a board
+                      comparable end to end. It is the default for that
+                      reason and no other.
+
+     RESPONSE MODEL   three components, every one of them a measured survey
+                      response, with everything moment-side moved onto a
+                      second feasibility axis. Sharper and better grounded —
+                      and only available for the four audiences that have a
+                      research cut behind them. On the other audiences it has
+                      nothing to say and says so.
+
+   This file is the registry the UI draws from. Everything here — the part
+   names, the weights, the colours — is READ FROM THE MODELS THEMSELVES, so a
+   weight changed in relevance.js or response.js moves the methodology note
+   and the score panel with it. A methodology that is retyped is a methodology
+   that starts describing a formula the board is not running.                */
+
+
+/* THE SHADE RAMP — how a score turns into how solid a bar is drawn.
+
+   Seven steps rather than four, because the bands are a decision and the
+   shading is a reading aid: a planner scanning a year of 664 bars is asking
+   "where is this dense" long before they ask "is this an Anchor". Hue says
+   which category, shade says how relevant.
+
+   IT IS PER MODEL, AND IT HAS TO BE. The steps are anchored on the band cuts,
+   and the two models do not band alike — but more than that, they do not
+   DISTRIBUTE alike. The response model has a floor under it that the affinity
+   model does not: receptivity and reachability are largely constant for an
+   audience, so a receptive, reachable audience starts every moment in the
+   sixties. Read through the affinity ramp, YTTV's whole year came out in the
+   top two shades and the encoding said nothing at all.
+
+   What it is NOT is per audience. A ramp that restretched to each audience's
+   own range would make two boards look alike that are not, and comparing two
+   audiences is most of what this rail is for.                                */
+const MODELS = [
+  {
+    id: 'affinity',
+    label: 'Affinity model',
+    short: 'Affinity',
+    tag: 'Works for every audience',
+    /* One line, on the rail, under the toggle. It has to say what the model
+       asks — not what it is called. */
+    gist: 'Scores how much an audience cares, then discounts for how buyable and how crowded the moment is.',
+    bands: BANDS,
+    /* `driver` is the component the rest of the UI treats as "the audience's
+       pull" — the congestion ribbon plots it, and the Gemini rail reports it.
+       Naming it here rather than hard-coding `aff` is what lets the same
+       drawing code serve both models. */
+    driver: 'aff',
+    weights: WEIGHTS,
+    /* Unchanged from the single-model tool. These cuts were set by looking at
+       a real board and are not derived from the bands — do not "tidy" them
+       into the band numbers without looking at a board again. */
+    shades: [
+      { min: 76, fill: 100, dark: 34, lit: true,  label: '76+' },
+      { min: 68, fill: 100, dark: 10, lit: true,  label: '68–75' },
+      { min: 63, fill: 74,  dark: 0,  lit: false, label: '63–67' },
+      { min: 59, fill: 50,  dark: 0,  lit: false, label: '59–62' },
+      { min: 56, fill: 31,  dark: 0,  lit: false, label: '56–58' },
+      { min: 48, fill: 18,  dark: 0,  lit: false, label: '48–55' },
+      { min: 0,  fill: 9,   dark: 0,  lit: false, label: 'under 48' }
+    ],
+    parts: [
+      { key: 'aff',   name: 'Affinity',      color: '#1A67D2', weight: WEIGHTS.aff,
+        q: 'Does this audience care?',
+        why: 'Category index for this audience, sharpened by any entity read.' },
+      { key: 'scale', name: 'Scale',         color: '#0B7A67', weight: WEIGHTS.scale,
+        q: 'How many of them show up?',
+        why: 'How many of them actually show up.' },
+      { key: 'act',   name: 'Actionability', color: '#946200', weight: WEIGHTS.act,
+        q: 'Is there a door in?',
+        why: 'Whether there is a door in — a distributor, a sponsorship.' },
+      { key: 'tim',   name: 'Timing',        color: '#6D5DE0', weight: WEIGHTS.tim,
+        q: 'Is the date firm enough to plan against?',
+        why: "The sheet's own date confirmation." },
+      { key: 'cong',  name: 'Congestion',    color: '#C5221F', weight: null,
+        q: 'How loud is everything else that week?',
+        why: 'Everything else fighting for the same week. A tax, not a term.',
+        note: `−${Math.round(CONGESTION_MAX * 100)}% max` }
+    ],
+    score: (moments, auds, mode) => scoreAffinity(moments, auds, mode),
+    /* Every audience on the rail can be scored, which is the whole argument
+       for this model being the default. */
+    supports: () => true
+  },
+  {
+    id: 'response',
+    label: 'Response model',
+    short: 'Response',
+    tag: 'Needs a research cut',
+    gist: 'Scores only things the audience was actually asked — do they follow it, can we reach them there, will they welcome a brand.',
+    bands: RESPONSE_BANDS,
+    driver: 'fan',
+    weights: RESPONSE_WEIGHTS,
+    quadrants: QUADRANTS,
+    feasWeights: FEASIBILITY_WEIGHTS,
+    /* Shifted up and spread wider than the affinity ramp, because this model's
+       scores sit higher and closer together — see the note above. */
+    shades: [
+      { min: 78, fill: 100, dark: 34, lit: true,  label: '78+' },
+      { min: 72, fill: 100, dark: 10, lit: true,  label: '72–77' },
+      { min: 67, fill: 74,  dark: 0,  lit: false, label: '67–71' },
+      { min: 62, fill: 50,  dark: 0,  lit: false, label: '62–66' },
+      { min: 56, fill: 31,  dark: 0,  lit: false, label: '56–61' },
+      { min: 46, fill: 18,  dark: 0,  lit: false, label: '46–55' },
+      { min: 0,  fill: 9,   dark: 0,  lit: false, label: 'under 46' }
+    ],
+    parts: [
+      { key: 'fan',  name: 'Fandom',       color: '#1A67D2', weight: RESPONSE_WEIGHTS.fan,
+        q: 'Do they follow this?',
+        why: 'Measured interest in the property, blended with the category, weighted by how many of them take part.' },
+      { key: 'rch',  name: 'Reachability', color: '#0B7A67', weight: RESPONSE_WEIGHTS.rch,
+        q: 'Can we get to them there?',
+        why: 'How heavily this audience uses the channels the moment actually lives on.' },
+      { key: 'rcp',  name: 'Receptivity',  color: '#B3451E', weight: RESPONSE_WEIGHTS.rcp,
+        q: 'Will they welcome a brand?',
+        why: 'Whether they welcome advertising and whether they act on sponsorship. A fact about the audience, so it lifts a whole board rather than reordering one.' },
+      { key: 'feas', name: 'Feasibility',  color: '#6D5DE0', weight: null,
+        q: 'Is there a way in, and is the date real?',
+        why: 'Date confirmation, inventory and week congestion. The second axis — it qualifies relevance rather than competing with it.',
+        note: 'second axis' }
+    ],
+    score: (moments, auds, mode) => scoreMomentsResponse(moments, auds, mode),
+    supports: hasResponseData
+  }
+];
+
+const DEFAULT_MODEL = 'affinity';
+const modelById = id => MODELS.find(m => m.id === id) || MODELS[0];
+
+/* How many of the selected audiences a model can actually speak for. The
+   toggle uses this to warn BEFORE the switch rather than drawing an empty
+   board and leaving the reader to work out why. */
+function coverage(model, auds) {
+  const list = (Array.isArray(auds) ? auds : [auds]).filter(Boolean);
+  const ok = list.filter(a => model.supports(a));
+  return { ok: ok.length, total: list.length, missing: list.filter(a => !model.supports(a)) };
 }
 
 /* ── data/parse.js ── */
@@ -4321,6 +5611,8 @@ if (typeof module !== 'undefined' && module.exports) module.exports = Strip;
 
 
 
+
+
 /* ---------- audiences the user has added ---------- */
 /* The six that ship are placeholders and are marked as such. An audience the
    user defines is theirs, lives in their browser, and is never mixed in with
@@ -4442,19 +5734,31 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 /* Direction and audience live in the hash, so a link carries what you were
    looking at — which is the whole point of five mockups: somebody has to be
    able to send back "03, sports superfans, this bar". */
+/* `#/<audiences>[/<combine>][/<model>]`, and a leading direction digit is
+   still read so that links written while there were five mockups keep working.
+
+   THE READER AND THE WRITER HAD DRIFTED APART. This function required the
+   direction segment, and render() had long since stopped writing one — so
+   every hash the app produced failed its own parse and no reload ever
+   restored anything. It went unnoticed because the fallback is a working
+   board. Now the digit is optional on the way in, never written on the way
+   out, and there is a test for the round trip. */
 function fromHash() {
-  /* `[a-z]+` here would not match a user-defined audience — their ids are
-     slugged from the name and "women1834" has digits in it — so a custom
-     audience never survived a reload. Several ids join on `+`, and the combine
-     mode is the third segment. */
-  const m = /^#\/(\d)\/([a-z0-9+]+)(?:\/([a-z]+))?/.exec(location.hash || '');
+  /* `[a-z]+` would not match a user-defined audience — their ids are slugged
+     from the name and "women1834" has digits in it — so a custom audience
+     never survived a reload either. */
+  const m = /^#\/(?:(\d)\/)?([a-z0-9+]+)((?:\/[a-z]+)*)$/.exec(location.hash || '');
   if (!m) return {};
-  const dir = +m[1];
+  const dir = m[1] ? +m[1] : undefined;
   const ids = m[2].split('+').filter(id => ROSTER().some(a => a.id === id));
+  /* The trailing segments are read by what they ARE rather than by position,
+     so a link carrying only a model still works and the order cannot rot. */
+  const rest = (m[3] || '').split('/').filter(Boolean);
   return {
     dir: dir >= 1 && dir <= 5 ? dir : undefined,
     auds: ids.length ? ids : undefined,
-    mode: MODES.some(x => x.id === m[3]) ? m[3] : undefined
+    mode: rest.find(x => MODES.some(y => y.id === x)),
+    model: rest.find(x => MODELS.some(y => y.id === x))
   };
 }
 const H = fromHash();
@@ -4462,6 +5766,10 @@ const H = fromHash();
 const S = {
   auds: H.auds || [AUDIENCES[0].id],   // one or several; never none
   mode: H.mode || 'blend',
+  /* Which model the board is being read through. Lives in the hash beside the
+     audience because it changes what the audience MEANS — a link that carries
+     one without the other carries half a claim. */
+  model: H.model || DEFAULT_MODEL,
   dir: H.dir || 3,
   off: new Set(),          // categories switched off
   showWatch: false,        // draw the Watch band as well as Anchor and Play
@@ -4492,9 +5800,15 @@ function audiences() {
 const audience = () => audiences()[0];
 const multi = () => audiences().length > 1;
 
+/* The active model, and the audiences it can actually speak for. Everything
+   that draws a score goes through these two rather than through relevance.js
+   directly — which is what lets one set of drawing code serve both models. */
+const MODEL = () => modelById(S.model);
+const COVER = () => coverage(MODEL(), audiences());
+
 let SCORED = [];
 function recompute() {
-  SCORED = scoreMoments(IN_WINDOW, audiences(), S.mode);
+  SCORED = MODEL().score(IN_WINDOW, audiences(), S.mode);
 }
 const visible = () => SCORED.filter(m => !S.off.has(m.cat));
 
@@ -4505,6 +5819,7 @@ function renderRail() {
   const a = audience();
   const sel = new Set(S.auds);
   const only = S.auds.length === 1;
+  renderModelToggle();
   /* One row. Two badges it can carry, and they answer different questions:
      "Yours" is whose it is, "Est." is what the numbers rest on. A custom
      audience defined in words is both. */
@@ -4517,7 +5832,14 @@ function renderRail() {
         <span class="at">
           <span class="an">${esc(x.name)}${x.custom ? '<span class="mine">Yours</span>' : ''}${
             x.est ? '<span class="est" title="Estimated \u2014 not a research cut">Est.</span>' : ''}${
-            x.pending ? '<span class="pend" title="No cut loaded \u2014 every category sits at par">No cut</span>' : ''}</span>
+            x.measured ? '<span class="meas" title="Measured \u2014 YouGov Profiles">Cut</span>' : ''}${
+            x.pending ? '<span class="pend" title="No cut loaded \u2014 every category sits at par">No cut</span>' : ''}${
+            /* The one badge that depends on the toggle rather than on the
+               audience. Under the response model an estimated audience has
+               nothing measured to score, and saying so ON THE ROW is the
+               difference between a reader understanding the board and
+               thinking the tool is broken. */
+            MODEL().supports(x) ? '' : `<span class="unsup" title="${esc(MODEL().label)} needs a research cut, and this audience does not have one">Needs a cut</span>`}</span>
           <span class="as">${x.pending
             ? `${esc(x.pa || '')}${x.pa ? ' \u00b7 ' : ''}awaiting cut`
             : `${esc(x.size || '\u2014')} \u00b7 ${topCats(x)}`}</span>
@@ -4530,7 +5852,37 @@ function renderRail() {
         title="Remove ${esc(x.name)}" aria-label="Remove ${esc(x.name)}">\u00d7</button>` : ''}
     </div>`;
 
-  /* An empty group keeps its heading. The official group is the reason: a
+  /* THE TOGGLE.
+
+   Two buttons and a line of explanation, and then — when it matters — a
+   warning. The warning is the part worth having: switching to the response
+   model with an estimated audience selected produces a board full of nothing,
+   and a reader who was not told why will conclude the tool is broken rather
+   than that the audience has no research behind it. So the count of
+   audiences the model can speak for is drawn under the toggle whenever it is
+   not all of them, BEFORE the board redraws. */
+function renderModelToggle() {
+  const cur = MODEL();
+  const cov = COVER();
+  const el = document.getElementById('modelTog');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="rl-hd gap">Relevance model</div>
+    <div class="seg mdl">${MODELS.map(m => `
+      <button type="button" data-model="${m.id}" class="${m.id === S.model ? 'on' : ''}"
+        aria-pressed="${m.id === S.model}"
+        title="${esc(m.gist)}">${esc(m.short)}</button>`).join('')}</div>
+    <p class="mdl-gist">${esc(cur.gist)}</p>
+    ${cov.ok === cov.total ? '' : `
+      <p class="mdl-warn">${cov.ok
+        ? `Scores <b>${cov.ok} of ${cov.total}</b> selected audiences. ${cov.missing.map(x => esc(x.name)).join(', ')} ${cov.missing.length === 1 ? 'has' : 'have'} no research cut, so ${cov.missing.length === 1 ? 'it is' : 'they are'} left out of the board rather than scored at par.`
+        : `<b>Nothing to score.</b> ${cov.missing.length === 1 ? 'This audience has' : 'None of these audiences have'} a research cut behind ${cov.missing.length === 1 ? 'it' : 'them'}, and this model reads nothing else. Pick an official target, or switch back to ${esc(MODELS[0].short)}.`}</p>`}
+    <button class="mdl-help" id="modelHelpBtn" type="button"
+      aria-haspopup="dialog" aria-controls="modelHelp">Which should I use?</button>`;
+}
+
+/* An empty group keeps its heading. The official group is the reason: a
      planner has to be able to see that the PA's own targets have not been
      loaded, and a group that disappears when it is empty cannot say that. */
   document.getElementById('audList').innerHTML = GROUPS.map(g => {
@@ -4590,7 +5942,13 @@ function renderRail() {
 /* The two categories this audience over-indexes on hardest. It is the fastest
    honest summary of a cut, and it fits on the rail's second line. */
 function topCats(a) {
-  return Object.entries(a.aff).sort((x, y) => y[1] - x[1]).slice(0, 2).map(e => e[0].split(' ')[0]).join(' · ');
+  /* Nulls are dropped rather than sorted. Three of the twelve categories have
+     no battery in the research cut, and `null` sorts as though it were zero —
+     which would make "Holidays" look like the thing this audience cares
+     least about instead of the thing nobody asked them. */
+  const named = Object.entries(a.aff || {}).filter(([, v]) => typeof v === 'number');
+  if (!named.length) return 'no cut';
+  return named.sort((x, y) => y[1] - x[1]).slice(0, 2).map(e => e[0].split(' ')[0]).join(' \u00b7 ');
 }
 
 /* ============================================================
@@ -4622,7 +5980,7 @@ function renderHead() {
   }
 
   const v = visible();
-  const b = Object.fromEntries(BANDS.map(x => [x.id, v.filter(m => m.band.id === x.id).length]));
+  const b = Object.fromEntries(MODEL().bands.map(x => [x.id, v.filter(m => m.band && m.band.id === x.id).length]));
   const w = document.getElementById('watchTog');
   w.classList.toggle('on', S.showWatch);
   w.setAttribute('aria-pressed', String(S.showWatch));
@@ -4677,16 +6035,11 @@ function renderHead() {
    moments actually pop: a category hue at full strength is a mid-tone, and a
    board of mid-tones has no top end. The densest step is a near-black box in
    its own hue, carrying white type. */
-const SHADES = [
-  { min: 76, fill: 100, dark: 34, lit: true,  label: '76+' },
-  { min: 68, fill: 100, dark: 10, lit: true,  label: '68–75' },
-  { min: 63, fill: 74,  dark: 0,  lit: false, label: '63–67' },
-  { min: 59, fill: 50,  dark: 0,  lit: false, label: '59–62' },
-  { min: 56, fill: 31,  dark: 0,  lit: false, label: '56–58' },
-  { min: 48, fill: 18,  dark: 0,  lit: false, label: '48–55' },
-  { min: 0,  fill: 9,   dark: 0,  lit: false, label: 'under 48' }
-];
-const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
+/* Read from the active model — see the ramp note in data/models.js. */
+const shadeOf = s => {
+  const r = MODEL().shades;
+  return r.find(x => s >= x.min) || r[r.length - 1];
+};
 
 /* The ramp itself, drawn in the legend — the encoding is only usable if it is
    stated somewhere, and a reader should not have to infer that darker means
@@ -4695,32 +6048,40 @@ const shadeOf = s => SHADES.find(x => s >= x.min) || SHADES[SHADES.length - 1];
 const shadeLegend = () => `
   <span class="li ramp">
     <b>Relevance</b>
-    <span class="rmp">${[...SHADES].reverse().map(s =>
+    <span class="rmp">${[...MODEL().shades].reverse().map(s =>
       `<i style="--f:${s.fill}%;--dk:${s.dark}%" title="score ${s.label}"></i>`).join('')}</span>
     <span class="rmp-x">paler = less relevant to this audience</span>
   </span>`;
 
-const bandLegend = () => BANDS.filter(b => b.id !== 'skip').map(b => {
-  const dim = b.id === 'watch' && !S.showWatch;
-  return `<span class="li${dim ? ' dim' : ''}">
-    <span class="key ${b.id}"></span>
-    <b>${b.label}</b> ${b.id === 'anchor' ? '72+' : b.id === 'play' ? '56–71' : '40–55'} · ${b.note}
-    ${dim ? '<i>— switch Watch on to draw these</i>' : ''}
-  </span>`;
-}).join('');
+/* The cuts are read off the active model's own bands rather than typed in.
+   They are not the same in both — the response model's Anchor starts at 70,
+   not 72 — and a legend quoting the other model's numbers is a legend that
+   lies about the board underneath it. */
+const bandLegend = () => {
+  const bands = MODEL().bands;
+  return bands.filter(b => b.id !== 'skip').map((b, i) => {
+    const dim = b.id === 'watch' && !S.showWatch;
+    const above = bands[i - 1];
+    const range = above ? `${b.min}–${above.min - 1}` : `${b.min}+`;
+    return `<span class="li${dim ? ' dim' : ''}">
+      <span class="key ${b.id}"></span>
+      <b>${b.label}</b> ${range} · ${b.note}
+      ${dim ? '<i>— switch Watch on to draw these</i>' : ''}
+    </span>`;
+  }).join('');
+};
 
 /* ============================================================
    THE FIVE COMPONENTS, WRITTEN OUT
    Shared vocabulary rather than one view's furniture: wherever a score is
    shown, the thing that produced it has to be openable.
    ============================================================ */
-const PART_META = {
-  aff:   { k: 'Affinity',      c: '#1A67D2', w: WEIGHTS.aff,   why: 'Category index for this audience, sharpened by any entity read.' },
-  scale: { k: 'Scale',         c: '#0B7A67', w: WEIGHTS.scale, why: 'How many of them actually show up.' },
-  act:   { k: 'Actionability', c: '#946200', w: WEIGHTS.act,   why: 'Whether there is a door in \u2014 a distributor, a sponsorship.' },
-  tim:   { k: 'Timing',        c: '#6D5DE0', w: WEIGHTS.tim,   why: "The sheet's own date confirmation." },
-  cong:  { k: 'Congestion',    c: '#C5221F', w: null,          why: 'Everything else fighting for the same week. A tax, not a term.' }
-};
+/* Drawn from the active model rather than declared here. Two models with
+   different components cannot share a hard-coded panel, and a panel that
+   names a component the board is not computing is worse than no panel. */
+const partMeta = () => Object.fromEntries(MODEL().parts.map(p => [p.key, {
+  k: p.name, c: p.color, w: p.weight, note: p.note || null, why: p.why
+}]));
 
 /* With several audiences selected, affinity is a combination \u2014 so the panel
    shows what it was combined FROM. A blended figure nobody can take apart is
@@ -4741,12 +6102,25 @@ function affByBlock(m) {
 }
 
 function partsBlock(m) {
-  return affByBlock(m) + `<div class="parts">${Object.entries(PART_META).map(([k, p]) => `
+  return affByBlock(m) + `<div class="parts">${Object.entries(partMeta()).map(([k, p]) => {
+    const v = m.parts[k];
+    /* A component with nothing behind it draws as an absence, not as a zero.
+       The response model genuinely has no fandom reading for a public holiday
+       — the cut carries no holiday battery — and a bar at 0 would say the
+       audience is indifferent, which is a finding nobody made. */
+    if (v == null) return `
+      <div class="part none">
+        <div class="pk"><span>${p.k}</span><b>—</b></div>
+        <div class="pb"><i style="width:0"></i></div>
+        <div class="pw">Not asked in this cut, so it is left out and the other components carry its weight.</div>
+      </div>`;
+    return `
     <div class="part">
-      <div class="pk"><span>${p.k}${p.w ? ` \u00b7 ${Math.round(p.w * 100)}%` : ' \u00b7 \u221225% max'}</span><b>${Math.round(m.parts[k])}</b></div>
-      <div class="pb"><i style="width:${Math.round(m.parts[k])}%;--pc:${p.c}"></i></div>
+      <div class="pk"><span>${p.k}${p.w ? ` \u00b7 ${Math.round(p.w * 100)}%` : (p.note ? ` \u00b7 ${p.note}` : '')}</span><b>${Math.round(v)}</b></div>
+      <div class="pb"><i style="width:${Math.round(v)}%;--pc:${p.c}"></i></div>
       <div class="pw">${p.why}</div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  }).join('')}</div>`;
 }
 
 /* ============================================================
@@ -4797,10 +6171,15 @@ function drawRibbon() {
                stays for the outline weight, but it no longer decides the fill —
                three bands drew as two visible shades, which threw away most of
                the range a reader could have seen. */
-            const sh = shadeOf(b.m.score);
-            return `<button class="bar ${b.m.band.id}${sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
-              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${sh.fill}%;--dk:${sh.dark}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
-              title="${esc(b.m.name)} — ${b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
+            /* No score is not a low score. Under the response model an
+               audience with no research cut behind it cannot be scored at
+               all, and the bar says so by drawing hollow rather than pale —
+               pale already means "scored, and low". */
+            const sh = shadeOf(b.m.score == null ? 0 : b.m.score);
+            const nd = b.m.score == null;
+            return `<button class="bar ${nd ? 'nodata' : b.m.band.id}${!nd && sh.lit ? ' lit' : ''}${tick ? ' tick' : ''}"
+              data-id="${b.m.id}" style="--c:${CAT_COLOR[c]};--f:${nd ? 0 : sh.fill}%;--dk:${sh.dark}%;left:${pct(b.s)}%;width:${pct(b.w)}%"
+              title="${esc(b.m.name)}${nd ? ' — not scored: no research cut for this audience' : ' — ' + b.m.score}">${tick ? '' : esc(b.m.name)}</button>`;
           }).join('')}</div>`).join('')}
         </div>
       </div>`;
@@ -4859,7 +6238,7 @@ function drawRibbon() {
      inside a total. */
   const weeks = weekAxis();
   const load = weeks.map(w => visible().filter(m => weekKey(m.start < WIN_START ? WIN_START : m.start) === w.key)
-    .reduce((s, m) => s + m.parts.aff, 0));
+    .reduce((s, m) => s + (m.parts[MODEL().driver] ?? 0), 0));
   const lMax = Math.max(1, ...load);
 
   /* TODAY. Drawn only when today is inside the planning window — the window
@@ -5525,7 +6904,10 @@ function openPop(m, anchor) {
     <div class="t">${esc(m.name)}</div>
     <div class="meta"><span class="dot" style="--c:${CAT_COLOR[m.cat]}"></span>${esc(m.cat)}${m.plat ? ' · ' + esc(m.plat) : ''}<br>
       ${fmtDate(m.start)}${m.end !== m.start ? ' → ' + fmtDate(m.end) : ''} · ${esc(m.conf)}</div>
-    <div class="row"><span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span></div>
+    <div class="row">${m.score == null
+      ? `<span class="sc none">—</span><span class="bandpill nodata">Not scored</span>`
+      : `<span class="sc">${m.score}</span><span class="bandpill ${m.band.id}">${m.band.label}</span>` +
+        (m.quadrant ? `<span class="quadpill" style="--c:${m.quadrant.color}" title="${esc(m.quadrant.note)}">${esc(m.quadrant.label)}</span>` : '')}</div>
     ${partsBlock(m)}
     ${reachNote(m)}
     ${m.notes ? `<div class="note">${esc(m.notes)}</div>` : ''}
@@ -5569,7 +6951,7 @@ async function writeTheRead(m, btn) {
       action: 'read-moment',
       moment: { name: m.name, cat: m.cat, start: m.start, end: m.end, conf: m.conf, plat: m.plat },
       audience: { name: audience().name, def: audience().def },
-      score: m.score, band: m.band.label, parts: m.parts
+      score: m.score, band: m.band ? m.band.label : 'not scored', parts: m.parts
     });
     box.innerHTML = `<p class="rdtxt">${esc(j.read)}</p>
       <button type="button" class="copy" data-copy="1">Copy</button>`;
@@ -5590,7 +6972,9 @@ function render() {
      not somewhere you went, and a back button that walks through every rail
      click is worse than one that leaves the page. */
   try {
-    const q = S.auds.join('+') + (multi() ? '/' + S.mode : '');
+    const q = S.auds.join('+')
+      + (multi() ? '/' + S.mode : '')
+      + (S.model !== DEFAULT_MODEL ? '/' + S.model : '');
     history.replaceState(null, '', '#/' + q);
   } catch (e) { void e; }
   renderRail();
@@ -5615,22 +6999,17 @@ function render() {
    leading zero is noise in a table where every value is below one. */
 const shr = w => w.toFixed(2).replace(/^0/, '');
 
-const METH_PARTS = [
-  { name: 'Affinity', w: WEIGHTS.aff,
-    q: 'Does this audience care?',
-    from: 'The audience’s index for the moment’s category, sharpened by an entity override where one matches. The only term that varies by audience.' },
-  { name: 'Scale', w: WEIGHTS.scale,
-    q: 'How many of them show up?',
-    from: `Measured reach for sport — ${REACH_SOURCE.name}, ${REACH_SOURCE.edition}. A keyword ladder over the moment’s name everywhere else.` },
-  { name: 'Actionability', w: WEIGHTS.act,
-    q: 'Is there a door in?',
-    from: 'A named distributor is a door; a declared sponsorship is an open one. A moment with neither is something you talk around.' },
-  { name: 'Timing', w: WEIGHTS.tim,
-    q: 'Is the date firm enough to plan against?',
-    from: 'The sheet’s own Date Confirmation column. A window is plannable; TBD scores 15, so a placeholder date can never read as buyable.' }
-];
+/* Read from the active model, not retyped. The panel's whole claim is that it
+   describes the formula the board just ran, and two models cannot share one
+   hard-coded list of components without one of them being described wrongly. */
+const methParts = () => MODEL().parts.map(x => ({
+  name: x.name, w: x.weight, q: x.q, from: x.why, note: x.note
+}));
 
 function openMethodology() {
+  const cur = MODEL();
+  const parts = methParts();
+  const weighted = parts.filter(x => x.w);
   const el = document.getElementById('meth');
   el.hidden = false;
   el.innerHTML = `
@@ -5638,67 +7017,230 @@ function openMethodology() {
     <div class="meth-card" role="dialog" aria-modal="true" aria-labelledby="methTitle">
       <div class="meth-hd">
         <div>
-          <div class="meth-kick">Methodology</div>
-          <h2 id="methTitle">How a moment’s relevance is worked out</h2>
+          <div class="meth-kick">Methodology \u00b7 ${esc(cur.label)}</div>
+          <h2 id="methTitle">How a moment\u2019s relevance is worked out</h2>
         </div>
-        <button class="meth-x" data-meth-close="1" type="button" aria-label="Close">×</button>
+        <button class="meth-x" data-meth-close="1" type="button" aria-label="Close">\u00d7</button>
       </div>
 
       <div class="meth-bd">
         <p class="meth-lede">Relevance is never a bare number. It is
-          <b>four named components and one multiplier</b>, each answering a question a
-          planner would otherwise have to ask out loud — so you can say <i>which part</i>
-          of a score is wrong rather than just distrusting the total.</p>
+          <b>${weighted.length} named components</b>${parts.length > weighted.length
+            ? ` and ${parts.length - weighted.length === 1 ? 'one term that works differently' : 'two terms that work differently'}` : ''},
+          each answering a question a planner would otherwise have to ask out loud — so you
+          can say <i>which part</i> of a score is wrong rather than just distrusting the total.</p>
 
-        <div class="meth-eq">score = ( <b>affinity</b>×${shr(WEIGHTS.aff)} + <b>scale</b>×${shr(WEIGHTS.scale)} + <b>actionability</b>×${shr(WEIGHTS.act)} + <b>timing</b>×${shr(WEIGHTS.tim)} )
-        × ( 1 − <b>congestion</b>/100 × ${shr(CONGESTION_MAX)} )</div>
+        <div class="meth-eq">score = ${cur.id === 'affinity'
+          ? `( ${weighted.map(x => `<b>${esc(x.name.toLowerCase())}</b>\u00d7${shr(x.w)}`).join(' + ')} )
+             \u00d7 ( 1 \u2212 <b>congestion</b>/100 \u00d7 ${shr(CONGESTION_MAX)} )`
+          : `${weighted.map(x => `<b>${esc(x.name.toLowerCase())}</b>\u00d7${shr(x.w)}`).join(' + ')}
+             <br>feasibility = ${Object.entries(cur.feasWeights).map(([k, v]) =>
+               `<b>${k === 'quiet' ? 'quiet week' : k === 'tim' ? 'timing' : 'access'}</b>\u00d7${shr(v)}`).join(' + ')}`}</div>
 
         <div class="meth-rows">
-          ${METH_PARTS.map(x => `
+          ${parts.map(x => `
             <div class="meth-r">
               <div class="meth-rn">${esc(x.name)}</div>
               <div class="meth-rq">${esc(x.q)}<i>${esc(x.from)}</i></div>
-              <div class="meth-rw">${shr(x.w)}</div>
+              <div class="meth-rw">${x.w ? shr(x.w) : esc(x.note || '\u2014')}</div>
             </div>`).join('')}
-          <div class="meth-r">
-            <div class="meth-rn">Congestion</div>
-            <div class="meth-rq">How loud is everything else that week?<i>Same-category rivals count four times an unrelated moment. It multiplies rather than subtracts, because it is a tax on a moment and not a fault in it — so a moment in the loudest week of the year is worth less, but never drops out of the running.</i></div>
-            <div class="meth-rw">−${Math.round(CONGESTION_MAX * 100)}%</div>
-          </div>
+          ${cur.id === 'affinity' ? '' : `
+            <div class="meth-r">
+              <div class="meth-rn">Congestion</div>
+              <div class="meth-rq">How loud is everything else that week?<i>Inside feasibility rather than against the score. Nobody was surveyed about how busy a week is, so under this model it cannot be a term \u2014 but it still decides whether a moment is worth entering.</i></div>
+              <div class="meth-rw">in feas.</div>
+            </div>`}
         </div>
 
         <div>
           <div class="meth-h" style="margin-bottom:9px">Bands, not numbers — nobody acts on 71 versus 68</div>
           <div class="meth-bands">
-            ${BANDS.map(b => `
+            ${cur.bands.map(b => `
               <div class="meth-band" style="--c:${b.color}">
                 <b>${esc(b.label)}</b><span>${b.min}+</span> ${esc(b.note)}
               </div>`).join('')}
           </div>
         </div>
 
+        ${cur.id === 'response' ? `
+        <div>
+          <div class="meth-h" style="margin-bottom:9px">And the second axis crosses them into four</div>
+          <div class="meth-bands">
+            ${cur.quadrants.map(q => `
+              <div class="meth-band" style="--c:${q.color}">
+                <b>${esc(q.label)}</b><span></span> ${esc(q.note)}
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${cur.id === 'affinity' ? `
         <div class="meth-note">
-          <div class="meth-h">What is still a placeholder</div>
-          <p>The six built-in audiences carry <b>invented</b> category indices — the right
+          <div class="meth-h">What is measured here and what is not</div>
+          <p>The four <b>official targets</b> carry a real cut — ${esc(YOUGOV_SOURCE.name)},
+            ${YOUGOV_SOURCE.banks} question banks — and are marked <b>Cut</b> on the rail.
+            Three of the twelve lanes have no battery in it (holidays, national days,
+            heritage) and sit at par for every audience rather than being guessed at.</p>
+          <p>The six <b>popular</b> audiences carry <b>invented</b> category indices — the right
             shape, none of it true. Scale outside sport is a keyword ladder over the
-            moment’s name, not a reach figure.</p>
+            moment\u2019s name, not a reach figure.</p>
           <p>Anything you define yourself is either read from data you paste in, or
             <b>estimated by Gemini</b> and labelled as such everywhere it appears.</p>
-        </div>
+        </div>` : `
+        <div class="meth-note">
+          <div class="meth-h">Where each number came from</div>
+          <p>Every figure is a ${esc(YOUGOV_SOURCE.name)} response, re-based onto the whole
+            audience. ${YOUGOV_SOURCE.conditional.length} of the
+            ${YOUGOV_SOURCE.banks} question banks were only put to people who qualified —
+            sponsorship actions only to those who had noticed a sponsor — so their indices
+            are rebuilt from the projected counts rather than taken as printed.</p>
+          <p>Fandom is read at the sharpest rung available and <b>the rung is reported</b> on
+            every moment: the named property, the sub-topic, or the lane. Reachability is
+            measured across the whole audience rather than across the part of it that
+            follows the moment, because this export does not carry that cross.</p>
+        </div>`}
 
         <div class="meth-note next">
-          <div class="meth-h">What changes when the real audience cuts land</div>
-          <p>The model moves to three dimensions, every one of them a measured survey
-            response: <b>Fandom ${shr(0.50)}</b> · <b>Reachability ${shr(0.30)}</b> ·
-            <b>Receptivity ${shr(0.20)}</b>.</p>
-          <p>Date confirmation, inventory and week congestion come out of the score
-            altogether and become a second <b>feasibility</b> axis — so a moment the
-            audience loves with no way in reads as <b>“find a door”</b> rather than
-            quietly sinking down the board.</p>
+          <div class="meth-h">Reading the other model</div>
+          <p>${esc(MODELS.find(m => m.id !== cur.id).label)} asks a different question:
+            ${esc(MODELS.find(m => m.id !== cur.id).gist)}</p>
+          <p>The toggle is at the top of the rail, and
+            <b>“Which should I use?”</b> under it sets the two side by side.</p>
         </div>
       </div>
     </div>`;
   el.querySelector('.meth-x').focus();
+}
+
+/* ============================================================
+   WHICH MODEL SHOULD I USE
+   ============================================================
+
+   Ed's brief for this panel was "explain each formula simply and without
+   jargon", and the hard part of that is not vocabulary — it is resisting the
+   urge to sell one of them. Both are defensible; they answer different
+   questions and they have different weaknesses, and a reader who leaves here
+   knowing only which one we prefer has been told nothing they can use.
+
+   So: what each one asks, in a sentence. What it is good at. What it is bad
+   at. When to pick it. The numbers are read from the models themselves, the
+   same as the methodology panel, so this cannot drift from what the board is
+   actually computing. */
+
+const MODEL_HELP = {
+  affinity: {
+    line: 'How much does this audience like this kind of thing — and is the moment big, buyable and uncrowded enough to be worth it?',
+    plain: [
+      ['It starts with taste.', 'Every audience has a score for each of the twelve lanes — sport, music, gaming and so on — where 100 means "no different from anybody else". A sports audience might sit at 170 on sport and 85 on fashion. That taste score is half the answer.'],
+      ['Then it asks four things about the moment itself.', 'How big is it. Whether there is a way to buy into it. Whether the date is firm enough to plan against. And how much else is happening that week, which is taken off the total rather than added to it.'],
+      ['The four are the same for everybody.', 'Only taste changes when you switch audience. That is deliberate: it means the board reorders because the audience genuinely wants different things, not because the model quietly reweighted itself.']
+    ],
+    good: [
+      'Works for every audience on the rail, including the estimated ones and anything you define yourself — so one board can hold them all side by side.',
+      'The big obvious moments rise to the top, because size is part of the score. If you are looking for tentpoles, this finds them.',
+      'Every component is something a planner already argues about, so a score you disagree with can be taken apart into the part you disagree with.'
+    ],
+    bad: [
+      'Half the score is not about the audience at all. Two very different audiences can end up with fairly similar boards, because a big, firmly-dated, buyable moment wins three terms out of four no matter who is watching.',
+      '"Size" outside sport is inferred from the moment\u2019s name rather than measured — the words "World Cup" score higher than the words "Album Release", which is a guess wearing a number.',
+      'A moment the audience would love but that has no obvious way in gets quietly marked down and disappears, instead of being flagged as something to go and build.'
+    ],
+    when: 'Use it for the first pass, for any board that mixes real and estimated audiences, and whenever you need the year\u2019s tentpoles ranked.'
+  },
+  response: {
+    line: 'Do these people actually follow this, can we reach them where it lives, and will they welcome a brand turning up?',
+    plain: [
+      ['Everything scored here is an answer somebody gave.', 'Nothing is inferred from the moment\u2019s name or its size. If nobody was asked, it does not score — it is left out and the remaining parts carry the weight.'],
+      ['Do they follow it? — half the score.', 'Read at the sharpest level available: the survey asked about this exact thing (the NFL Draft), or about this kind of thing (fighting games, horror films), or only about the lane. It combines how strongly they index with how many of them actually take part, so a small fervent niche cannot outrank a mainstream passion.'],
+      ['Can we reach them there? — three tenths.', 'Every moment has channels it lives on, and every audience has channels it uses heavily. This is the overlap — again crossed with how many of them are really on that channel, not just how distinctive it is.'],
+      ['Will they welcome a brand? — two tenths.', 'Whether they say advertising is worth their time, and whether they have actually done something about a sponsorship. This is a fact about the audience rather than the moment, so it lifts or lowers a whole board rather than reordering one.'],
+      ['Timing and access come out of the score entirely.', 'They move to a second axis called feasibility, and the two cross. A moment scoring high on relevance with nothing to buy no longer sinks quietly — it reads as "find a door", which is a brief for a partnership rather than a moment you never noticed you dropped.']
+    ],
+    good: [
+      'Every number traces back to a person answering a question. Nothing is a proxy for anything.',
+      'Audiences separate much harder, because all three parts vary by audience instead of just one.',
+      'The moments you cannot currently buy stop hiding. They come out as their own category with a name that says what to do about them.'
+    ],
+    bad: [
+      'Only works for the four audiences with a research cut behind them. The estimated ones cannot be scored at all, and a board mixing the two will be part empty.',
+      'It cannot see seasonality. A survey finds the same football fans in June as in November, so a moment out of season reads exactly like one in season.',
+      'Three lanes \u2014 holidays, national days, heritage months \u2014 have no questions behind them in this cut, so they score on reach and receptivity only and say so.',
+      'Reachability is measured across the whole audience rather than across the part of it that cares, because the export does not carry that cross. It slightly flatters moments on broadly popular channels.'
+    ],
+    when: 'Use it once you have narrowed to the PA\u2019s own targets, when you need to defend a choice with research, or when you want to find the moments worth building an access route into.'
+  }
+};
+
+function openModelHelp() {
+  const el = document.getElementById('modelHelp');
+  el.hidden = false;
+  const card = m => {
+    const h = MODEL_HELP[m.id];
+    const on = m.id === S.model;
+    return `
+      <div class="mh-card${on ? ' on' : ''}">
+        <div class="mh-hd">
+          <b>${esc(m.label)}</b>
+          ${on ? '<span class="mh-now">You are reading this one</span>' : `<button class="mh-pick" type="button" data-model="${m.id}" data-help-close="1">Switch to it</button>`}
+        </div>
+        <p class="mh-line">${esc(h.line)}</p>
+        <div class="mh-eq">${m.parts.filter(p => p.weight).map(p =>
+            `<b>${esc(p.name.toLowerCase())}</b>&nbsp;\u00d7&nbsp;${p.weight.toFixed(2).replace(/^0/, '')}`).join(' &nbsp;+&nbsp; ')}${
+            m.parts.some(p => !p.weight) ? ` &nbsp;\u2014 then ${m.parts.filter(p => !p.weight).map(p => `<b>${esc(p.name.toLowerCase())}</b>`).join(' and ')}` : ''}</div>
+
+        <div class="mh-h">How it works</div>
+        ${h.plain.map(([t, b]) => `<p class="mh-p"><b>${esc(t)}</b> ${esc(b)}</p>`).join('')}
+
+        <div class="mh-cols">
+          <div class="mh-col good">
+            <div class="mh-h">What it is good at</div>
+            <ul>${h.good.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          </div>
+          <div class="mh-col bad">
+            <div class="mh-h">Where it falls down</div>
+            <ul>${h.bad.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          </div>
+        </div>
+
+        <p class="mh-when"><b>Reach for it when</b> ${esc(h.when)}</p>
+      </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="meth-scrim" data-help-close="1"></div>
+    <div class="meth-card wide" role="dialog" aria-modal="true" aria-labelledby="mhTitle">
+      <div class="meth-hd">
+        <div>
+          <div class="meth-kick">Relevance model</div>
+          <h2 id="mhTitle">Two ways to read the same year</h2>
+        </div>
+        <button class="meth-x" data-help-close="1" type="button" aria-label="Close">\u00d7</button>
+      </div>
+      <div class="meth-bd">
+        <p class="meth-lede">Both models score every moment out of 100 and sort the year by the
+          answer. They disagree about <b>what should count</b>, and that disagreement is worth
+          understanding before you take either board to a client.</p>
+        <div class="mh-grid">${MODELS.map(card).join('')}</div>
+        <div class="meth-note">
+          <div class="meth-h">The short version</div>
+          <p><b>${esc(MODELS[0].label)}</b> asks how much they like it and whether it is worth buying.
+            <b>${esc(MODELS[1].label)}</b> asks what they told a researcher, and refuses to guess about
+            anything else.</p>
+          <p>The first works everywhere and is easier to argue with. The second is better
+            evidence and only covers the four targets with a
+            ${esc(YOUGOV_SOURCE.name)} cut behind them. Neither is the right answer on its own,
+            which is why the toggle is at the top of the rail rather than buried in a setting.</p>
+        </div>
+      </div>
+    </div>`;
+  el.querySelector('.meth-x').focus();
+}
+
+function closeModelHelp() {
+  const el = document.getElementById('modelHelp');
+  el.hidden = true;
+  el.innerHTML = '';
+  const b = document.getElementById('modelHelpBtn');
+  if (b) b.focus();
 }
 
 function closeMethodology() {
@@ -5709,12 +7251,29 @@ function closeMethodology() {
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close]');
+  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-model],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close],#modelHelpBtn,[data-help-close]');
   if (!t) { closePop(); return; }
 
   /* Tested before the popover-closing paths below and before the audience
      toggle: the i sits inside the row, so without its own branch a click on it
      would both open the panel and switch the audience on or off. */
+  /* Tested before the close handler: the "Switch to it" button inside the
+     comparison carries BOTH data-model and data-help-close, and it has to do
+     the switch on the way out rather than only shutting the panel. */
+  if (t.dataset.model) {
+    const next = t.dataset.model;
+    if (t.dataset.helpClose) closeModelHelp();
+    if (next !== S.model && MODELS.some(m => m.id === next)) {
+      S.model = next;
+      recompute();
+      render();
+    }
+    return;
+  }
+
+  if (t.id === 'modelHelpBtn') { openModelHelp(); return; }
+  if (t.dataset.helpClose) { closeModelHelp(); return; }
+
   if (t.dataset.info) {
     const a = ROSTER().find(x => x.id === t.dataset.info);
     /* A second click on the same i closes it, rather than redrawing the same
@@ -5824,6 +7383,7 @@ document.addEventListener('keydown', e => {
      closing a tooltip while a half-filled dialog sits behind it would read as
      the key having done nothing. */
   if (draft) return closeAudPanel();
+  if (!document.getElementById('modelHelp').hidden) return closeModelHelp();
   if (!document.getElementById('meth').hidden) return closeMethodology();
   closePop();
 });
@@ -5887,7 +7447,7 @@ function boardDigest() {
             .reduce((s, m) => s + m.score, 0)
   })).sort((x, y) => y.total - x.total);
 
-  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score} ${m.band.label}`;
+  const line = m => `${m.start} · ${m.name} · ${m.cat} · ${m.score == null ? 'not scored' : m.score + ' ' + m.band.label}`;
   const shown = S.showWatch ? 'Anchor, Play and Watch' : 'Anchor and Play only';
 
   return [
@@ -5908,7 +7468,7 @@ function boardDigest() {
     ...v.slice(0, 25).map(m => '  ' + line(m)),
     ``,
     `THE UNCLAIMED MOMENTS — high affinity, quiet week:`,
-    ...unclaimed(v).map(m => `  ${m.start} · ${m.name} · affinity ${Math.round(m.parts.aff)}, congestion ${Math.round(m.parts.cong)}`),
+    ...unclaimed(v.map(m => ({ ...m, parts: { ...m.parts, aff: m.parts[MODEL().driver] ?? 0 } }))).map(m => `  ${m.start} · ${m.name} · ${MODEL().parts[0].name.toLowerCase()} ${Math.round(m.parts[MODEL().driver] ?? 0)}, congestion ${Math.round(m.parts.cong)}`),
     ``,
     `BUSIEST WEEKS: ${load.slice(0, 3).map(w => `${w.label} (${Math.round(w.total)})`).join(', ')}.`,
     `QUIETEST WEEKS WITH ANYTHING IN THEM: ${load.filter(w => w.total > 0).slice(-3)
