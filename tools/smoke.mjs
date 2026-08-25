@@ -29,14 +29,22 @@ for (const id of ['audList', 'audDef', 'audMode', 'modelTog', 'catStrip', 'railF
    inside a handler. Recording them lets a synthetic click walk the real path:
    selector, branch, render. */
 const clicks = [];
+const hovers = [];
+/* Everything openTip() and openPop() hand to the document. */
+const appended = [];
 
 globalThis.document = {
   documentElement: { dataset: {} },
-  body: { appendChild() {} },
+  body: { appendChild(el) { appended.push(el); } },
   getElementById: id => els.get(id) || (els.set(id, mk(id)), els.get(id)),
   querySelectorAll: () => [],
   createElement: () => mk('new'),
-  addEventListener(type, fn) { if (type === 'click') clicks.push(fn); }
+  addEventListener(type, fn) {
+    if (type === 'click') clicks.push(fn);
+    /* The hover box is built and appended inside a mouseover handler, so
+       a stub that swallows the listener leaves it untestable here. */
+    if (type === 'mouseover') hovers.push(fn);
+  }
 };
 globalThis.window = { innerWidth: 1600, innerHeight: 900, addEventListener() {} };
 globalThis.matchMedia = () => ({ matches: false });
@@ -558,6 +566,88 @@ for (const c of CASES) {
     const nm = `audience separation · ${model.id}`;
     if (problems.length) { fail++; console.log(`FAIL  ${nm}: ${problems.join('; ')}`); }
     else console.log(`ok    ${nm.padEnd(24)} worst pair ${worst}/10 (${pair || 'n/a'})`);
+  }
+}
+
+/* ---------- the panel definition on hover ---------- */
+/* WHY THIS IS A TEST AND NOT A LOOK.
+
+   data/yougov.js is rewritten whole by tools/build-yougov.mjs, and CRITERIA
+   lives in data/audiences.js keyed by id. Rename a target in the generator,
+   or add a fifth, and `CRITERIA[a.id]` quietly returns undefined: no throw, no
+   warning, just a target whose hover box has stopped existing. Nobody notices
+   a box that does not appear. So the check is that EVERY official target has
+   one, and that every clause of it reaches the markup — a truncated box would
+   pass a length test while dropping the HHI floor or half an OR list.
+
+   Driven through the real delegated listener, not by calling the builder: the
+   guard that stops the box rebuilding on every badge crossed inside a row it
+   already describes is in that path, and calling openTip() directly would
+   walk straight past it. */
+{
+  els.get('body').innerHTML = '';
+  globalThis.location.hash = `#/${OFFICIAL[0].id}`;
+  await import('../app.js?tip=1');
+
+  /* A row as the rail writes it: the listener asks for .aud[data-aud], reads
+     the id off the dataset, and then measures the row to place the box beside
+     it — so the rect is part of what the stub owes it, not decoration. */
+  const fireHover = id => {
+    appended.length = 0;
+    const t = {
+      dataset: { aud: id },
+      getBoundingClientRect: () => ({ left: 12, top: 200, right: 300, bottom: 240 })
+    };
+    t.closest = sel => (sel === '.aud[data-aud]' ? t : null);
+    hovers[hovers.length - 1]({ target: t });
+    return appended.find(el => el.className === 'aud-tip') || null;
+  };
+
+  for (const a of OFFICIAL) {
+    checked++;
+    const problems = [];
+    const nm = `hover definition · ${a.id}`;
+
+    if (!Array.isArray(a.criteria) || !a.criteria.length) {
+      fail++;
+      console.log(`FAIL  ${nm}: no panel definition — CRITERIA in data/audiences.js has no entry for "${a.id}"`);
+      continue;
+    }
+
+    const tip = fireHover(a.id);
+    if (!tip) problems.push('hovering the row appended no .aud-tip');
+    else {
+      const html = tip.innerHTML;
+      if (!html.includes(a.full)) problems.push('box does not name the target');
+      /* Every clause, not the first one. The YouTube TV target is six clauses
+         long and the last two carry the OR lists nobody would miss by eye. */
+      for (const c of a.criteria) {
+        /* Compared against the same escaping the rail applies, so a curly
+           quote or an ampersand in the PA's wording fails the clause rather
+           than the test. */
+        const esc = c.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        if (!html.includes(esc)) problems.push(`clause missing: "${c.slice(0, 40)}…"`);
+      }
+      if (/undefined|NaN|\[object Object\]/.test(html)) {
+        problems.push('rendered ' + (html.match(/undefined|NaN|\[object Object\]/) || [])[0]);
+      }
+    }
+
+    if (problems.length) { fail++; console.log(`FAIL  ${nm}: ${problems.join('; ')}`); }
+    else console.log(`ok    ${nm.padEnd(24)} ${a.criteria.length} clause${a.criteria.length === 1 ? '' : 's'}`);
+  }
+
+  /* The estimated audiences have no panel behind them, so they must draw NO
+     box at all — an empty frame that says nothing is worse than no frame,
+     because it looks like the definition is missing rather than absent. */
+  checked++;
+  const stray = AUDIENCES.filter(a => fireHover(a.id));
+  if (stray.length) {
+    fail++;
+    console.log(`FAIL  hover definition · estimated: ${stray.map(a => a.id).join(', ')} drew a box with nothing to put in it`);
+  } else {
+    console.log(`ok    ${'hover definition · estimated'.padEnd(24)} no box on the ${AUDIENCES.length} without a panel`);
   }
 }
 

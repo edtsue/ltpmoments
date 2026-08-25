@@ -1773,6 +1773,89 @@ function closeMethodology() {
   document.getElementById('methBtn').focus();
 }
 
+/* ============================================================
+   PANEL DEFINITION ON HOVER
+   ============================================================ */
+/* The official targets are the only rows whose definition is a boolean rather
+   than a sentence, and the sentence is the one the rail already shows. A
+   planner about to defend a board needs the boolean — "Adults 18–34" is
+   checkable, "the broadest of the four" is not — and needing it does not
+   justify a click and a full panel.
+
+   So: hover, and keyboard focus, because a hover box nobody can reach with a
+   keyboard is a box that is not there for half the ways this rail is used.
+
+   ITS OWN ELEMENT, NOT THE SHARED POPOVER. render() and every outside click
+   close popEl, and the rail re-renders on the click that selects a row — a
+   tooltip sharing that lifecycle would blink out from under the pointer that
+   was reading it. The ⓘ panel stays what it was: the deep one, with the
+   twelve indices. This is the reminder. */
+let tipEl = null;
+
+function closeTip() {
+  if (tipEl) { tipEl.remove(); tipEl = null; }
+}
+
+/* To the right of the rail by preference. Below the row — where placePop()
+   puts things — would cover the next three audiences, which is exactly the
+   comparison the reader is in the middle of making. */
+function placeTip(anchor) {
+  const r = anchor.getBoundingClientRect();
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  let x = r.right + 10;
+  if (x + w > window.innerWidth - 12) x = Math.max(12, r.left - w - 10);
+  const y = Math.max(12, Math.min(window.innerHeight - h - 12, r.top - 6));
+  tipEl.style.left = x + 'px';
+  tipEl.style.top = y + 'px';
+}
+
+function openTip(a, anchor) {
+  closeTip();
+  if (!a || !a.criteria || !a.criteria.length) return;
+  tipEl = document.createElement('div');
+  tipEl.className = 'aud-tip';
+  tipEl.setAttribute('role', 'tooltip');
+  tipEl.dataset.forAud = a.id;
+  /* Numbered and stacked rather than run together in a paragraph: the clauses
+     are ANDed, and an AND buried in prose next to six ORs is an AND nobody
+     reads. The joiner is drawn by CSS between the items so it cannot drift
+     out of step with the list. */
+  tipEl.innerHTML = `
+    <div class="tip-t">${esc(a.full || a.name)}</div>
+    <div class="tip-k">Panel definition — all of the following</div>
+    <ol class="tip-c">${a.criteria.map(c => `<li>${esc(c)}</li>`).join('')}</ol>
+    <div class="tip-s">${esc(YOUGOV_SOURCE.name)} \u00b7 ${esc(YOUGOV_SOURCE.cut)}</div>`;
+  document.body.appendChild(tipEl);
+  placeTip(anchor);
+}
+
+const audRow = el => el && el.closest ? el.closest('.aud[data-aud]') : null;
+
+/* mouseover rather than mouseenter: one listener on the document beats one per
+   row on a list that is rebuilt on every render. The same-row guard is what
+   stops it rebuilding the box each time the pointer crosses a badge inside
+   the row it is already describing. */
+document.addEventListener('mouseover', e => {
+  const t = audRow(e.target);
+  if (!t) return closeTip();
+  if (tipEl && tipEl.dataset.forAud === t.dataset.aud) return;
+  const a = ROSTER().find(x => x.id === t.dataset.aud);
+  if (a && a.criteria && a.criteria.length) openTip(a, t); else closeTip();
+});
+
+document.addEventListener('focusin', e => {
+  const t = audRow(e.target);
+  if (!t) return closeTip();
+  const a = ROSTER().find(x => x.id === t.dataset.aud);
+  if (a && a.criteria && a.criteria.length) openTip(a, t);
+});
+
+/* The rail scrolls under a fixed box. Capture, because the scroll is on the
+   rail element rather than on the window and a bubbling listener never hears
+   it. */
+document.addEventListener('scroll', closeTip, { capture: true, passive: true });
+window.addEventListener('resize', closeTip, { passive: true });
+
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-aud],[data-pick-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-model],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close],#modelHelpBtn,[data-help-close]');
   if (!t) { closePop(); return; }

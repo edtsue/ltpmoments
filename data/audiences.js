@@ -146,6 +146,53 @@ export const AUDIENCES = [
    YouTube TV's live-sport audience is here because it does. Inventing a
    Students column out of the Gemini one would have been the same lie as
    leaving them all at par, only harder to see. */
+/* HOW EACH TARGET WAS ACTUALLY BUILT — the panel filter, verbatim.
+
+   The `def` above says what a target is like. This says what it IS: the
+   boolean the survey was cut on, in the PA's own words. A planner arguing
+   with a board needs the second one, because "Adults 18–34" and "the Search
+   product area's own 2026 target" are not the same claim and only one of
+   them can be checked.
+
+   Kept here rather than in data/yougov.js because that file is rewritten
+   whole by tools/build-yougov.mjs, and hand-authored copy in a generated
+   file is copy that disappears the next time the cut is rebuilt.
+
+   Each entry is a list of clauses joined by AND — the rail draws the AND
+   between them, so an OR only ever appears INSIDE a clause. Wording is the
+   PA's; only the OR lists are punctuated for reading. */
+export const CRITERIA = {
+  search26: ['Adults 18–34'],
+
+  gemini26: [
+    'School type currently attending: 2-year college, 4-year college, law school, '
+    + 'business school, medical school, other graduate program, trade/vocational, '
+    + 'or public school'
+  ],
+
+  seekers26: [
+    'Millennials — born 1981–1996',
+    '2 out of 3 statements agreed with: “I am not afraid of change” · '
+    + '“I tend to think outside the box” · “I’m always looking for new ideas '
+    + 'to get inspired”'
+  ],
+
+  /* Two definitions ANDed, which is why this one runs long: the avid-fan
+     self-description on its own would catch people who never watch, and the
+     consumption cut on its own would catch people who watch without caring. */
+  yttv2544: [
+    'Avid sports fan',
+    'Sports media consumption — live TV',
+    'Adults 25–44',
+    'HHI $50k+',
+    'Subscribed to cable, Fios or satellite TV — OR streaming services used: '
+    + 'Netflix, Amazon, Hulu, Disney+, HBO Max, Apple TV, Peacock, Paramount+, '
+    + 'ESPN, YouTube TV or Discovery+',
+    'Streaming services used to watch sports: Hulu with Live TV or Sling TV — '
+    + 'OR current customer of Hulu with Live TV or Sling TV'
+  ]
+};
+
 export const OFFICIAL = YOUGOV.map(a => ({
   group: 'official',
   id: a.id, pa: a.pa, name: a.name, full: a.full, def: a.def, size: a.size,
@@ -157,6 +204,10 @@ export const OFFICIAL = YOUGOV.map(a => ({
      the methodology say which three and why. */
   aff: a.aff,
   ent: a.ent,
+  /* The panel filter, for the rail's hover box. Absent rather than empty
+     when a target has none: the box is only drawn when there is something
+     verbatim to draw, never as an empty frame. */
+  criteria: CRITERIA[a.id] || null,
   /* Marked as measured rather than estimated. The rail carries no badge for
      these: "Est." says a number was guessed at, and the absence of it is the
      strongest claim the row can make. */
