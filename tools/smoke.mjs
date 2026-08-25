@@ -445,6 +445,21 @@ for (const c of CASES) {
     problems.push('the plain explanation quotes a decimal weight — it is meant to be in words');
   }
   if (!/class="mh-one"/.test(html)) problems.push('no one-sentence version');
+
+  /* THE VAGUE WORDING MUST NOT COME BACK. "Do they follow this?" shipped once
+     and told a reader nothing — it scans as social-media following and hides
+     that the term is two measurements rather than one. Asserted as an absence
+     because that is what the fix was. */
+  if (/do they follow/i.test(html)) {
+    problems.push('the heaviest term is described as "do they follow this", which explains nothing');
+  }
+  /* And the term that needed explaining has to carry its explanation and a
+     worked example — a scored quantity a reader cannot picture is one they
+     will not argue with, which is the opposite of the point. */
+  if (!/class="mh-q-n"/.test(html)) problems.push('no sub-line on the terms that need one');
+  if (!/class="mh-eg"/.test(html)) problems.push('no worked example anywhere in the panel');
+  const eg = (html.match(/class="mh-eg-r"/g) || []).length;
+  if (eg < 2) problems.push('the worked example does not contrast two audiences');
   for (const m of MODELS) {
     if (!html.includes(m.label)) problems.push(`${m.label} is not named`);
     if (!html.includes('class="mh-line"')) problems.push(`${m.label} has no plain-English summary line`);

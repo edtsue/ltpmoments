@@ -1556,7 +1556,8 @@ const MODEL_HELP = {
        to if you want it. */
     ask: 'Do they like this kind of thing — and is the moment worth buying?',
     counts: [
-      ['Does this audience like this sort of thing?', 'half the score'],
+      ['Does this audience like this sort of thing?', 'half the score',
+       'One number per lane — sport, music, gaming — where 100 means “no different from anybody else”. A sports audience might sit at 170 on sport and 85 on fashion.'],
       ['How big is the moment?', 'a fifth'],
       ['Is there a way to buy into it?', 'a bit'],
       ['Is the date firm enough to plan against?', 'a bit'],
@@ -1587,18 +1588,33 @@ const MODEL_HELP = {
   response: {
     ask: 'What did these people actually tell a researcher?',
     counts: [
-      ['Do they follow this?', 'half the score'],
-      ['Can we reach them where it lives?', 'three tenths'],
-      ['Will they welcome a brand turning up?', 'two tenths']
+      /* "Do they follow this?" was the first wording and it was too vague to
+         be useful — it reads as social-media following, and it hid the fact
+         that the term is TWO numbers rather than one. Say both. */
+      ['Are they into it — and more than most people are?', 'half the score',
+       'Two numbers, not one. <b>How many of them</b> said they are interested, and <b>whether that beats the national rate</b>. A small group who are wildly keen is not the same as a big group who quite like it, and either figure on its own picks the wrong moment.'],
+      ['Can we reach them where it lives?', 'three tenths',
+       'The channels the moment actually runs on, crossed with how heavily this audience uses each one.'],
+      ['Will they welcome a brand turning up?', 'two tenths',
+       'Whether they say advertising is worth their time, and whether they have ever acted on a sponsorship. A fact about the audience, so it lifts or lowers a whole board rather than reordering one.']
     ],
+    /* Two audiences, one moment, real numbers off the cut. Nothing explains a
+       scored term like watching it disagree with itself. */
+    eg: {
+      what: 'The NBA Finals',
+      rows: [
+        ['YTTV Sport 25–44', '62% of them are interested — about twice the national rate', 91],
+        ['Gemini ’26', '17% are, which is below the national rate', 35]
+      ]
+    },
     only: 'Nothing is inferred from a name or a size. If nobody was asked, it does not score. Everything about the <b>moment</b> — the date, whether you can buy in, how crowded the week is — comes out of the score and goes on a second scale called <b>feasibility</b>.',
     means: 'Good moments stop disappearing. A moment they would love with no obvious way in comes out in its own box marked <b>“find a door”</b> — go and build a route into this one — instead of quietly sinking.',
     weak: 'It only works for the four official targets, because they are the only ones with real research behind them. And it cannot see seasons: a survey finds the same football fans in June as in November.',
     pick: 'Once you are down to the PA’s own targets, or you need to defend a choice with evidence.',
-    line: 'Do these people actually follow this, can we reach them where it lives, and will they welcome a brand turning up?',
+    line: 'Are these people actually into this, can we reach them where it lives, and will they welcome a brand turning up?',
     plain: [
       ['Everything scored here is an answer somebody gave.', 'Nothing is inferred from the moment\u2019s name or its size. If nobody was asked, it does not score — it is left out and the remaining parts carry the weight.'],
-      ['Do they follow it? — half the score.', 'Read at the sharpest level available: the survey asked about this exact thing (the NFL Draft), or about this kind of thing (fighting games, horror films), or only about the lane. It combines how strongly they index with how many of them actually take part, so a small fervent niche cannot outrank a mainstream passion.'],
+      ['Are they into it, and more than most? — half the score.', 'Read at the sharpest level available: the survey asked about this exact thing (the NFL Draft), or about this kind of thing (fighting games, horror films), or only about the lane. It combines how strongly they index with how many of them actually take part, so a small fervent niche cannot outrank a mainstream passion.'],
       ['Can we reach them there? — three tenths.', 'Every moment has channels it lives on, and every audience has channels it uses heavily. This is the overlap — again crossed with how many of them are really on that channel, not just how distinctive it is.'],
       ['Will they welcome a brand? — two tenths.', 'Whether they say advertising is worth their time, and whether they have actually done something about a sponsorship. This is a fact about the audience rather than the moment, so it lifts or lowers a whole board rather than reordering one.'],
       ['Timing and access come out of the score entirely.', 'They move to a second axis called feasibility, and the two cross. A moment scoring high on relevance with nothing to buy no longer sinks quietly — it reads as "find a door", which is a brief for a partnership rather than a moment you never noticed you dropped.']
@@ -1680,11 +1696,23 @@ function openModelHelp() {
                 <i>${esc(q.ask)}</i>
               </div>
               <table class="mh-q-t">
-                ${q.counts.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}
+                ${q.counts.map(([k, v, note]) => `
+                  <tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>
+                  ${note ? `<tr class="mh-q-n"><td colspan="2">${note}</td></tr>` : ''}`).join('')}
               </table>
               <p class="mh-q-p">${q.only}</p>
               <p class="mh-q-p"><b>What that means:</b> ${q.means}</p>
               <p class="mh-q-p weak"><b>Its weak spot:</b> ${q.weak}</p>
+              ${q.eg ? `
+                <div class="mh-eg">
+                  <div class="mh-eg-h">${esc(q.eg.what)}, two audiences</div>
+                  ${q.eg.rows.map(([who, why, score]) => `
+                    <div class="mh-eg-r">
+                      <span class="mh-eg-w">${esc(who)}</span>
+                      <span class="mh-eg-y">${esc(why)}</span>
+                      <span class="mh-eg-s">${score}</span>
+                    </div>`).join('')}
+                </div>` : ''}
               <p class="mh-q-use"><b>Use it for</b> ${esc(q.pick)}</p>
             </div>`;
           }).join('')}

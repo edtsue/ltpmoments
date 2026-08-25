@@ -155,7 +155,7 @@ Every scored quantity is a measured survey response. Moment-side data selects
 
 | | | |
 |---|---|---|
-| **Fandom** | Do they follow this? | .50 |
+| **Fandom** | Are they into it, and more than most people are? | .50 |
 | **Reachability** | Can we get to them there? | .30 |
 | **Receptivity** | Will they welcome a brand? | .20 |
 | **Feasibility** | Is there a way in, and is the date real? | *second axis* |
@@ -166,10 +166,16 @@ into four squares. The interesting one is **high relevance, no way in** — it
 reads as *"find a door"*, a partnership brief for stage 6.3, instead of
 quietly sinking down the board.
 
-Fandom is read at the sharpest rung available and **the rung is reported on
-every moment**: the named property (`NFL Draft`), the sub-topic (`Fighting`,
-`Horror`), or the lane. Each rung carries an index *and* a participation
-figure, and both are used — index leads, volume anchors.
+Fandom is **two measurements, not one**: how many of the audience say they are
+interested, and whether that beats the national rate. Either on its own picks
+the wrong moment — a small group who are wildly keen is not a big group who
+quite like it. The NBA Finals for YTTV Sport 25–44: 62% interested, about
+twice the national rate, so 91. For Gemini '26: 17%, below the national rate,
+so 35.
+
+It is read at the sharpest rung available and **the rung is reported on every
+moment**: the named property (`NFL Draft`), the sub-topic (`Fighting`,
+`Horror`), or the lane. Index leads, volume anchors.
 
 ## The research cut
 

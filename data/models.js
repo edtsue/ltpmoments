@@ -124,7 +124,7 @@ export const MODELS = [
     icon: '\uD83D\uDCCB',
     color: '#0B7A67',
     colorDark: '#4FC2AC',
-    gist: 'Scores only things the audience was actually asked — do they follow it, can we reach them there, will they welcome a brand.',
+    gist: 'Scores only things the audience was actually asked — are they into it, can we reach them there, will they welcome a brand.',
     bands: RESPONSE_BANDS,
     driver: 'fan',
     weights: RESPONSE_WEIGHTS,
@@ -143,8 +143,11 @@ export const MODELS = [
     ],
     parts: [
       { key: 'fan',  name: 'Fandom',       color: '#1A67D2', weight: RESPONSE_WEIGHTS.fan,
-        q: 'Do they follow this?',
-        why: 'Measured interest in the property, blended with the category, weighted by how many of them take part.' },
+        /* "Do they follow this?" shipped first and was too vague to be worth
+           reading — it scans as social-media following, and it hid that the
+           term is two measurements rather than one. */
+        q: 'Are they into this, and more than most people are?',
+        why: 'How many of this audience say they are interested in it, and whether that beats the national rate. Read at the sharpest level the survey has — the named property, the kind of thing, or the lane — and the level is reported on every moment.' },
       { key: 'rch',  name: 'Reachability', color: '#0B7A67', weight: RESPONSE_WEIGHTS.rch,
         q: 'Can we get to them there?',
         why: 'How heavily this audience uses the channels the moment actually lives on.' },
