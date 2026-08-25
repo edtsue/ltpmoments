@@ -2133,3 +2133,24 @@ button, input, select { font-family: inherit; }
   color: var(--shell-ink2);
 }
 .mh-when b { color: var(--shell-ink); }
+
+/* THE WAY OFF AN EMPTY BOARD.
+
+   A warning that only explains itself leaves the reader to go hunting the rail
+   for an audience the model can read, which is the tool making them do its
+   work. Two buttons: one that lands on something scoreable, one that goes
+   back to the model that scores everything. */
+.mdl-fix { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.mdl-fix-b {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--shell-line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--shell-ink2);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mdl-fix-b:hover { background: var(--shell-ink); border-color: var(--shell-ink); color: var(--shell-2); }
+.mdl-fix-b:focus-visible { outline: 2px solid var(--vi); outline-offset: 1px; }

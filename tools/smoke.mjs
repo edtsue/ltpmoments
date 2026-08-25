@@ -351,6 +351,49 @@ for (const c of CASES) {
   }
 }
 
+/* ---------- the empty board explains itself, and offers a way off ---------- */
+/* A model that cannot score the selected audience draws nothing, and the only
+   thing standing between that and "the tool is broken" is one sentence in the
+   rail. That sentence shipped once with its NEGATION MISSING — it read "this
+   audience has a research cut behind it", the exact opposite of the truth —
+   so the board was blank and the explanation agreed that it should not be.
+   Asserted on the meaning, not on the wording. */
+{
+  const { MODELS } = await import('../data/models.js');
+  const problems = [];
+  els.get('body').innerHTML = '';
+  globalThis.location.hash = `#/${AUDIENCES[0].id}/response`;
+  await import('../app.js?empty=1');
+
+  const tog = els.get('modelTog').innerHTML;
+  const board = els.get('body').innerHTML;
+
+  if (!/Nothing to score/.test(tog)) problems.push('an unscoreable board draws no warning at all');
+  if (!/no research cut/i.test(tog)) {
+    problems.push('the warning does not say the audience LACKS a cut — check the negation');
+  }
+  if (/has a research cut behind it/.test(tog)) {
+    problems.push('the warning claims the audience HAS a cut, which is the opposite of why the board is empty');
+  }
+  if (!tog.includes(AUDIENCES[0].name)) problems.push('the warning does not name the audience it is about');
+  /* And a way out, or the reader has to go hunting the rail themselves. */
+  if (!/data-pick-aud="/.test(tog)) problems.push('no one-click route to an audience this model can read');
+  if (!/data-model="affinity"/.test(tog)) problems.push('no one-click route back to the model that scores everything');
+  /* The offer has to be an audience the model can actually speak for. */
+  const offered = (tog.match(/data-pick-aud="([^"]+)"/) || [])[1];
+  const resp = MODELS.find(m => m.id === 'response');
+  if (offered && !resp.supports({ id: offered })) {
+    problems.push(`the recovery button offers ${offered}, which this model cannot score either`);
+  }
+  /* The board itself must be drawn and empty, not thrown away. */
+  if (board.length < 400) problems.push('the board did not render at all');
+  if (/class="bar (?!nodata)/.test(board)) problems.push('bars were scored on an audience with no data behind it');
+
+  checked++;
+  if (problems.length) { fail++; console.log(`FAIL  unscoreable board: ${problems.join('; ')}`); }
+  else console.log(`ok    ${'unscoreable board'.padEnd(24)} warns, names it, offers ${offered}`);
+}
+
 /* ---------- the model comparison ---------- */
 /* The panel Ed asked for: what each model is, what it is good and bad at, in
    plain words. Asserted for STRUCTURE rather than for prose — the wording will

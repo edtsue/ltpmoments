@@ -266,6 +266,10 @@ function renderModelToggle() {
   const cov = COVER();
   const el = document.getElementById('modelTog');
   if (!el) return;
+  /* An empty board needs a way off it, not just an explanation of itself.
+     The first audience this model CAN speak for, offered by name — hunting
+     the rail for one is the reader doing the tool's work. */
+  const firstScorable = ROSTER().find(x => cur.supports(x) && !S.auds.includes(x.id));
 
   el.innerHTML = `
     <div class="rl-hd gap">Relevance model</div>
@@ -276,8 +280,21 @@ function renderModelToggle() {
     <p class="mdl-gist">${esc(cur.gist)}</p>
     ${cov.ok === cov.total ? '' : `
       <p class="mdl-warn">${cov.ok
-        ? `Scores <b>${cov.ok} of ${cov.total}</b> selected audiences. ${cov.missing.map(x => esc(x.name)).join(', ')} ${cov.missing.length === 1 ? 'has' : 'have'} no research cut, so ${cov.missing.length === 1 ? 'it is' : 'they are'} left out of the board rather than scored at par.`
-        : `<b>Nothing to score.</b> ${cov.missing.length === 1 ? 'This audience has' : 'None of these audiences have'} a research cut behind ${cov.missing.length === 1 ? 'it' : 'them'}, and this model reads nothing else. Pick an official target, or switch back to ${esc(MODELS[0].short)}.`}</p>`}
+        ? `Scores <b>${cov.ok} of ${cov.total}</b> selected audiences. ${cov.missing.map(x => esc(x.name)).join(', ')} ${cov.missing.length === 1 ? 'has' : 'have'} <b>no research cut</b>, so ${cov.missing.length === 1 ? 'it is' : 'they are'} left out of the board rather than scored at par.`
+        /* ⚠️ THE NEGATION IS THE WHOLE SENTENCE. This read "This audience HAS
+           a research cut behind it" for one release — the exact opposite of
+           the truth — so the one message whose entire job was to explain an
+           empty board explained nothing, and the board looked broken. */
+        : `<b>Nothing to score.</b> ${cov.missing.length === 1
+            ? `<b>${esc(cov.missing[0].name)}</b> has <b>no research cut</b> behind it`
+            : `<b>None</b> of these audiences have a research cut behind them`}, and this
+           model reads nothing else — so rather than score every moment at par and
+           call that an answer, it scores none of them.`}</p>
+      ${cov.ok ? '' : `
+        <div class="mdl-fix">
+          ${firstScorable ? `<button type="button" class="mdl-fix-b" data-pick-aud="${esc(firstScorable.id)}">Show me ${esc(firstScorable.name)}</button>` : ''}
+          <button type="button" class="mdl-fix-b" data-model="${MODELS[0].id}">Back to ${esc(MODELS[0].short)}</button>
+        </div>`}`}
     <button class="mdl-help" id="modelHelpBtn" type="button"
       aria-haspopup="dialog" aria-controls="modelHelp">Which should I use?</button>`;
 }
@@ -1651,7 +1668,7 @@ function closeMethodology() {
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-model],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close],#modelHelpBtn,[data-help-close]');
+  const t = e.target.closest('[data-aud],[data-pick-aud],[data-cat],[data-id],[data-open],[data-del],[data-close],[data-info],#themeTog,#watchTog,#audAdd,[data-mode],[data-model],[data-fam-tog],[data-grp-tog],#zoomIn,#zoomOut,#zoomRd,#methBtn,[data-meth-close],#modelHelpBtn,[data-help-close]');
   if (!t) { closePop(); return; }
 
   /* Tested before the popover-closing paths below and before the audience
@@ -1721,6 +1738,15 @@ document.addEventListener('click', e => {
   if (t.dataset.close)     return closeAudPanel();
   if (t.dataset.del)       return deleteAudience(t.dataset.del);
 
+  /* Select ONE audience and drop the rest. The ordinary row click toggles,
+     which is right on the rail — but the recovery button in the warning is
+     answering "show me something this model can read", and adding a fifth
+     audience to a selection of four unscoreable ones does not answer it. */
+  if (t.dataset.pickAud) {
+    S.auds = [t.dataset.pickAud];
+    recompute();
+    return render();
+  }
   if (t.dataset.aud)  {
     const id = t.dataset.aud;
     const i = S.auds.indexOf(id);
